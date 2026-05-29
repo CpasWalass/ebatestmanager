@@ -5,8 +5,12 @@ namespace App\Providers;
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
 use App\Models\Client;
 use App\Models\Project;
+use App\Models\TestCase;
+use App\Models\TestCaseTemplate;
 use App\Policies\ClientPolicy;
 use App\Policies\ProjectPolicy;
+use App\Policies\TestCasePolicy;
+use App\Policies\TestCaseTemplatePolicy;
 
 class AuthServiceProvider extends ServiceProvider
 {
@@ -18,6 +22,8 @@ class AuthServiceProvider extends ServiceProvider
     protected $policies = [
         Client::class => ClientPolicy::class,
         Project::class => ProjectPolicy::class,
+        TestCaseTemplate::class => TestCaseTemplatePolicy::class,
+        TestCase::class => TestCasePolicy::class,
     ];
 
     /**
