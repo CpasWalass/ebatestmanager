@@ -15,7 +15,7 @@ class ClientController extends Controller
      */
     public function index(): JsonResponse
     {
-        $this->authorize('view', Client::class);
+        $this->authorize('viewAny', Client::class);
 
         $clients = Client::paginate(15);
         return response()->json($clients);
@@ -80,7 +80,7 @@ class ClientController extends Controller
      */
     public function projects(Client $client): JsonResponse
     {
-        $this->authorize('view', $client);
+        $this->authorize('view', $client) ;
 
         $projects = $client->projects()->paginate(15);
 

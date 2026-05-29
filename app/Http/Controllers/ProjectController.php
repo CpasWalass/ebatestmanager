@@ -18,7 +18,7 @@ class ProjectController extends Controller
     {
         $this->authorize('viewAny', Project::class);
 
-        $projects = Project::with(['client', 'createdBy'])
+        $projects = Project::with(['client', 'creator'])
             ->paginate(15);
 
         return response()->json($projects);
@@ -38,7 +38,7 @@ class ProjectController extends Controller
 
         return response()->json([
             'message' => 'Projet créé avec succès',
-            'data' => $project->load(['client', 'createdBy']),
+            'data' => $project->load(['client', 'creator']),
         ], 201);
     }
 
@@ -49,7 +49,7 @@ class ProjectController extends Controller
     {
         $this->authorize('view', $project);
 
-        return response()->json($project->load(['client', 'createdBy']));
+        return response()->json($project->load(['client', 'creator']));
     }
 
     /**
@@ -63,7 +63,7 @@ class ProjectController extends Controller
 
         return response()->json([
             'message' => 'Projet mis à jour avec succès',
-            'data' => $project->load(['client', 'createdBy']),
+            'data' => $project->load(['client', 'creator']),
         ]);
     }
 

@@ -19,6 +19,7 @@ class ProjectResource extends JsonResource
             'client_id' => $this->client_id,
             'client' => new ClientResource($this->whenLoaded('client')),
             'created_by' => $this->created_by,
+            'creator' => $this->whenLoaded('creator'),
             'name' => $this->name,
             'description' => $this->description,
             'type' => $this->type,
