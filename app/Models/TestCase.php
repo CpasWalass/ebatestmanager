@@ -2,16 +2,20 @@
 
 namespace App\Models;
 
+use App\Models\Traits\BelongsToTenant;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class TestCase extends Model
 {
+    use BelongsToTenant;
+
     protected $fillable = [
-        'project_id',
         'template_id',
+        'project_id',
         'data',
+        'tenant_id',
     ];
 
     protected $casts = [
