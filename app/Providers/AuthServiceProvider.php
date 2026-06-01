@@ -7,10 +7,14 @@ use App\Models\Client;
 use App\Models\Project;
 use App\Models\TestCase;
 use App\Models\TestCaseTemplate;
+use App\Models\TestCaseAssignment;
+use App\Models\User;
 use App\Policies\ClientPolicy;
 use App\Policies\ProjectPolicy;
 use App\Policies\TestCasePolicy;
 use App\Policies\TestCaseTemplatePolicy;
+use App\Policies\TestCaseAssignmentPolicy;
+use App\Policies\UserPolicy;
 
 class AuthServiceProvider extends ServiceProvider
 {
@@ -24,6 +28,8 @@ class AuthServiceProvider extends ServiceProvider
         Project::class => ProjectPolicy::class,
         TestCaseTemplate::class => TestCaseTemplatePolicy::class,
         TestCase::class => TestCasePolicy::class,
+        TestCaseAssignment::class => TestCaseAssignmentPolicy::class,
+        User::class => UserPolicy::class,
     ];
 
     /**

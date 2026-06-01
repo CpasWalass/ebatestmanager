@@ -6,6 +6,8 @@ use App\Http\Controllers\ClientController;
 use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\TestCaseTemplateController;
 use App\Http\Controllers\TestCaseController;
+use App\Http\Controllers\UserController;
+use App\Http\Controllers\TestAssignmentController;
 
 Route::middleware(['auth:sanctum'])->group(function () {
     /**
@@ -82,6 +84,24 @@ Route::middleware(['auth:sanctum'])->group(function () {
         ->middleware('auth:sanctum');
     
     Route::get('/projects/{project}/templates/{template}/test-cases', [TestCaseController::class, 'byTemplate'])
+        ->middleware('auth:sanctum');
+
+    /**
+     * Users Routes
+     */
+    Route::apiResource('users', UserController::class)
+        ->middleware('auth:sanctum');
+    
+    Route::post('/users/{user}/assign', [UserController::class, 'assign'])
+        ->middleware('auth:sanctum');
+
+    /**
+     * Test Assignments Routes
+     */
+    Route::post('/assignments', [TestAssignmentController::class, 'store'])
+        ->middleware('auth:sanctum');
+    
+    Route::delete('/assignments/{assignment}', [TestAssignmentController::class, 'destroy'])
         ->middleware('auth:sanctum');
 });
 
