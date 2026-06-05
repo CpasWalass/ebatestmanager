@@ -2,18 +2,23 @@
 
 namespace Tests\Feature;
 
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Foundation\Testing\WithFaker;
 use Tests\TestCase;
+use App\Models\User;
 
 class LoginDebugTest extends TestCase
 {
-    public function test_login()
+    public function test_users_route()
     {
-        $response = $this->post('/login', [
-            'email' => 'chef@ebatest.local',
-            'password' => 'password',
-        ]);
-        
-        $response->dump();
+        $user = User::where('email', 'chef@ebatest.local')->first();
+        if (!$user) {
+            $this->markTestSkipped('Chef not found');
+        }
+
+        $response = $this->actingAs($user)->get('/users');
+        $response->dumpHeaders();
         $response->dumpSession();
+        $response->assertStatus(200);
     }
 }

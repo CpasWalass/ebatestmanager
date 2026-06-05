@@ -3,25 +3,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>@yield('title', 'EbaTestManager')</title>
-    <meta name="description" content="@yield('meta_description', 'Plateforme de gestion des tests UAT/IAT - e-Business Afrique')">
+    <title>Projets — EbaTestManager</title>
+    <meta name="description" content="Plateforme de gestion des tests UAT/IAT - e-Business Afrique">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
-    @livewireStyles
+    <link rel="preload" as="style" href="http://localhost/build/assets/app-iPR_qCEy.css" /><link rel="modulepreload" as="script" href="http://localhost/build/assets/app-BvRk9kiK.js" /><link rel="stylesheet" href="http://localhost/build/assets/app-iPR_qCEy.css" data-navigate-track="reload" /><script type="module" src="http://localhost/build/assets/app-BvRk9kiK.js" data-navigate-track="reload"></script>    <!-- Livewire Styles --><style >[wire\:loading][wire\:loading], [wire\:loading\.delay][wire\:loading\.delay], [wire\:loading\.list-item][wire\:loading\.list-item], [wire\:loading\.inline-block][wire\:loading\.inline-block], [wire\:loading\.inline][wire\:loading\.inline], [wire\:loading\.block][wire\:loading\.block], [wire\:loading\.flex][wire\:loading\.flex], [wire\:loading\.table][wire\:loading\.table], [wire\:loading\.grid][wire\:loading\.grid], [wire\:loading\.inline-flex][wire\:loading\.inline-flex] {display: none;}[wire\:loading\.delay\.none][wire\:loading\.delay\.none], [wire\:loading\.delay\.shortest][wire\:loading\.delay\.shortest], [wire\:loading\.delay\.shorter][wire\:loading\.delay\.shorter], [wire\:loading\.delay\.short][wire\:loading\.delay\.short], [wire\:loading\.delay\.default][wire\:loading\.delay\.default], [wire\:loading\.delay\.long][wire\:loading\.delay\.long], [wire\:loading\.delay\.longer][wire\:loading\.delay\.longer], [wire\:loading\.delay\.longest][wire\:loading\.delay\.longest] {display: none;}[wire\:offline][wire\:offline] {display: none;}[wire\:dirty]:not(textarea):not(input):not(select) {display: none;}:root {--livewire-progress-bar-color: #2299dd;}[x-cloak] {display: none !important;}[wire\:cloak] {display: none !important;}dialog#livewire-error::backdrop {background-color: rgba(0, 0, 0, .6);}</style>
 </head>
 <body class="bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 font-inter" style="font-family: 'Inter', sans-serif;">
 
 <div class="min-h-screen flex flex-col" style="padding-bottom: 110px;">
 
-    {{-- ═══════════════════════════════════════ TOP NAVBAR ═══════════════════════════════════════ --}}
+    
     <nav class="fixed top-0 left-0 right-0 z-50 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 shadow-sm" style="height:64px;">
         <div class="max-w-screen-2xl mx-auto px-4 sm:px-6 h-full flex items-center justify-between gap-4">
 
-            {{-- Logo & Marque --}}
+            
             <div class="flex items-center gap-3 min-w-0">
                 <div class="flex items-center justify-center w-9 h-9 rounded-xl flex-shrink-0 bg-white border border-gray-200 overflow-hidden">
-                    <img src="{{ asset('images/logo.jpg') }}" alt="Logo" class="w-full h-full object-cover" onerror="this.outerHTML='<span class=\'text-[#8b0000] font-bold text-sm tracking-tight\'>EB</span>'">
+                    <img src="http://localhost/images/logo.jpg" alt="Logo" class="w-full h-full object-cover" onerror="this.outerHTML='<span class=\'text-[#8b0000] font-bold text-sm tracking-tight\'>EB</span>'">
                 </div>
                 <div class="hidden sm:block leading-none">
                     <p class="text-[10px] font-bold text-gray-800 uppercase tracking-widest">UAT/IAT Manager</p>
@@ -29,32 +28,30 @@
                 </div>
             </div>
 
-            {{-- Barre de recherche centrée --}}
+            
             <div class="flex-1 max-w-md mx-4 hidden md:block">
                 <div class="relative">
                     <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0"/>
                     </svg>
                     <input type="text" id="global-search"
-                        placeholder="@yield('search_placeholder', 'Rechercher un projet...')"
+                        placeholder="Rechercher un projet..."
                         class="w-full pl-10 pr-4 py-2 text-sm bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:border-transparent transition"
                         style="--tw-ring-color: #CC0000;">
                 </div>
             </div>
 
-            {{-- Actions droite --}}
+            
             <div class="flex items-center gap-2 sm:gap-3">
 
-                {{-- Badge multi-tenant --}}
+                
                 <div class="hidden lg:flex items-center gap-1.5 px-2.5 py-1 bg-blue-50 dark:bg-blue-900/20 rounded-full border border-blue-100 dark:border-blue-800">
                     <span class="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse"></span>
                     <span class="text-xs font-medium text-blue-600 dark:text-blue-400">Multi-Tenant Active</span>
                 </div>
 
-                {{-- Notifications (opens messagerie for unread) --}}
-                @auth
-                @php $unreadCount = \App\Models\Message::where('receiver_id', auth()->id())->whereNull('read_at')->count(); @endphp
-                <button
+                
+                                                <button
                     onclick="Livewire.dispatch('openMessagerie')"
                     class="relative p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition"
                     id="btn-notifications"
@@ -63,12 +60,9 @@
                     <svg class="w-5 h-5 text-gray-600 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
                     </svg>
-                    @if($unreadCount > 0)
-                        <span class="absolute top-1 right-1 w-4 h-4 text-white text-xs rounded-full flex items-center justify-center font-bold" style="background:#CC0000; font-size:10px;">{{ $unreadCount > 9 ? '9+' : $unreadCount }}</span>
-                    @endif
-                </button>
+                                    </button>
 
-                {{-- Messagerie rapide --}}
+                
                 <button
                     onclick="Livewire.dispatch('openMessagerie')"
                     class="relative p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition"
@@ -79,16 +73,15 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-4 4-4-4z"/>
                     </svg>
                 </button>
-                @endauth
-
-                {{-- Grille apps --}}
+                
+                
                 <button class="p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition hidden sm:block" id="btn-apps">
                     <svg class="w-5 h-5 text-gray-600 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/>
                     </svg>
                 </button>
 
-                {{-- Dark mode --}}
+                
                 <button @click="toggle()" class="p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition">
                     <svg x-show="!dark" class="w-5 h-5 text-amber-500" fill="currentColor" viewBox="0 0 20 20">
                         <path fill-rule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.536l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.121-10.607a1 1 0 010 1.414l-.707.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.464 5.464a1 1 0 01.707-.293h.026a1 1 0 010 2 1 1 0 01-.733-1.707zM5 11a1 1 0 100-2H4a1 1 0 100 2h1z" clip-rule="evenodd"/>
@@ -98,26 +91,17 @@
                     </svg>
                 </button>
 
-                {{-- Profil utilisateur --}}
+                
                 <div class="relative" x-data="{ open: false }">
                     <button @click="open = !open" class="flex items-center gap-2 pl-1 pr-3 py-1 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition">
                         <div class="w-8 h-8 rounded-lg flex items-center justify-center text-white font-bold text-sm flex-shrink-0"
                             style="background: linear-gradient(135deg, #CC0000, #ff4444);">
-                            {{ auth()->user() ? strtoupper(substr(auth()->user()->name, 0, 1)) : 'U' }}
+                            C
                         </div>
                         <div class="hidden md:block text-left">
-                            <p class="text-xs font-semibold text-gray-900 dark:text-white leading-none">{{ auth()->user()?->name ?? 'Utilisateur' }}</p>
+                            <p class="text-xs font-semibold text-gray-900 dark:text-white leading-none">Chef de Projet</p>
                             <p class="text-xs text-gray-400 capitalize leading-none mt-0.5">
-                                @php
-                                    $roleLabel = match(auth()->user()?->getRoleNames()->first()) {
-                                        'chef_project' => 'Chef de Projet',
-                                        'tester'       => 'Testeur',
-                                        'developer'    => 'Développeur',
-                                        'client'       => 'Client',
-                                        default        => auth()->user()?->getRoleNames()->first() ?? 'Utilisateur',
-                                    };
-                                @endphp
-                                {{ $roleLabel }}
+                                                                Chef de Projet
                             </p>
                         </div>
                     </button>
@@ -128,8 +112,8 @@
                         x-transition:enter-start="opacity-0 scale-95"
                         x-transition:enter-end="opacity-100 scale-100">
                         <div class="p-3 border-b border-gray-100 dark:border-gray-700">
-                            <p class="text-sm font-semibold text-gray-900 dark:text-white">{{ auth()->user()?->name }}</p>
-                            <p class="text-xs text-gray-500 dark:text-gray-400">{{ auth()->user()?->email }}</p>
+                            <p class="text-sm font-semibold text-gray-900 dark:text-white">Chef de Projet</p>
+                            <p class="text-xs text-gray-500 dark:text-gray-400">chef@ebatest.local</p>
                         </div>
                         <a href="#" class="flex items-center gap-2 px-3 py-2.5 text-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition">
                             <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
@@ -140,9 +124,8 @@
                             Paramètres
                         </a>
                         <div class="border-t border-gray-100 dark:border-gray-700">
-                            <form method="POST" action="{{ route('logout') }}">
-                                @csrf
-                                <button type="submit" class="flex items-center gap-2 w-full px-3 py-2.5 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition">
+                            <form method="POST" action="http://localhost/logout">
+                                <input type="hidden" name="_token" value="08v72cTNYXO8umxLUOlJLMBblsHknsyOn774se72" autocomplete="off">                                <button type="submit" class="flex items-center gap-2 w-full px-3 py-2.5 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
                                     Déconnexion
                                 </button>
@@ -154,24 +137,45 @@
         </div>
     </nav>
 
-    {{-- ══════════════════════════════════════ CONTENU PRINCIPAL ══════════════════════════════════════ --}}
+    
     <main class="flex-1 mt-16 max-w-screen-2xl w-full mx-auto px-4 sm:px-6 py-6">
-        @if(session('success'))
-            <div class="mb-4 flex items-center gap-3 p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-xl text-sm text-green-700 dark:text-green-400">
-                <svg class="w-4 h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
-                {{ session('success') }}
-            </div>
-        @endif
-        @if(session('error'))
-            <div class="mb-4 flex items-center gap-3 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl text-sm text-red-700 dark:text-red-400">
-                <svg class="w-4 h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
-                {{ session('error') }}
-            </div>
-        @endif
-        @yield('content')
-    </main>
+                            <div wire:key="lw-185184885-0" wire:snapshot="{&quot;data&quot;:{&quot;search&quot;:&quot;&quot;,&quot;showModal&quot;:false,&quot;name&quot;:&quot;&quot;,&quot;description&quot;:&quot;&quot;,&quot;version&quot;:&quot;&quot;,&quot;perimeter&quot;:&quot;&quot;,&quot;type&quot;:&quot;IAT&quot;},&quot;memo&quot;:{&quot;id&quot;:&quot;oKOK8HvWDZSXZNUgj3Qw&quot;,&quot;name&quot;:&quot;project-manager&quot;,&quot;path&quot;:&quot;\/&quot;,&quot;method&quot;:&quot;GET&quot;,&quot;release&quot;:&quot;a-a-a&quot;,&quot;children&quot;:[],&quot;scripts&quot;:[],&quot;assets&quot;:[],&quot;errors&quot;:[],&quot;locale&quot;:&quot;fr&quot;,&quot;islands&quot;:[]},&quot;checksum&quot;:&quot;69ac52f7eeb9790de88196b7621ac695db535c0e0d2d5535d37f9b9fbd219e0d&quot;}" wire:effects="[]" wire:id="oKOK8HvWDZSXZNUgj3Qw" wire:name="project-manager">
+    <!-- En-tête -->
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+        <div>
+            <h1 class="text-3xl font-bold">Projets</h1>
+            <p class="text-gray-600 dark:text-gray-400 text-sm mt-1">Gestion des projets de test</p>
+        </div>
+        
+        <!--[if BLOCK]><![endif]-->        <button wire:click="$set('showModal', true)" class="px-4 py-2 bg-[#8b0000] hover:bg-red-800 text-white rounded-md font-medium text-sm flex items-center space-x-2 transition shadow-sm">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+            </svg>
+            <span>Nouveau Projet</span>
+        </button>
+        <!--[if ENDBLOCK]><![endif]-->    </div>
 
-    {{-- ═══════════════════════════════════ BOTTOM DOCK NAVIGATION ═══════════════════════════════════ --}}
+    <!-- Barre de recherche -->
+    <div class="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700 mb-6 shadow-sm">
+        <div class="relative max-w-md">
+            <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0"/>
+            </svg>
+            <input wire:model.live="search" type="text" placeholder="Rechercher un projet..." class="w-full pl-10 pr-4 py-2 text-sm bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#8b0000] transition">
+        </div>
+    </div>
+
+    <!-- Grille des projets -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pb-24">
+        <!--[if BLOCK]><![endif]-->            <div class="col-span-full py-12 text-center text-gray-500 dark:text-gray-400">
+                Aucun projet trouvé.
+            </div>
+        <!--[if ENDBLOCK]><![endif]-->    </div>
+
+    <!-- Modal Création de projet -->
+    <!--[if BLOCK]><![endif]--><!--[if ENDBLOCK]><![endif]--></div>    </main>
+
+    
     <div class="fixed bottom-0 left-0 right-0 z-50 flex justify-center pointer-events-none">
         <div class="pointer-events-auto relative flex items-end justify-center gap-3 px-10 pt-8 pb-3"
             style="
@@ -183,114 +187,90 @@
                 border-top: 1px solid rgba(255,255,255,0.05);
             ">
 
-            {{-- Items du dock filtrés par rôle --}}
-            @php
-                $user = auth()->user();
-                $role = $user?->getRoleNames()->first() ?? '';
-                $isChef = $role === 'chef_project';
-                $isTester = $role === 'tester';
-                $isClient = $role === 'client';
-                $isDev = $role === 'developer';
-
-                // Route du dashboard selon le rôle
-                $dashRoute = match($role) {
-                    'tester'    => 'testeur.dashboard',
-                    'developer' => 'developpeur.dashboard',
-                    'client'    => 'client.dashboard',
-                    default     => 'dashboard',
-                };
-
-                // Route des projets selon le rôle
-                $projetsRoute = match($role) {
-                    'tester'    => 'testeur.projets.index',
-                    'developer' => 'projets.index',
-                    'client'    => 'projets.index',
-                    default     => 'projets.index',
-                };
-
-                $dockItems = [];
-
-                // Dashboard — visible par tous
-                $dockItems[] = [
-                    'id'     => 'dock-home',
-                    'label'  => 'Accueil',
-                    'route'  => $dashRoute,
-                    'active' => request()->routeIs('dashboard') || request()->routeIs('testeur.dashboard') || request()->routeIs('developpeur.dashboard') || request()->routeIs('client.dashboard'),
-                    'icon'   => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>',
-                    'badge'  => 0,
-                ];
-
-                // Projets — visible par Chef, Testeur, Dev et Client
-                if ($isChef || $isTester || $isDev || $isClient) {
-                    $dockItems[] = [
-                        'id'     => 'dock-projets',
-                        'label'  => 'Projets',
-                        'route'  => $projetsRoute,
-                        'active' => request()->routeIs('projets.*') || request()->routeIs('testeur.projets.*') || request()->routeIs('test-cases.*') || request()->routeIs('testeur.projet.*') || request()->routeIs('testeur.executer'),
-                        'icon'   => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/>',
-                        'badge'  => 0,
-                    ];
-                }
-
-                // Équipe — visible par Chef uniquement
-                if ($isChef) {
-                    $dockItems[] = [
-                        'id'     => 'dock-settings',
-                        'label'  => 'Équipe',
-                        'route'  => 'equipe.index',
-                        'active' => request()->routeIs('equipe.*'),
-                        'icon'   => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>',
-                        'badge'  => 0,
-                    ];
-                }
-            @endphp
-
-            @foreach($dockItems as $item)
-                <a href="{{ route($item['route']) }}"
-                    id="{{ $item['id'] }}"
+            
+            
+                            <a href="http://localhost/dashboard"
+                    id="dock-home"
                     class="dock-item group relative flex flex-col items-center justify-end h-[60px] transition-all duration-200 cursor-pointer w-16"
-                    style="{{ $item['active'] ? 'z-index: 10;' : '' }}">
+                    style="">
 
-                    {{-- Badge --}}
-                    @if($item['badge'] > 0)
-                        <span class="absolute top-0 right-2 w-4 h-4 text-white text-xs rounded-full flex items-center justify-center font-bold z-20 shadow-sm"
-                            style="background:#8b0000; font-size:9px;">
-                            {{ $item['badge'] > 9 ? '9+' : $item['badge'] }}
-                        </span>
-                    @endif
-
-                    {{-- Icône container --}}
+                    
+                    
+                    
                     <div class="w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-300 relative z-10"
-                        style="{{ $item['active']
-                            ? 'background: #8b0000; box-shadow: 0 4px 15px rgba(139,0,0,0.5); transform: translateY(-4px);'
-                            : 'background: rgba(255,255,255,0.05);' }}">
+                        style="background: rgba(255,255,255,0.05);">
                         <svg class="w-5 h-5 transition-colors duration-200"
-                            style="color: {{ $item['active'] ? '#ffffff' : '#9ca3af' }}"
+                            style="color: #9ca3af"
                             fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            {!! $item['icon'] !!}
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
                         </svg>
                     </div>
 
-                    {{-- Label (visible uniquement si actif ou au hover) --}}
+                    
                     <span class="text-[9px] font-bold uppercase tracking-wider transition-all duration-300 absolute -bottom-4 opacity-0 group-hover:opacity-100 group-hover:-bottom-1"
-                        style="color: {{ $item['active'] ? '#ffffff' : '#9ca3af' }}; {{ $item['active'] ? 'opacity: 1; bottom: -1px;' : '' }}">
-                        {{ $item['label'] }}
+                        style="color: #9ca3af; ">
+                        Accueil
                     </span>
                     
-                    {{-- Point indicateur actif (Grille subtile en dessous) --}}
-                    @if($item['active'])
-                        <span class="absolute -bottom-3 left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full bg-white opacity-50 shadow-[0_0_8px_rgba(255,255,255,0.8)]"></span>
-                    @endif
-                </a>
-            @endforeach
-        </div>
+                    
+                                    </a>
+                            <a href="http://localhost/projets"
+                    id="dock-projets"
+                    class="dock-item group relative flex flex-col items-center justify-end h-[60px] transition-all duration-200 cursor-pointer w-16"
+                    style="">
 
-        {{-- FAB Bouton + (rouge foncé, bas droite) --}}
-        @yield('fab')
-    </div>
+                    
+                    
+                    
+                    <div class="w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-300 relative z-10"
+                        style="background: rgba(255,255,255,0.05);">
+                        <svg class="w-5 h-5 transition-colors duration-200"
+                            style="color: #9ca3af"
+                            fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/>
+                        </svg>
+                    </div>
+
+                    
+                    <span class="text-[9px] font-bold uppercase tracking-wider transition-all duration-300 absolute -bottom-4 opacity-0 group-hover:opacity-100 group-hover:-bottom-1"
+                        style="color: #9ca3af; ">
+                        Projets
+                    </span>
+                    
+                    
+                                    </a>
+                            <a href="http://localhost/api/users"
+                    id="dock-settings"
+                    class="dock-item group relative flex flex-col items-center justify-end h-[60px] transition-all duration-200 cursor-pointer w-16"
+                    style="">
+
+                    
+                    
+                    
+                    <div class="w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-300 relative z-10"
+                        style="background: rgba(255,255,255,0.05);">
+                        <svg class="w-5 h-5 transition-colors duration-200"
+                            style="color: #9ca3af"
+                            fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
+                        </svg>
+                    </div>
+
+                    
+                    <span class="text-[9px] font-bold uppercase tracking-wider transition-all duration-300 absolute -bottom-4 opacity-0 group-hover:opacity-100 group-hover:-bottom-1"
+                        style="color: #9ca3af; ">
+                        Équipe
+                    </span>
+                    
+                    
+                                    </a>
+                    </div>
+
+        
+            </div>
 </div>
 
-{{-- Styles dock & light mode --}}
+
 <style>
     [x-cloak] { display: none !important; }
     
@@ -327,7 +307,7 @@
     
 </style>
 
-{{-- Scripts --}}
+
 <script>
     // Appliquer le mode sombre AVANT que Alpine ne charge pour éviter le flash
     (function() {
@@ -355,11 +335,11 @@
     }
 </script>
 
-@livewireScripts
-@stack('scripts')
+<!-- Livewire Scripts -->
+<script src="http://localhost/livewire-054814c2/livewire.js?id=ab6b028c"   data-csrf="08v72cTNYXO8umxLUOlJLMBblsHknsyOn774se72" data-module-url="http://localhost/livewire-054814c2" data-update-uri="http://localhost/livewire-054814c2/update" data-navigate-once="true"></script>
 
-@auth
-<livewire:messagerie />
-@endauth
+<div wire:key="lw-3201480179-0-0" wire:snapshot="{&quot;data&quot;:{&quot;showPanel&quot;:false,&quot;selectedUserId&quot;:null,&quot;newMessage&quot;:&quot;&quot;},&quot;memo&quot;:{&quot;id&quot;:&quot;h2g5AxOydvQwpl4XGmCC&quot;,&quot;name&quot;:&quot;messagerie&quot;,&quot;path&quot;:&quot;\/&quot;,&quot;method&quot;:&quot;GET&quot;,&quot;release&quot;:&quot;a-a-a&quot;,&quot;children&quot;:[],&quot;scripts&quot;:[],&quot;assets&quot;:[],&quot;errors&quot;:[],&quot;locale&quot;:&quot;fr&quot;,&quot;islands&quot;:[]},&quot;checksum&quot;:&quot;b487460219a0a69229a00096afb2a1e0378c4da9c58b08b78f62a2909bf7db84&quot;}" wire:effects="{&quot;listeners&quot;:[&quot;openMessagerie&quot;]}" wire:id="h2g5AxOydvQwpl4XGmCC" wire:name="messagerie">
+    
+    <!--[if BLOCK]><![endif]--><!--[if ENDBLOCK]><![endif]--></div>
 </body>
 </html>

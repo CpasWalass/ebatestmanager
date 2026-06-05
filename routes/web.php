@@ -58,9 +58,9 @@ Route::middleware(['auth:sanctum', 'verified', 'role:chef_project'])->group(func
     Route::get('/dashboard', [DashboardController::class, 'index'])
         ->name('dashboard');
 
-    Route::get('/users', function () {
+    Route::get('/equipe', function () {
         return view('users.index');
-    })->name('users.index');
+    })->name('equipe.index');
 });
 
 /*
