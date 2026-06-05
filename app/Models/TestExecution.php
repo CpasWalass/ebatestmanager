@@ -17,11 +17,43 @@ class TestExecution extends Model
         'results',
         'status',
         'comments',
+        'nature',
+        'priority',
+        'started_at',
+        'completed_at',
         'tenant_id',
     ];
 
     protected $casts = [
-        'results' => 'array',
+        'results'      => 'array',
+        'started_at'   => 'datetime',
+        'completed_at' => 'datetime',
+    ];
+
+    /**
+     * Libellés des statuts
+     */
+    public static array $statusLabels = [
+        'valide'       => 'Validé',
+        'non_valide'   => 'Non validé',
+        'sous_reserve' => 'Sous réserve',
+        'optimisation' => 'Optimisation',
+    ];
+
+    /**
+     * Types de nature d'erreur
+     */
+    public static array $natures = [
+        'Erreurs Fonctionnelles',
+        'Erreurs de Validation / Saisie',
+        "Erreurs d'Interface (UI/UX)",
+        'Erreurs Techniques',
+        'Erreurs de Performance',
+        'Erreurs de Sécurité',
+        'Erreurs de Données',
+        "Erreurs d'Intégration",
+        'Erreurs de Compatibilité',
+        'Erreurs de Workflow / Navigation',
     ];
 
     public function testCase(): BelongsTo

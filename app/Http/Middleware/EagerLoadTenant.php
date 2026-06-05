@@ -16,11 +16,15 @@ class EagerLoadTenant
      */
     public function handle(Request $request, Closure $next)
     {
-        // Share tenant with views if initialized
-        if (tenancy()->tenant) {
-            $tenant = tenant();
-            view()->share('currentTenant', $tenant);
-            $request->attributes->set('tenant', $tenant);
+        try {
+            // Share tenant with views if initialized
+            if (tenancy()->tenant) {
+                $tenant = tenant();
+                view()->share('currentTenant', $tenant);
+                $request->attributes->set('tenant', $tenant);
+            }
+        } catch (\Exception $e) {
+            // Silently fail if tenant can't be loaded (e.g., during auth routes)
         }
 
         return $next($request);

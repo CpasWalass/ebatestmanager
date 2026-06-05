@@ -13,6 +13,8 @@ class TestCaseAssignment extends Model
     use SoftDeletes, BelongsToTenant;
 
     protected $fillable = [
+        'project_id',
+        'template_id',
         'test_case_id',
         'user_id',
         'scope',

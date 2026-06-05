@@ -17,6 +17,8 @@ class Project extends Model
         'created_by',
         'name',
         'description',
+        'version',
+        'perimeter',
         'type',
         'status',
         'start_date',
