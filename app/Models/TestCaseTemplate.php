@@ -39,7 +39,7 @@ class TestCaseTemplate extends Model
     {
         return [
             ['name' => 'cas_test', 'label' => 'CAS DE TEST', 'type' => 'text', 'required' => true],
-            ['name' => 'etat_test', 'label' => 'ETAT DE TEST', 'type' => 'select', 'required' => true, 'options' => ['Terminé']],
+            ['name' => 'etat_test', 'label' => 'ETAT DE TEST', 'type' => 'select', 'required' => true, 'options' => ['À faire', 'En cours', 'Bloqué', 'Terminé']],
             ['name' => 'modules', 'label' => 'MODULES', 'type' => 'text', 'required' => false],
             ['name' => 'fonctionnalites', 'label' => 'FONCTIONNALITES', 'type' => 'text', 'required' => false],
             ['name' => 'scenarios_test', 'label' => 'SCENARIOS DE TEST', 'type' => 'textarea', 'required' => true],
