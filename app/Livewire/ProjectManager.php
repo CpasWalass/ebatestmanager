@@ -15,6 +15,13 @@ class ProjectManager extends Component
     public string $version = '';
     public string $perimeter = '';
     public string $type = 'IAT';
+    public $client_id = null;
+
+    #[Computed]
+    public function clients()
+    {
+        return \App\Models\Client::orderBy('name')->get();
+    }
 
     #[Computed]
     public function projects()
@@ -53,6 +60,9 @@ class ProjectManager extends Component
             'version'     => 'nullable|string|max:50',
             'perimeter'   => 'nullable|string',
             'type'        => 'required|string',
+            'client_id'   => 'required|exists:clients,id',
+        ], [
+            'client_id.required' => 'Veuillez sélectionner un client.',
         ]);
 
         Project::create([
@@ -61,11 +71,12 @@ class ProjectManager extends Component
             'version'     => $this->version,
             'perimeter'   => $this->perimeter,
             'type'        => $this->type,
+            'client_id'   => $this->client_id,
             'created_by'  => auth()->id(),
         ]);
 
         $this->showModal = false;
-        $this->reset(['name', 'description', 'version', 'perimeter', 'type']);
+        $this->reset(['name', 'description', 'version', 'perimeter', 'type', 'client_id']);
         session()->flash('success', 'Projet créé avec succès.');
     }
 
