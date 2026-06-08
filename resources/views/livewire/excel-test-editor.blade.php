@@ -96,8 +96,9 @@
                                     }
                                 @endphp
                                 
-                                @if($isReadOnly)
-                                    <div class="w-full h-full min-h-[40px] px-3 py-2 text-gray-700 dark:text-gray-300 {{ $field['type'] === 'textarea' ? 'whitespace-pre-wrap' : '' }}">
+                                <td class="p-0 border-r border-gray-200 dark:border-gray-700 {{ $bgClass }} relative">
+                                    @if($isReadOnly)
+                                        <div class="w-full h-full min-h-[40px] px-3 py-2 text-gray-700 dark:text-gray-300 {{ $field['type'] === 'textarea' ? 'whitespace-pre-wrap' : '' }}">
                                         {{ $val }}
                                     </div>
                                 @elseif($field['type'] === 'select' && isset($field['options']))
