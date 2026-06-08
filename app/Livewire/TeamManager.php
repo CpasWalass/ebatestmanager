@@ -3,9 +3,12 @@
 namespace App\Livewire;
 
 use App\Models\User;
+use App\Mail\WelcomeNewUser;
 use Livewire\Component;
 use Livewire\Attributes\Computed;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 
 class TeamManager extends Component
@@ -56,9 +59,18 @@ class TeamManager extends Component
 
         $user->assignRole($this->role);
 
+        // Envoi de l'email de bienvenue avec le mot de passe temporaire
+        try {
+            Mail::to($user->email)->send(new WelcomeNewUser($user, $this->generatedPassword));
+            $emailStatus = 'Un email de bienvenue a été envoyé.';
+        } catch (\Exception $e) {
+            Log::warning('Impossible d\'envoyer l\'email de bienvenue: ' . $e->getMessage());
+            $emailStatus = "Mot de passe temporaire : {$this->generatedPassword}";
+        }
+
         $this->showModal = false;
         $this->reset(['name', 'email', 'role']);
-        session()->flash('success', "Utilisateur créé. Mot de passe : {$this->generatedPassword}");
+        session()->flash('success', "Utilisateur créé. {$emailStatus}");
     }
 
     public function deleteUser(int $userId): void

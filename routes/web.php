@@ -61,6 +61,10 @@ Route::middleware(['auth:sanctum', 'verified', 'role:chef_project'])->group(func
     Route::get('/equipe', function () {
         return view('users.index');
     })->name('equipe.index');
+
+    Route::get('/clients', function () {
+        return view('clients.index');
+    })->name('clients.index');
 });
 
 /*
