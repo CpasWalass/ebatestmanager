@@ -111,8 +111,8 @@
 
     {{-- Add User Modal --}}
     @if($showModal)
-    <div class="fixed inset-0 z-50 overflow-y-auto" role="dialog" aria-modal="true">
-        <div class="flex items-center justify-center min-h-screen px-4">
+    <div class="fixed inset-0 z-[60] overflow-y-auto" role="dialog" aria-modal="true">
+        <div class="flex items-center justify-center min-h-screen px-4 py-24">
             <div class="fixed inset-0 bg-gray-900 bg-opacity-75" wire:click="$set('showModal', false)"></div>
             <div class="relative bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-md border border-gray-200 dark:border-gray-700 overflow-hidden">
                 <div class="px-6 pt-6 pb-4 border-b border-gray-100 dark:border-gray-700 bg-gradient-to-r from-[#8b0000] to-[#cc0000]">
