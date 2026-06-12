@@ -85,9 +85,13 @@
                             @endif
                         </td>
                         <td class="px-6 py-4 text-right">
-                            <a href="{{ route('test-cases.show', ['project' => $assignment->project_id, 'template' => $assignment->template_id]) }}" class="text-[#8b0000] hover:text-red-800 font-medium text-sm">
-                                Voir
-                            </a>
+                            @if($assignment->project_id && $assignment->template_id && $assignment->project && $assignment->template)
+                                <a href="{{ route('test-cases.show', ['project' => $assignment->project_id, 'template' => $assignment->template_id]) }}" class="text-[#8b0000] hover:text-red-800 font-medium text-sm">
+                                    Voir
+                                </a>
+                            @else
+                                <span class="text-gray-400 text-sm italic" title="Le projet ou le template associé n'est plus disponible">Indisponible</span>
+                            @endif
                         </td>
                     </tr>
                     @empty
