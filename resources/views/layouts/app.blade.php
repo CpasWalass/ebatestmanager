@@ -269,7 +269,7 @@
                     @endphp
 
                     {{-- Icône container --}}
-                    <div class="dock-icon-box flex items-center justify-center transition-all duration-300 relative z-10 {{ $bgClass }} group-hover:bg-[#8b0000] group-hover:shadow-[0_4px_15px_rgba(139,0,0,0.5)] group-hover:scale-110">
+                    <div class="dock-icon-box flex items-center justify-center transition-all duration-300 relative z-10 {{ $bgClass }} group-hover:bg-white/10 group-hover:ring-2 group-hover:ring-[#8b0000] group-hover:scale-[1.25] group-hover:z-50">
                         <svg class="w-5 h-5 transition-colors duration-200 {{ $iconColor }} group-hover:text-white"
                             fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             {!! $item['icon'] !!}
@@ -277,7 +277,7 @@
                     </div>
 
                     {{-- Label --}}
-                    <span class="text-[9px] font-bold uppercase tracking-wider mt-1 transition-all duration-300 {{ $labelColor }} group-hover:text-white">
+                    <span class="text-[9px] font-bold uppercase tracking-wider mt-1 transition-all duration-300 {{ $labelColor }} group-hover:text-white group-hover:translate-y-1">
                         {{ $item['label'] }}
                     </span>
                 </a>
