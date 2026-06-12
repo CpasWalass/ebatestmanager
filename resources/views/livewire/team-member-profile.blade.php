@@ -70,10 +70,10 @@
                     @forelse($user->testCaseAssignments as $assignment)
                     <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition">
                         <td class="px-6 py-4 font-medium text-gray-900 dark:text-white">
-                            {{ $assignment->project->name }}
+                            {{ $assignment->project?->name ?? 'Projet inconnu/supprimé' }}
                         </td>
                         <td class="px-6 py-4">
-                            {{ $assignment->template->name }}
+                            {{ $assignment->template?->name ?? 'Template inconnu/supprimé' }}
                         </td>
                         <td class="px-6 py-4">
                             @if($assignment->status === 'completed')
