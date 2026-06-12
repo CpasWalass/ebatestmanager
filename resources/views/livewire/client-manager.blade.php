@@ -38,17 +38,17 @@
         @forelse($this->clients as $client)
         <div class="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm hover:shadow-md transition p-5 flex flex-col gap-3">
             <div class="flex items-start justify-between">
-                <div class="flex items-center gap-3">
+                <a href="{{ route('gestion.client.show', $client) }}" class="flex items-center gap-3 flex-1 min-w-0">
                     <div class="w-11 h-11 rounded-xl flex items-center justify-center text-white font-bold text-sm flex-shrink-0"
                         style="background: linear-gradient(135deg, #8b0000, #cc0000);">
                         {{ strtoupper(substr($client->name, 0, 2)) }}
                     </div>
                     <div>
-                        <p class="font-semibold text-gray-900 dark:text-white text-sm leading-tight">{{ $client->name }}</p>
+                        <p class="font-semibold text-gray-900 dark:text-white text-sm leading-tight hover:text-[#8b0000] transition">{{ $client->name }}</p>
                         <p class="text-xs text-gray-400 mt-0.5">{{ $client->city ?? 'Ville non renseignée' }}{{ $client->country ? ', '.$client->country : '' }}</p>
                     </div>
-                </div>
-                <button wire:click="deleteClient({{ $client->id }})" wire:confirm="Supprimer {{ $client->name }} ?" class="text-gray-300 hover:text-red-500 transition flex-shrink-0">
+                </a>
+                <button wire:click="deleteClient({{ $client->id }})" wire:confirm="Supprimer {{ $client->name }} ?" class="text-gray-300 hover:text-red-500 transition flex-shrink-0 ml-2">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
                 </button>
             </div>
@@ -73,7 +73,7 @@
                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/></svg>
                     {{ $client->projects_count }} projet(s)
                 </span>
-                <span class="text-xs text-gray-400">{{ $client->created_at->format('d/m/Y') }}</span>
+                <a href="{{ route('gestion.client.show', $client) }}" class="text-xs text-[#8b0000] hover:underline font-medium">Voir les projets &rarr;</a>
             </div>
         </div>
         @empty

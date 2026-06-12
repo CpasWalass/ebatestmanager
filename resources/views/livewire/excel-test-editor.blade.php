@@ -47,6 +47,10 @@
             </h1>
             @if(!auth()->check() || (!auth()->user()->hasRole('tester') && !auth()->user()->hasRole('developer')))
             <div class="flex items-center space-x-2">
+                <button wire:click="$set('showImportModal', true)" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md font-medium text-sm flex items-center space-x-2 transition shadow-sm">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+                    <span>Importer Excel</span>
+                </button>
                 <button wire:click="$set('showColumnModal', true)" class="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-md font-medium text-sm flex items-center space-x-2 transition shadow-sm">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
                     <span>Gérer les colonnes</span>
@@ -261,6 +265,51 @@
                 <div class="px-4 py-3 bg-gray-50 dark:bg-gray-800/50 sm:px-6 flex justify-end border-t border-gray-200 dark:border-gray-700">
                     <button type="button" wire:click="$set('showColumnModal', false)" class="inline-flex justify-center rounded-md border border-gray-300 dark:border-gray-600 shadow-sm px-4 py-2 bg-white dark:bg-gray-700 text-base font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#8b0000] sm:text-sm">
                         Fermer
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    @endif
+
+    <!-- Modal Import Excel -->
+    @if($showImportModal)
+    <div class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+        <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div class="fixed inset-0 bg-gray-900 bg-opacity-75 transition-opacity" aria-hidden="true" wire:click="$set('showImportModal', false)"></div>
+            <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+            <div class="relative z-10 inline-block align-bottom bg-white dark:bg-gray-800 rounded-xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg w-full border border-gray-200 dark:border-gray-700">
+                <div class="px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                    <h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-white mb-2">Importer un fichier Excel</h3>
+                    <p class="text-sm text-gray-500 mb-4">L'importateur va chercher automatiquement la ligne d'en-tête (où se trouvent vos noms de colonnes). Assurez-vous que les colonnes de votre fichier correspondent aux colonnes de cette grille.</p>
+                    
+                    @if($importResult)
+                        <div class="mb-4 p-3 bg-green-50 text-green-700 border border-green-200 rounded-md text-sm">
+                            {{ $importResult }}
+                        </div>
+                    @endif
+
+                    @if($importError)
+                        <div class="mb-4 p-3 bg-red-50 text-red-700 border border-red-200 rounded-md text-sm">
+                            {{ $importError }}
+                        </div>
+                    @endif
+
+                    <div class="mt-4">
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Sélectionner un fichier (.xlsx)</label>
+                        <input type="file" wire:model="excelFile" accept=".xlsx,.xls,.csv" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-[#8b0000] file:text-white hover:file:bg-red-800 transition">
+                        @error('excelFile') <span class="text-red-500 text-xs mt-1 block">{{ $message }}</span> @enderror
+                        
+                        <div wire:loading wire:target="excelFile" class="text-sm text-blue-500 mt-2">Chargement du fichier en cours...</div>
+                        <div wire:loading wire:target="importExcel" class="text-sm text-blue-500 mt-2">Importation en cours, veuillez patienter...</div>
+                    </div>
+                </div>
+                <div class="px-4 py-3 bg-gray-50 dark:bg-gray-800/50 sm:px-6 flex justify-end gap-3 border-t border-gray-200 dark:border-gray-700">
+                    <button type="button" wire:click="$set('showImportModal', false)" class="inline-flex justify-center rounded-md border border-gray-300 dark:border-gray-600 shadow-sm px-4 py-2 bg-white dark:bg-gray-700 text-base font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#8b0000] sm:text-sm">
+                        Fermer
+                    </button>
+                    <button type="button" wire:click="importExcel" wire:loading.attr="disabled" class="inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-[#8b0000] text-base font-medium text-white hover:bg-red-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#8b0000] sm:text-sm disabled:opacity-50">
+                        Lancer l'importation
                     </button>
                 </div>
             </div>

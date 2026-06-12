@@ -65,6 +65,10 @@ Route::middleware(['auth:sanctum', 'verified', 'role:chef_project'])->group(func
     Route::get('/clients', function () {
         return view('clients.index');
     })->name('gestion.clients');
+
+    Route::get('/clients/{client}', function (\App\Models\Client $client) {
+        return view('clients.show', compact('client'));
+    })->name('gestion.client.show');
 });
 
 /*

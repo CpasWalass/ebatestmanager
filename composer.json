@@ -14,8 +14,9 @@
         "laravel/tinker": "^3.0",
         "livewire/livewire": "^4.3",
         "livewire/volt": "^1.10",
-        "maatwebsite/excel": "^3.1",
+        "maatwebsite/excel": "^1.1",
         "meilisearch/meilisearch-php": "^1.16",
+        "openspout/openspout": "^5.7",
         "predis/predis": "^3.4",
         "spatie/laravel-permission": "^7.4",
         "stancl/tenancy": "^3.10"

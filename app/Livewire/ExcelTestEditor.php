@@ -2,20 +2,29 @@
 
 namespace App\Livewire;
 
+use App\Imports\TestCaseExcelImport;
 use App\Models\Project;
 use App\Models\TestCase;
 use App\Models\TestCaseTemplate;
 use Livewire\Component;
 use Livewire\Attributes\Computed;
+use Livewire\WithFileUploads;
 
 class ExcelTestEditor extends Component
 {
+    use WithFileUploads;
+
     public Project $project;
     public TestCaseTemplate $template;
 
     public bool $showColumnModal = false;
     public string $newColumnName = '';
     public string $newColumnType = 'text';
+
+    public $excelFile = null;
+    public bool $showImportModal = false;
+    public ?string $importResult = null;
+    public ?string $importError = null;
 
     public function mount(Project $project, TestCaseTemplate $template): void
     {
@@ -115,6 +124,31 @@ class ExcelTestEditor extends Component
         $templateLinks = $this->template->links ?? [];
         
         return array_merge($projectLinks, $templateLinks);
+    }
+
+    public function importExcel(): void
+    {
+        $this->validate([
+            'excelFile' => 'required|file|mimes:xlsx,xls,csv|max:10240',
+        ], [
+            'excelFile.required' => 'Veuillez sélectionner un fichier.',
+            'excelFile.mimes'    => 'Le fichier doit être un fichier Excel (.xlsx, .xls) ou CSV.',
+            'excelFile.max'      => 'Le fichier ne doit pas dépasser 10 Mo.',
+        ]);
+
+        try {
+            $path = $this->excelFile->getRealPath();
+            $importer = new TestCaseExcelImport($this->template, $this->project->id);
+            $count = $importer->import($path);
+
+            $this->importResult = "$count ligne(s) importée(s) avec succès !";
+            $this->importError = null;
+            $this->excelFile = null;
+            $this->template->refresh();
+        } catch (\Exception $e) {
+            $this->importError = 'Erreur : ' . $e->getMessage();
+            $this->importResult = null;
+        }
     }
 
     public function render()
