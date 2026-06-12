@@ -85,7 +85,7 @@
                             @endif
                         </td>
                         <td class="px-6 py-4 text-right">
-                            <a href="{{ route('projets.cas-de-test', ['project' => $assignment->project_id, 'template' => $assignment->template_id]) }}" class="text-[#8b0000] hover:text-red-800 font-medium text-sm">
+                            <a href="{{ route('test-cases.show', ['project' => $assignment->project_id, 'template' => $assignment->template_id]) }}" class="text-[#8b0000] hover:text-red-800 font-medium text-sm">
                                 Voir
                             </a>
                         </td>
