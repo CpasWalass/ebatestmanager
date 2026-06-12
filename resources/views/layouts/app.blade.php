@@ -265,7 +265,7 @@
                         style="{{ $item['active']
                             ? 'background: #8b0000; box-shadow: 0 4px 15px rgba(139,0,0,0.5);'
                             : 'background: rgba(255,255,255,0.07);' }}">
-                        <svg class="w-[18px] h-[18px] transition-colors duration-200"
+                        <svg class="w-5 h-5 transition-colors duration-200"
                             style="color: {{ $item['active'] ? '#ffffff' : '#9ca3af' }}"
                             fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             {!! $item['icon'] !!}
@@ -273,7 +273,7 @@
                     </div>
 
                     {{-- Label --}}
-                    <span class="text-[7px] font-bold uppercase tracking-wider mt-1 transition-all duration-300"
+                    <span class="text-[9px] font-bold uppercase tracking-wider mt-1 transition-all duration-300"
                         style="color: {{ $item['active'] ? '#ffffff' : '#6b7280' }};">
                         {{ $item['label'] }}
                     </span>
@@ -330,14 +330,14 @@
 
     /* Effets Hover sur les icônes du dock */
     .dock-item:hover .dock-icon-box {
-        transform: scale(1.1);
-        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        transform: scale(1.15);
     }
     .dock-item:hover svg {
         color: #ffffff !important;
     }
     .dock-item:hover .dock-icon-box:not([style*="8b0000"]) {
-        background: rgba(255,255,255,0.12) !important;
+        background: #8b0000 !important;
+        box-shadow: 0 4px 15px rgba(139,0,0,0.5) !important;
     }
     .dock-item:active .dock-icon-box {
         transform: scale(0.95);
