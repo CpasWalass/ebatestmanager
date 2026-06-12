@@ -16,6 +16,7 @@ class ProjectManager extends Component
     public string $perimeter = '';
     public string $type = 'IAT';
     public $client_id = null;
+    public array $links = [];
 
     #[Computed]
     public function clients()
@@ -52,6 +53,17 @@ class ProjectManager extends Component
         return $query->get();
     }
 
+    public function addLink()
+    {
+        $this->links[] = ['title' => '', 'url' => ''];
+    }
+
+    public function removeLink($index)
+    {
+        unset($this->links[$index]);
+        $this->links = array_values($this->links);
+    }
+
     public function save(): void
     {
         $this->validate([
@@ -61,6 +73,8 @@ class ProjectManager extends Component
             'perimeter'   => 'nullable|string',
             'type'        => 'required|string',
             'client_id'   => 'required|exists:clients,id',
+            'links.*.title' => 'required|string',
+            'links.*.url'   => 'required|url',
         ], [
             'client_id.required' => 'Veuillez sélectionner un client.',
         ]);
@@ -72,11 +86,12 @@ class ProjectManager extends Component
             'perimeter'   => $this->perimeter,
             'type'        => $this->type,
             'client_id'   => $this->client_id,
+            'links'       => $this->links,
             'created_by'  => auth()->id(),
         ]);
 
         $this->showModal = false;
-        $this->reset(['name', 'description', 'version', 'perimeter', 'type', 'client_id']);
+        $this->reset(['name', 'description', 'version', 'perimeter', 'type', 'client_id', 'links']);
         session()->flash('success', 'Projet créé avec succès.');
     }
 

@@ -24,11 +24,13 @@ class Project extends Model
         'start_date',
         'end_date',
         'tenant_id',
+        'links',
     ];
 
     protected $casts = [
         'start_date' => 'date',
         'end_date' => 'date',
+        'links' => 'array',
     ];
 
     public function client(): BelongsTo

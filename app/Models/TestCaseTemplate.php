@@ -16,10 +16,12 @@ class TestCaseTemplate extends Model
         'name',
         'fields',
         'tenant_id',
+        'links',
     ];
 
     protected $casts = [
         'fields' => 'array',
+        'links' => 'array',
     ];
 
     public function project(): BelongsTo

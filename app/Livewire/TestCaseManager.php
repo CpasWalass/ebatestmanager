@@ -12,6 +12,7 @@ class TestCaseManager extends Component
     public Project $project;
     public bool $showModal = false;
     public string $name = '';
+    public array $links = [];
 
     public function mount(Project $project): void
     {
@@ -47,20 +48,34 @@ class TestCaseManager extends Component
         return $query->get();
     }
 
+    public function addLink()
+    {
+        $this->links[] = ['title' => '', 'url' => ''];
+    }
+
+    public function removeLink($index)
+    {
+        unset($this->links[$index]);
+        $this->links = array_values($this->links);
+    }
+
     public function save(): void
     {
         $this->validate([
             'name' => 'required|min:3|max:255',
+            'links.*.title' => 'required|string',
+            'links.*.url'   => 'required|url',
         ]);
 
         TestCaseTemplate::create([
             'name'       => $this->name,
             'project_id' => $this->project->id,
             'fields'     => TestCaseTemplate::defaultFields(),
+            'links'      => $this->links,
         ]);
 
         $this->showModal = false;
-        $this->reset('name');
+        $this->reset(['name', 'links']);
         session()->flash('success', 'Cas de test créé avec succès.');
     }
 

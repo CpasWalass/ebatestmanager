@@ -28,16 +28,34 @@
                 </li>
             </ol>
         </nav>
+        </nav>
+
+        @if(count($this->allLinks) > 0)
+        <div class="flex flex-wrap gap-2 mb-4">
+            @foreach($this->allLinks as $link)
+            <a href="{{ $link['url'] }}" target="_blank" class="px-3 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-md text-sm font-medium flex items-center gap-1.5 transition border border-blue-200 shadow-sm">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+                {{ $link['title'] }}
+            </a>
+            @endforeach
+        </div>
+        @endif
 
         <div class="flex justify-between items-center bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
             <h1 class="text-xl font-bold uppercase tracking-wide text-gray-900 dark:text-white">
                 <span class="text-[#8b0000]">FICHIER UAT</span> - {{ $template->name }}
             </h1>
             @if(!auth()->check() || (!auth()->user()->hasRole('tester') && !auth()->user()->hasRole('developer')))
-            <button wire:click="addRow" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-md font-medium text-sm flex items-center space-x-2 transition shadow-sm">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
-                <span>Ajouter une ligne</span>
-            </button>
+            <div class="flex items-center space-x-2">
+                <button wire:click="$set('showColumnModal', true)" class="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-md font-medium text-sm flex items-center space-x-2 transition shadow-sm">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                    <span>Gérer les colonnes</span>
+                </button>
+                <button wire:click="addRow" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-md font-medium text-sm flex items-center space-x-2 transition shadow-sm">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                    <span>Ajouter une ligne</span>
+                </button>
+            </div>
             @elseif(auth()->check() && auth()->user()->hasRole('tester'))
             <button wire:click="$dispatch('openReportModal', { projectId: {{ $project->id }}, templateId: {{ $template->id }} })" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md font-medium text-sm flex items-center space-x-2 transition shadow-sm">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
@@ -99,8 +117,30 @@
                                 <td class="p-0 border-r border-gray-200 dark:border-gray-700 {{ $bgClass }} relative">
                                     @if($isReadOnly)
                                         <div class="w-full h-full min-h-[40px] px-3 py-2 text-gray-700 dark:text-gray-300 {{ $field['type'] === 'textarea' ? 'whitespace-pre-wrap' : '' }}">
-                                        {{ $val }}
-                                    </div>
+                                            @if($field['type'] === 'url' && $val)
+                                                <a href="{{ $val }}" target="_blank" class="text-blue-500 hover:underline flex items-center gap-1">
+                                                    {{ $val }}
+                                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+                                                </a>
+                                            @else
+                                                {{ $val }}
+                                            @endif
+                                        </div>
+                                    @elseif($field['type'] === 'url')
+                                        <div class="flex items-center w-full h-full min-h-[40px] bg-transparent focus-within:ring-2 focus-within:ring-[#8b0000] focus-within:bg-white dark:focus-within:bg-gray-700">
+                                            <input 
+                                                type="url" 
+                                                value="{{ $val }}"
+                                                wire:blur="updateCell({{ $row->id }}, '{{ $field['name'] }}', $event.target.value)"
+                                                class="flex-1 px-3 py-2 bg-transparent border-none outline-none w-full"
+                                                placeholder="https://..."
+                                            >
+                                            @if($val)
+                                            <a href="{{ $val }}" target="_blank" class="px-2 text-blue-500 hover:text-blue-700 flex-shrink-0" title="Ouvrir le lien">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+                                            </a>
+                                            @endif
+                                        </div>
                                 @elseif($field['type'] === 'select' && isset($field['options']))
                                     <select 
                                         wire:change="updateCell({{ $row->id }}, '{{ $field['name'] }}', $event.target.value)"
@@ -165,4 +205,66 @@
             letter-spacing: 0.05em;
         }
     </style>
+
+    <!-- Modal Gestion des Colonnes -->
+    @if($showColumnModal)
+    <div class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+        <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div class="fixed inset-0 bg-gray-900 bg-opacity-75 transition-opacity" aria-hidden="true" wire:click="$set('showColumnModal', false)"></div>
+            <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+            <div class="relative z-10 inline-block align-bottom bg-white dark:bg-gray-800 rounded-xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-2xl w-full border border-gray-200 dark:border-gray-700">
+                <div class="px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                    <h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-white mb-4">Gérer les colonnes</h3>
+                    
+                    <div class="mb-6">
+                        <h4 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Colonnes existantes</h4>
+                        <ul class="space-y-2 max-h-60 overflow-y-auto pr-2">
+                            @foreach($template->fields as $field)
+                                <li class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg">
+                                    <div class="flex flex-col">
+                                        <span class="font-medium text-sm text-gray-900 dark:text-white">{{ $field['label'] }}</span>
+                                        <span class="text-xs text-gray-500">Type: {{ $field['type'] }}</span>
+                                    </div>
+                                    <button wire:click="removeColumn('{{ $field['name'] }}')" wire:confirm="Supprimer la colonne '{{ $field['label'] }}' ? Attention, cela n'efface pas les données existantes, mais elles ne seront plus affichées." class="text-red-500 hover:text-red-700 p-2 rounded-md hover:bg-red-50 dark:hover:bg-red-900/20 transition">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                    </button>
+                                </li>
+                            @endforeach
+                        </ul>
+                    </div>
+
+                    <div class="pt-4 border-t border-gray-200 dark:border-gray-700">
+                        <h4 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Ajouter une colonne</h4>
+                        <div class="flex gap-3 items-end">
+                            <div class="flex-1">
+                                <label class="block text-xs text-gray-500 mb-1">Nom de la colonne</label>
+                                <input type="text" wire:model="newColumnName" placeholder="Ex: Priorité, Lien Jira..." class="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#8b0000]">
+                                @error('newColumnName') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
+                            </div>
+                            <div class="w-1/3">
+                                <label class="block text-xs text-gray-500 mb-1">Type de champ</label>
+                                <select wire:model="newColumnType" class="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#8b0000]">
+                                    <option value="text">Texte court</option>
+                                    <option value="textarea">Texte long</option>
+                                    <option value="select">Menu déroulant (Liste)</option>
+                                    <option value="url">Lien URL cliquable</option>
+                                </select>
+                                @error('newColumnType') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
+                            </div>
+                            <button wire:click="addColumn" class="px-4 py-2 bg-[#8b0000] hover:bg-red-800 text-white rounded-md text-sm font-medium transition shadow-sm h-10 flex items-center gap-2">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                                Ajouter
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="px-4 py-3 bg-gray-50 dark:bg-gray-800/50 sm:px-6 flex justify-end border-t border-gray-200 dark:border-gray-700">
+                    <button type="button" wire:click="$set('showColumnModal', false)" class="inline-flex justify-center rounded-md border border-gray-300 dark:border-gray-600 shadow-sm px-4 py-2 bg-white dark:bg-gray-700 text-base font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#8b0000] sm:text-sm">
+                        Fermer
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    @endif
 </div>
