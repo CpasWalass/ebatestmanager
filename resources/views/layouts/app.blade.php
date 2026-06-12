@@ -269,15 +269,15 @@
                     @endphp
 
                     {{-- Icône container --}}
-                    <div class="dock-icon-box flex items-center justify-center transition-all duration-300 relative z-10 {{ $bgClass }} group-hover:bg-white/10 group-hover:ring-2 group-hover:ring-[#8b0000] group-hover:scale-[1.25] group-hover:z-50">
-                        <svg class="w-5 h-5 transition-colors duration-200 {{ $iconColor }} group-hover:text-white"
+                    <div class="dock-icon-box flex items-center justify-center transition-all duration-300 relative z-10 {{ $bgClass }}">
+                        <svg class="w-5 h-5 transition-colors duration-200 {{ $iconColor }}"
                             fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             {!! $item['icon'] !!}
                         </svg>
                     </div>
 
                     {{-- Label --}}
-                    <span class="text-[9px] font-bold uppercase tracking-wider mt-1 transition-all duration-300 {{ $labelColor }} group-hover:text-white group-hover:translate-y-1">
+                    <span class="dock-label text-[9px] font-bold uppercase tracking-wider mt-1 transition-all duration-300 {{ $labelColor }}">
                         {{ $item['label'] }}
                     </span>
                 </a>
@@ -331,6 +331,26 @@
         border-radius: 10px;
     }
 
+    /* Effets Hover sur les icônes du dock */
+    .dock-item:hover .dock-icon-box {
+        transform: scale(1.25);
+        z-index: 50;
+    }
+    
+    .dock-item:hover .dock-icon-box:not([class*="bg-[#8b0000]"]) {
+        background: rgba(255, 255, 255, 0.1) !important;
+        box-shadow: 0 0 0 2px #8b0000 !important;
+    }
+
+    .dock-item:hover svg {
+        color: #ffffff !important;
+    }
+
+    .dock-item:hover .dock-label {
+        color: #ffffff !important;
+        transform: translateY(4px);
+    }
+    
     /* Variables et ajustements spécifiques pour le mode clair (inspiré des maquettes) */
     :root {
         --brand-red: #8b0000;
