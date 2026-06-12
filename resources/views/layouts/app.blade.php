@@ -260,21 +260,24 @@
                         </span>
                     @endif
 
+                    @php
+                        $bgClass = $item['active'] 
+                            ? 'bg-[#8b0000] shadow-[0_4px_15px_rgba(139,0,0,0.5)]' 
+                            : 'bg-white/5';
+                        $iconColor = $item['active'] ? 'text-white' : 'text-gray-400';
+                        $labelColor = $item['active'] ? 'text-white' : 'text-gray-500';
+                    @endphp
+
                     {{-- Icône container --}}
-                    <div class="dock-icon-box flex items-center justify-center transition-all duration-300 relative z-10"
-                        style="{{ $item['active']
-                            ? 'background: #8b0000; box-shadow: 0 4px 15px rgba(139,0,0,0.5);'
-                            : 'background: rgba(255,255,255,0.07);' }}">
-                        <svg class="w-5 h-5 transition-colors duration-200"
-                            style="color: {{ $item['active'] ? '#ffffff' : '#9ca3af' }}"
+                    <div class="dock-icon-box flex items-center justify-center transition-all duration-300 relative z-10 {{ $bgClass }} group-hover:bg-[#8b0000] group-hover:shadow-[0_4px_15px_rgba(139,0,0,0.5)] group-hover:scale-110">
+                        <svg class="w-5 h-5 transition-colors duration-200 {{ $iconColor }} group-hover:text-white"
                             fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             {!! $item['icon'] !!}
                         </svg>
                     </div>
 
                     {{-- Label --}}
-                    <span class="text-[9px] font-bold uppercase tracking-wider mt-1 transition-all duration-300"
-                        style="color: {{ $item['active'] ? '#ffffff' : '#6b7280' }};">
+                    <span class="text-[9px] font-bold uppercase tracking-wider mt-1 transition-all duration-300 {{ $labelColor }} group-hover:text-white">
                         {{ $item['label'] }}
                     </span>
                 </a>
@@ -328,21 +331,6 @@
         border-radius: 10px;
     }
 
-    /* Effets Hover sur les icônes du dock */
-    .dock-item:hover .dock-icon-box {
-        transform: scale(1.15);
-    }
-    .dock-item:hover svg {
-        color: #ffffff !important;
-    }
-    .dock-item:hover .dock-icon-box:not([style*="8b0000"]) {
-        background: #8b0000 !important;
-        box-shadow: 0 4px 15px rgba(139,0,0,0.5) !important;
-    }
-    .dock-item:active .dock-icon-box {
-        transform: scale(0.95);
-    }
-    
     /* Variables et ajustements spécifiques pour le mode clair (inspiré des maquettes) */
     :root {
         --brand-red: #8b0000;
