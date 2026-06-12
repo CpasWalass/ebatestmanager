@@ -32,6 +32,16 @@ class TestCaseAssignment extends Model
         return $this->belongsTo(TestCase::class);
     }
 
+    public function project(): BelongsTo
+    {
+        return $this->belongsTo(Project::class);
+    }
+
+    public function template(): BelongsTo
+    {
+        return $this->belongsTo(TestCaseTemplate::class);
+    }
+
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
