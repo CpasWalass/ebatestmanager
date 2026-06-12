@@ -42,13 +42,13 @@ class TestCaseExcelImport
         foreach ($reader->getSheetIterator() as $sheet) {
             $rowIndex = 1;
             foreach ($sheet->getRowIterator() as $row) {
-                $cells = $row->getCells();
+                // toArray() returns an array of values (strings, DateTimes, ints, etc.)
+                $cells = $row->toArray();
                 
                 // 1. Detect Header Row
                 if ($headerRowIndex === null) {
                     $matches = [];
-                    foreach ($cells as $colIndex => $cell) {
-                        $cellValue = $cell->getValue();
+                    foreach ($cells as $colIndex => $cellValue) {
                         if (empty($cellValue)) continue;
                         $normalized = $this->normalize((string) $cellValue);
                         if (isset($fieldMap[$normalized])) {
@@ -66,7 +66,7 @@ class TestCaseExcelImport
                 else {
                     $hasData = false;
                     foreach ($columnMap as $colIndex => $fieldName) {
-                        $cellValue = isset($cells[$colIndex]) ? $cells[$colIndex]->getValue() : '';
+                        $cellValue = $cells[$colIndex] ?? '';
                         if (!empty($cellValue)) {
                             $hasData = true;
                             break;
@@ -81,7 +81,7 @@ class TestCaseExcelImport
                         }
 
                         foreach ($columnMap as $colIndex => $fieldName) {
-                            $val = isset($cells[$colIndex]) ? $cells[$colIndex]->getValue() : '';
+                            $val = $cells[$colIndex] ?? '';
                             // Handle date objects from Excel if needed
                             if ($val instanceof \DateTimeInterface) {
                                 $val = $val->format('Y-m-d H:i:s');
