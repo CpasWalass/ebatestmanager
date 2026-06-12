@@ -33,6 +33,7 @@ class TeamMemberProfile extends Component
     public function render()
     {
         return view('livewire.team-member-profile')
-            ->layout('layouts.app');
+            ->extends('layouts.app')
+            ->section('content');
     }
 }
