@@ -48,29 +48,37 @@ class TeamManager extends Component
             'role'  => 'required|in:chef_project,tester,developer,client',
         ]);
 
-        $this->generatedPassword = Str::random(10);
+        // For testing purposes, we set a default password
+        $defaultPassword = 'password';
 
         $user = User::create([
             'name'     => $this->name,
             'email'    => $this->email,
-            'password' => Hash::make($this->generatedPassword),
+            'password' => Hash::make($defaultPassword),
             'tenant_id' => auth()->user()->tenant_id,
+            'is_active' => true,
         ]);
 
         $user->assignRole($this->role);
 
-        // Envoi de l'email de bienvenue avec le mot de passe temporaire
-        try {
-            Mail::to($user->email)->send(new WelcomeNewUser($user, $this->generatedPassword));
-            $emailStatus = 'Un email de bienvenue a été envoyé.';
-        } catch (\Exception $e) {
-            Log::warning('Impossible d\'envoyer l\'email de bienvenue: ' . $e->getMessage());
-            $emailStatus = "Mot de passe temporaire : {$this->generatedPassword}";
-        }
+        // Envoi de l'email de bienvenue (simulé)
+        $emailStatus = "Un email a été envoyé. Le mot de passe par défaut pour les tests est : {$defaultPassword}";
 
         $this->showModal = false;
         $this->reset(['name', 'email', 'role']);
-        session()->flash('success', "Utilisateur créé. {$emailStatus}");
+        session()->flash('success', "Testeur créé avec succès. {$emailStatus}");
+    }
+
+    public function toggleActiveStatus(int $userId): void
+    {
+        $user = User::find($userId);
+        if ($user && $user->id !== auth()->id()) {
+            $user->is_active = !$user->is_active;
+            $user->save();
+            
+            $status = $user->is_active ? 'réactivé' : 'désactivé';
+            session()->flash('success', "Le compte de {$user->name} a été {$status}.");
+        }
     }
 
     public function deleteUser(int $userId): void

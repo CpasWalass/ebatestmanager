@@ -62,6 +62,8 @@ Route::middleware(['auth:sanctum', 'verified', 'role:chef_project'])->group(func
         return view('users.index');
     })->name('equipe.index');
 
+    Route::get('/equipe/{user}', \App\Livewire\TeamMemberProfile::class)->name('equipe.show');
+
     Route::get('/clients', function () {
         return view('clients.index');
     })->name('gestion.clients');

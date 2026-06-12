@@ -17,6 +17,7 @@ return Application::configure(basePath: dirname(__DIR__))
             \App\Http\Middleware\IdentifyTenant::class,
             \App\Http\Middleware\EagerLoadTenant::class,
             \App\Http\Middleware\RedirectByRole::class,
+            \App\Http\Middleware\CheckIsActive::class,
         ]);
         $middleware->alias([
             'role' => \Spatie\Permission\Middleware\RoleMiddleware::class,

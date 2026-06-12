@@ -48,21 +48,34 @@
             $workload = $member->active_assignments ?? 0;
             $workloadClass = $workload > 8 ? 'bg-red-500' : ($workload > 3 ? 'bg-yellow-500' : 'bg-green-500');
         @endphp
-        <div class="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm hover:shadow-md transition p-5 flex flex-col gap-4">
+        <div class="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm hover:shadow-md transition p-5 flex flex-col gap-4 {{ !$member->is_active ? 'opacity-60 grayscale' : '' }}">
             <div class="flex items-center justify-between">
                 <div class="flex items-center gap-3">
                     <div class="w-11 h-11 rounded-xl flex items-center justify-center text-white font-bold text-sm flex-shrink-0"
                         style="background: linear-gradient(135deg, {{ $avatarColor }}, {{ $avatarColor }}99);">
                         {{ strtoupper(substr($member->name, 0, 2)) }}
                     </div>
-                    <div>
-                        <p class="font-semibold text-gray-900 dark:text-white text-sm leading-tight">{{ $member->name }}</p>
+                    <a href="{{ route('equipe.show', $member) }}" class="block">
+                        <p class="font-semibold text-gray-900 dark:text-white text-sm leading-tight hover:text-[#8b0000] transition">
+                            {{ $member->name }}
+                            @if(!$member->is_active)
+                                <span class="ml-2 px-2 py-0.5 bg-red-100 text-red-700 text-[10px] font-bold rounded uppercase">Désactivé</span>
+                            @endif
+                        </p>
                         <p class="text-xs text-gray-400 dark:text-gray-500 mt-0.5 truncate max-w-[150px]">{{ $member->email }}</p>
-                    </div>
+                    </a>
                 </div>
                 @if($member->id !== auth()->id())
-                <button wire:click="deleteUser({{ $member->id }})" wire:confirm="Supprimer {{ $member->name }} ?" class="text-gray-300 hover:text-red-500 transition">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                <button wire:click="toggleActiveStatus({{ $member->id }})" wire:confirm="{{ $member->is_active ? 'Désactiver' : 'Réactiver' }} le compte de {{ $member->name }} ?" class="{{ $member->is_active ? 'text-gray-300 hover:text-red-500' : 'text-red-500 hover:text-green-500' }} transition" title="{{ $member->is_active ? 'Désactiver' : 'Réactiver' }}">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        @if($member->is_active)
+                            <!-- Power button icon for active -->
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        @else
+                            <!-- Play button/restore icon for inactive -->
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                        @endif
+                    </svg>
                 </button>
                 @endif
             </div>
