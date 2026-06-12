@@ -172,14 +172,7 @@
     </main>
 
     {{-- ═══════════════════════════════════ BOTTOM DOCK NAVIGATION ═══════════════════════════════════ --}}
-    <div class="fixed bottom-0 left-0 right-0 z-50 flex justify-center pointer-events-none" style="padding-bottom: 12px;">
-        <div class="pointer-events-auto relative flex items-center justify-center gap-2 px-6 py-2"
-            style="
-                background: #1a1c23;
-                border-radius: 18px;
-                box-shadow: 0 4px 24px rgba(0,0,0,0.25), 0 0 0 1px rgba(255,255,255,0.06);
-                max-width: 90vw;
-            ">
+    <div class="dock pointer-events-auto z-50">
 
             {{-- Items du dock filtrés par rôle --}}
             @php
@@ -253,25 +246,25 @@
                 }
             @endphp
 
+            <div class="dock-items">
             @foreach($dockItems as $item)
                 <a href="{{ route($item['route']) }}"
                     id="{{ $item['id'] }}"
-                    class="dock-item group relative flex flex-col items-center justify-center transition-all duration-200 cursor-pointer"
-                    style="width: 56px; height: 52px; {{ $item['active'] ? 'z-index: 10;' : '' }}">
+                    class="dock-item group relative flex flex-col items-center justify-center transition-all duration-200 cursor-pointer">
 
                     {{-- Badge --}}
                     @if($item['badge'] > 0)
-                        <span class="absolute -top-1 right-1 w-4 h-4 text-white text-xs rounded-full flex items-center justify-center font-bold z-20 shadow-sm"
+                        <span class="absolute -top-1 right-0 w-4 h-4 text-white text-xs rounded-full flex items-center justify-center font-bold z-20 shadow-sm"
                             style="background:#8b0000; font-size:9px;">
                             {{ $item['badge'] > 9 ? '9+' : $item['badge'] }}
                         </span>
                     @endif
 
                     {{-- Icône container --}}
-                    <div class="w-9 h-9 rounded-xl flex items-center justify-center transition-all duration-300 relative z-10"
+                    <div class="dock-icon-box flex items-center justify-center transition-all duration-300 relative z-10"
                         style="{{ $item['active']
                             ? 'background: #8b0000; box-shadow: 0 4px 15px rgba(139,0,0,0.5);'
-                            : 'background: rgba(255,255,255,0.05);' }}">
+                            : 'background: rgba(255,255,255,0.07);' }}">
                         <svg class="w-[18px] h-[18px] transition-colors duration-200"
                             style="color: {{ $item['active'] ? '#ffffff' : '#9ca3af' }}"
                             fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -280,35 +273,73 @@
                     </div>
 
                     {{-- Label --}}
-                    <span class="text-[8px] font-bold uppercase tracking-wider mt-0.5 transition-all duration-300"
+                    <span class="text-[7px] font-bold uppercase tracking-wider mt-1 transition-all duration-300"
                         style="color: {{ $item['active'] ? '#ffffff' : '#6b7280' }};">
                         {{ $item['label'] }}
                     </span>
                 </a>
             @endforeach
-        </div>
-
-        {{-- FAB Bouton + (rouge foncé, bas droite) --}}
-        @yield('fab')
+            </div>
     </div>
+
+    {{-- FAB Bouton + (rouge foncé, bas droite) --}}
+    @yield('fab')
 </div>
 
 {{-- Styles dock & light mode --}}
 <style>
     [x-cloak] { display: none !important; }
-    
+
+    /* ── Dock Navigation ── */
+    .dock {
+        position: fixed;
+        bottom: 16px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 420px;
+        height: 70px;
+        max-width: 92vw;
+        background: #1f2b3d;
+        clip-path: path(
+            "M35 70 L35 38 C85 8 170 0 210 0 C250 0 335 8 385 38 L385 70 Z"
+        );
+        box-shadow: 0 4px 24px rgba(0,0,0,0.3);
+    }
+
+    .dock-items {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        height: 100%;
+        padding-top: 16px;
+        padding-bottom: 4px;
+    }
+
+    .dock-item {
+        width: 52px;
+        height: 48px;
+        text-decoration: none;
+    }
+
+    .dock-icon-box {
+        width: 34px;
+        height: 34px;
+        border-radius: 10px;
+    }
+
     /* Effets Hover sur les icônes du dock */
-    .dock-item:hover > div:first-of-type {
+    .dock-item:hover .dock-icon-box {
         transform: scale(1.1);
         box-shadow: 0 4px 12px rgba(0,0,0,0.3);
     }
     .dock-item:hover svg {
         color: #ffffff !important;
     }
-    .dock-item:hover > div:first-of-type:not([style*="8b0000"]) {
+    .dock-item:hover .dock-icon-box:not([style*="8b0000"]) {
         background: rgba(255,255,255,0.12) !important;
     }
-    .dock-item:active > div:first-of-type {
+    .dock-item:active .dock-icon-box {
         transform: scale(0.95);
     }
     
