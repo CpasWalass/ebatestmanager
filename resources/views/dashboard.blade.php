@@ -33,7 +33,7 @@
                 <div class="flex items-start justify-between">
                     <div>
                         <p class="text-gray-600 dark:text-gray-400 text-sm font-medium">Projets Actifs</p>
-                        <p class="text-3xl font-bold mt-2">24</p>
+                        <p class="text-3xl font-bold mt-2">{{ $activeProjects }}</p>
                         <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">
                             <span class="text-green-600 dark:text-green-400">↑ 3 créés</span>
                         </p>
@@ -51,7 +51,7 @@
                 <div class="flex items-start justify-between">
                     <div>
                         <p class="text-gray-600 dark:text-gray-400 text-sm font-medium">En Phase UAT</p>
-                        <p class="text-3xl font-bold mt-2">12</p>
+                        <p class="text-3xl font-bold mt-2">{{ $uatProjects }}</p>
                         <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">
                             <span class="text-red-600 dark:text-red-400">3 critiques</span>
                         </p>
@@ -69,7 +69,7 @@
                 <div class="flex items-start justify-between">
                     <div>
                         <p class="text-gray-600 dark:text-gray-400 text-sm font-medium">Templates Assignés</p>
-                        <p class="text-3xl font-bold mt-2">86</p>
+                        <p class="text-3xl font-bold mt-2">{{ $totalTemplates }}</p>
                         <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">
                             <span class="text-blue-600 dark:text-blue-400">57% disponible</span>
                         </p>
@@ -87,7 +87,7 @@
                 <div class="flex items-start justify-between">
                     <div>
                         <p class="text-gray-600 dark:text-gray-400 text-sm font-medium">Taux de Validation</p>
-                        <p class="text-3xl font-bold mt-2">78%</p>
+                        <p class="text-3xl font-bold mt-2">{{ $validationRate }}%</p>
                         <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">
                             <span class="text-green-600 dark:text-green-400">↑ 4% la last week</span>
                         </p>

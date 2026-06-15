@@ -11,11 +11,22 @@ class DashboardController extends Controller
 {
     public function index(): View
     {
-        // Get KPI data
         $activeProjects = Project::count();
-        $uatProjects = Project::where('status', 'in_progress')->count();
+        $uatProjects = Project::where('status', 'en_cours')->count();
         $totalTemplates = \App\Models\TestCaseTemplate::count();
-        $validationRate = 78; // Calculate from executions
+        
+        $cases = TestCase::all(['data']);
+        $totalTestCases = $cases->count();
+        $validCases = 0;
+        
+        foreach ($cases as $case) {
+            $status = strtolower($case->data['status'] ?? $case->data['etat_test'] ?? '');
+            if (in_array($status, ['validé', 'terminé', 'valide', 'termine'])) {
+                $validCases++;
+            }
+        }
+        
+        $validationRate = $totalTestCases > 0 ? round(($validCases / $totalTestCases) * 100) : 0;
 
         return view('dashboard', [
             'activeProjects' => $activeProjects,

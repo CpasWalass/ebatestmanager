@@ -9,6 +9,7 @@ use Livewire\Attributes\Computed;
 class ProjectManager extends Component
 {
     public string $search = '';
+    public string $statusFilter = '';
     public bool $showModal = false;
     public bool $editMode = false;
     public $projectIdToEdit = null;
@@ -33,6 +34,10 @@ class ProjectManager extends Component
         $query = Project::where('name', 'like', '%' . $this->search . '%')
             ->withCount('testCases')
             ->latest();
+            
+        if ($this->statusFilter) {
+            $query->where('status', $this->statusFilter);
+        }
             
         if (auth()->check() && auth()->user()->hasRole('tester')) {
             $user = auth()->user();
