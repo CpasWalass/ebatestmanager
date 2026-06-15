@@ -25,6 +25,10 @@ class ProjectExcelImport
         $rowsImported = 0;
 
         foreach ($reader->getSheetIterator() as $sheet) {
+            if (method_exists($sheet, 'isVisible') && !$sheet->isVisible()) {
+                continue; // Skip hidden sheets
+            }
+            
             $sheetName = $sheet->getName();
             
             // Collect rows to analyze
