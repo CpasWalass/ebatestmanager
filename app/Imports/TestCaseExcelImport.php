@@ -50,6 +50,11 @@ class TestCaseExcelImport
                     $matches = [];
                     foreach ($cells as $colIndex => $cellValue) {
                         if (empty($cellValue)) continue;
+                        
+                        if ($cellValue instanceof \DateTimeInterface) {
+                            $cellValue = $cellValue->format('Y-m-d H:i:s');
+                        }
+                        
                         $normalized = $this->normalize((string) $cellValue);
                         if (isset($fieldMap[$normalized])) {
                             $matches[$colIndex] = $fieldMap[$normalized];
