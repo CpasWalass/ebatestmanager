@@ -6,15 +6,20 @@ use App\Models\Project;
 use App\Models\TestCaseTemplate;
 use Livewire\Component;
 use Livewire\Attributes\Computed;
+use Livewire\WithFileUploads;
+use App\Imports\ProjectExcelImport;
 
 class TestCaseManager extends Component
 {
+    use WithFileUploads;
+
     public Project $project;
     public bool $showModal = false;
     public bool $editMode = false;
     public $templateIdToEdit = null;
     public string $name = '';
     public array $links = [];
+    public $globalExcelFile;
 
     public function mount(Project $project): void
     {
@@ -117,6 +122,36 @@ class TestCaseManager extends Component
     {
         $this->project->update(['status' => 'in_review']);
         session()->flash('success', 'Projet envoyé au développeur pour correction.');
+    }
+
+    public function updatedGlobalExcelFile()
+    {
+        $this->importGlobalExcel();
+    }
+
+    public function importGlobalExcel()
+    {
+        $this->validate([
+            'globalExcelFile' => 'required|file|mimes:xlsx,xls,csv|max:10240', // 10MB max
+        ]);
+
+        try {
+            $path = $this->globalExcelFile->getRealPath();
+            
+            $importService = new ProjectExcelImport($this->project->id);
+            $results = $importService->import($path);
+            
+            $this->reset('globalExcelFile');
+            
+            if ($results['sheets'] > 0) {
+                session()->flash('success', "Import réussi : {$results['sheets']} feuilles et {$results['rows']} cas de test importés.");
+            } else {
+                session()->flash('error', "Aucune donnée valide trouvée dans ce fichier.");
+            }
+            
+        } catch (\Exception $e) {
+            session()->flash('error', 'Erreur lors de l\'import : ' . $e->getMessage());
+        }
     }
 
     public function render()
