@@ -74,10 +74,9 @@ class ReportGenerator extends Component
 
         Report::create([
             'project_id' => $this->project->id,
-            'template_id' => $this->template?->id,
-            'author_id' => auth()->id(),
+            'created_by' => auth()->id(),
             'title' => $this->title,
-            'content' => $this->conclusion,
+            'notes' => $this->conclusion,
             'stats' => $this->stats,
             'status' => 'submitted'
         ]);
