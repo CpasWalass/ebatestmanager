@@ -45,12 +45,6 @@
             {{-- Actions droite --}}
             <div class="flex items-center gap-2 sm:gap-3">
 
-                {{-- Badge multi-tenant --}}
-                <div class="hidden lg:flex items-center gap-1.5 px-2.5 py-1 bg-blue-50 dark:bg-blue-900/20 rounded-full border border-blue-100 dark:border-blue-800">
-                    <span class="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse"></span>
-                    <span class="text-xs font-medium text-blue-600 dark:text-blue-400">Multi-Tenant Active</span>
-                </div>
-
                 {{-- Notifications (opens messagerie for unread) --}}
                 @auth
                 @php $unreadCount = \App\Models\Message::where('receiver_id', auth()->id())->whereNull('read_at')->count(); @endphp
