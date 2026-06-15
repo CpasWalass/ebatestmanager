@@ -117,6 +117,24 @@ class ExcelTestEditor extends Component
         $this->template->refresh();
     }
 
+    public function updateColumnType(string $columnName, string $newType): void
+    {
+        $fields = $this->template->fields;
+        
+        foreach ($fields as &$field) {
+            if ($field['name'] === $columnName) {
+                $field['type'] = $newType;
+                if ($newType === 'select' && empty($field['options'])) {
+                    $field['options'] = ['Option 1', 'Option 2'];
+                }
+                break;
+            }
+        }
+        
+        $this->template->update(['fields' => $fields]);
+        $this->template->refresh();
+    }
+
     #[Computed]
     public function allLinks()
     {
