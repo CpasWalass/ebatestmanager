@@ -10,6 +10,9 @@ class ProjectManager extends Component
 {
     public string $search = '';
     public bool $showModal = false;
+    public bool $editMode = false;
+    public $projectIdToEdit = null;
+    
     public string $name = '';
     public string $description = '';
     public string $version = '';
@@ -64,6 +67,34 @@ class ProjectManager extends Component
         $this->links = array_values($this->links);
     }
 
+    public function openNewModal()
+    {
+        $this->reset(['name', 'description', 'version', 'perimeter', 'type', 'client_id', 'links', 'editMode', 'projectIdToEdit']);
+        $this->showModal = true;
+    }
+
+    public function editProject($id)
+    {
+        $project = Project::findOrFail($id);
+        $this->projectIdToEdit = $project->id;
+        $this->name = $project->name;
+        $this->description = $project->description ?? '';
+        $this->version = $project->version ?? '';
+        $this->perimeter = $project->perimeter ?? '';
+        $this->type = $project->type ?? 'IAT';
+        $this->client_id = $project->client_id;
+        $this->links = is_array($project->links) ? $project->links : [];
+        $this->editMode = true;
+        $this->showModal = true;
+    }
+
+    public function deleteProject($id)
+    {
+        $project = Project::findOrFail($id);
+        $project->delete();
+        session()->flash('success', 'Projet supprimé avec succès.');
+    }
+
     public function save(): void
     {
         $this->validate([
@@ -79,20 +110,34 @@ class ProjectManager extends Component
             'client_id.required' => 'Veuillez sélectionner un client.',
         ]);
 
-        Project::create([
-            'name'        => $this->name,
-            'description' => $this->description,
-            'version'     => $this->version,
-            'perimeter'   => $this->perimeter,
-            'type'        => $this->type,
-            'client_id'   => $this->client_id,
-            'links'       => $this->links,
-            'created_by'  => auth()->id(),
-        ]);
+        if ($this->editMode && $this->projectIdToEdit) {
+            $project = Project::findOrFail($this->projectIdToEdit);
+            $project->update([
+                'name'        => $this->name,
+                'description' => $this->description,
+                'version'     => $this->version,
+                'perimeter'   => $this->perimeter,
+                'type'        => $this->type,
+                'client_id'   => $this->client_id,
+                'links'       => $this->links,
+            ]);
+            session()->flash('success', 'Projet mis à jour avec succès.');
+        } else {
+            Project::create([
+                'name'        => $this->name,
+                'description' => $this->description,
+                'version'     => $this->version,
+                'perimeter'   => $this->perimeter,
+                'type'        => $this->type,
+                'client_id'   => $this->client_id,
+                'links'       => $this->links,
+                'created_by'  => auth()->id(),
+            ]);
+            session()->flash('success', 'Projet créé avec succès.');
+        }
 
         $this->showModal = false;
-        $this->reset(['name', 'description', 'version', 'perimeter', 'type', 'client_id', 'links']);
-        session()->flash('success', 'Projet créé avec succès.');
+        $this->reset(['name', 'description', 'version', 'perimeter', 'type', 'client_id', 'links', 'editMode', 'projectIdToEdit']);
     }
 
     public function render()

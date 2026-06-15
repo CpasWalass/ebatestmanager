@@ -11,6 +11,8 @@ class TestCaseManager extends Component
 {
     public Project $project;
     public bool $showModal = false;
+    public bool $editMode = false;
+    public $templateIdToEdit = null;
     public string $name = '';
     public array $links = [];
 
@@ -59,6 +61,29 @@ class TestCaseManager extends Component
         $this->links = array_values($this->links);
     }
 
+    public function openNewModal()
+    {
+        $this->reset(['name', 'links', 'editMode', 'templateIdToEdit']);
+        $this->showModal = true;
+    }
+
+    public function editTemplate($id)
+    {
+        $template = TestCaseTemplate::findOrFail($id);
+        $this->templateIdToEdit = $template->id;
+        $this->name = $template->name;
+        $this->links = is_array($template->links) ? $template->links : [];
+        $this->editMode = true;
+        $this->showModal = true;
+    }
+
+    public function deleteTemplate($id)
+    {
+        $template = TestCaseTemplate::findOrFail($id);
+        $template->delete();
+        session()->flash('success', 'Cas de test supprimé avec succès.');
+    }
+
     public function save(): void
     {
         $this->validate([
@@ -67,16 +92,25 @@ class TestCaseManager extends Component
             'links.*.url'   => 'required|url',
         ]);
 
-        TestCaseTemplate::create([
-            'name'       => $this->name,
-            'project_id' => $this->project->id,
-            'fields'     => TestCaseTemplate::defaultFields(),
-            'links'      => $this->links,
-        ]);
+        if ($this->editMode && $this->templateIdToEdit) {
+            $template = TestCaseTemplate::findOrFail($this->templateIdToEdit);
+            $template->update([
+                'name'  => $this->name,
+                'links' => $this->links,
+            ]);
+            session()->flash('success', 'Cas de test mis à jour avec succès.');
+        } else {
+            TestCaseTemplate::create([
+                'name'       => $this->name,
+                'project_id' => $this->project->id,
+                'fields'     => TestCaseTemplate::defaultFields(),
+                'links'      => $this->links,
+            ]);
+            session()->flash('success', 'Cas de test créé avec succès.');
+        }
 
         $this->showModal = false;
-        $this->reset(['name', 'links']);
-        session()->flash('success', 'Cas de test créé avec succès.');
+        $this->reset(['name', 'links', 'editMode', 'templateIdToEdit']);
     }
 
     public function sendToDeveloper(): void
