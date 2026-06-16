@@ -142,6 +142,7 @@ class ExcelTestEditor extends Component
 
     public function openOptionsEditor(string $columnName): void
     {
+        $this->showColumnModal = false; // Fermer le modal colonnes en premier
         $this->editingOptionsColumn = $columnName;
         $this->editingOptions = [];
         
