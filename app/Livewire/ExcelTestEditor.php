@@ -21,6 +21,11 @@ class ExcelTestEditor extends Component
     public string $newColumnName = '';
     public string $newColumnType = 'text';
 
+    // Options editor
+    public ?string $editingOptionsColumn = null;
+    public array $editingOptions = [];
+    public bool $showOptionsEditor = false;
+
     public $excelFile = null;
     public bool $showImportModal = false;
     public ?string $importResult = null;
@@ -133,6 +138,81 @@ class ExcelTestEditor extends Component
         
         $this->template->update(['fields' => $fields]);
         $this->template->refresh();
+    }
+
+    public function openOptionsEditor(string $columnName): void
+    {
+        $this->editingOptionsColumn = $columnName;
+        $this->editingOptions = [];
+        
+        $fields = $this->template->fields;
+        foreach ($fields as $field) {
+            if ($field['name'] === $columnName) {
+                $options = $field['options'] ?? [];
+                $colors  = $field['option_colors'] ?? [];
+                foreach ($options as $opt) {
+                    $this->editingOptions[] = [
+                        'value' => $opt,
+                        'color' => $colors[$opt] ?? '#6b7280',
+                    ];
+                }
+                break;
+            }
+        }
+        
+        if (empty($this->editingOptions)) {
+            $this->editingOptions = [
+                ['value' => '', 'color' => '#6b7280'],
+            ];
+        }
+        
+        $this->showOptionsEditor = true;
+    }
+
+    public function addOption(): void
+    {
+        $this->editingOptions[] = ['value' => '', 'color' => '#6b7280'];
+    }
+
+    public function removeOption(int $index): void
+    {
+        unset($this->editingOptions[$index]);
+        $this->editingOptions = array_values($this->editingOptions);
+    }
+
+    public function saveOptions(): void
+    {
+        $fields = $this->template->fields;
+        
+        foreach ($fields as &$field) {
+            if ($field['name'] === $this->editingOptionsColumn) {
+                $options = [];
+                $colors  = [];
+                foreach ($this->editingOptions as $opt) {
+                    $val = trim($opt['value']);
+                    if ($val !== '') {
+                        $options[] = $val;
+                        $colors[$val] = $opt['color'];
+                    }
+                }
+                $field['options'] = $options;
+                $field['option_colors'] = $colors;
+                break;
+            }
+        }
+        
+        $this->template->update(['fields' => $fields]);
+        $this->template->refresh();
+        $this->showOptionsEditor = false;
+        $this->editingOptionsColumn = null;
+        $this->editingOptions = [];
+    }
+
+    public function closeOptionsEditor(): void
+    {
+        $this->showOptionsEditor = false;
+        $this->editingOptionsColumn = null;
+        $this->editingOptions = [];
     }
 
     #[Computed]

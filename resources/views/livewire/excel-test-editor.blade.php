@@ -95,12 +95,16 @@
                         @foreach($template->fields as $field)
                             @php
                                 $val = $row->data[$field['name']] ?? '';
-                                // Code couleur pour STATUS
-                                $bgClass = '';
-                                if ($field['name'] === 'status' || $field['name'] === 'etat_test') {
-                                    if (in_array(strtolower($val), ['validé', 'terminé'])) $bgClass = 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300';
-                                    elseif (in_array(strtolower($val), ['optimisation', 'en cours'])) $bgClass = 'bg-orange-100 dark:bg-orange-900/30 text-orange-800 dark:text-orange-300';
-                                    elseif (in_array(strtolower($val), ['sous réserve', 'non validé', 'échec'])) $bgClass = 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300';
+                                // Dynamic color from option_colors, fallback to keyword-based
+                                $inlineStyle = '';
+                                $badgeClass = '';
+                                if (!empty($field['option_colors'][$val])) {
+                                    $hex = $field['option_colors'][$val];
+                                    $inlineStyle = "background-color: {$hex}22; color: {$hex};";
+                                } elseif ($field['name'] === 'status' || $field['name'] === 'etat_test') {
+                                    if (in_array(strtolower($val), ['validé', 'terminé'])) $badgeClass = 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300';
+                                    elseif (in_array(strtolower($val), ['optimisation', 'en cours'])) $badgeClass = 'bg-orange-100 dark:bg-orange-900/30 text-orange-800 dark:text-orange-300';
+                                    elseif (in_array(strtolower($val), ['sous réserve', 'non validé', 'échec'])) $badgeClass = 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300';
                                 }
                             @endphp
 
@@ -117,7 +121,7 @@
                                     }
                                 @endphp
                                 
-                                <td class="p-0 border-r border-gray-200 dark:border-gray-700 {{ $bgClass }} relative">
+                                <td class="p-0 border-r border-gray-200 dark:border-gray-700 {{ $badgeClass }} relative" @if($inlineStyle) style="{{ $inlineStyle }}" @endif>
                                     @if($isReadOnly)
                                         <div class="w-full h-full min-h-[40px] px-3 py-2 text-gray-700 dark:text-gray-300 {{ $field['type'] === 'textarea' ? 'whitespace-pre-wrap' : '' }}">
                                             @if($field['type'] === 'url' && $val)
@@ -147,7 +151,8 @@
                                 @elseif($field['type'] === 'select' && isset($field['options']))
                                     <select 
                                         wire:change="updateCell({{ $row->id }}, '{{ $field['name'] }}', $event.target.value)"
-                                        class="w-full h-full min-h-[40px] px-3 py-2 bg-transparent border-none focus:ring-2 focus:ring-[#8b0000] focus:bg-white dark:focus:bg-gray-700 outline-none appearance-none {{ $bgClass ? 'font-semibold' : '' }}"
+                                        class="w-full h-full min-h-[40px] px-3 py-2 bg-transparent border-none focus:ring-2 focus:ring-[#8b0000] focus:bg-white dark:focus:bg-gray-700 outline-none appearance-none {{ (!empty($field['option_colors'][$val]) || $badgeClass) ? 'font-semibold' : '' }}"
+                                        style="{{ $inlineStyle }}"
                                     >
                                         <option value=""></option>
                                         @foreach($field['options'] as $option)
@@ -234,6 +239,12 @@
                                                 <option value="select" @if($field['type'] === 'select') selected @endif>Menu déroulant</option>
                                                 <option value="url" @if($field['type'] === 'url') selected @endif>Lien URL</option>
                                             </select>
+                                            @if($field['type'] === 'select')
+                                            <button type="button" wire:click="openOptionsEditor('{{ $field['name'] }}')" class="text-xs text-[#8b0000] hover:text-red-800 flex items-center gap-1 font-medium px-2 py-0.5 border border-[#8b0000] rounded hover:bg-red-50 dark:hover:bg-red-900/20 transition">
+                                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h7"></path></svg>
+                                                Options
+                                            </button>
+                                            @endif
                                         </div>
                                     </div>
                                     <button wire:click="removeColumn('{{ $field['name'] }}')" wire:confirm="Supprimer la colonne '{{ $field['label'] }}' ? Attention, cela n'efface pas les données existantes, mais elles ne seront plus affichées." class="text-red-500 hover:text-red-700 p-2 rounded-md hover:bg-red-50 dark:hover:bg-red-900/20 transition">
@@ -272,6 +283,76 @@
                 <div class="px-4 py-3 bg-gray-50 dark:bg-gray-800/50 sm:px-6 flex justify-end border-t border-gray-200 dark:border-gray-700">
                     <button type="button" wire:click="$set('showColumnModal', false)" class="inline-flex justify-center rounded-md border border-gray-300 dark:border-gray-600 shadow-sm px-4 py-2 bg-white dark:bg-gray-700 text-base font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#8b0000] sm:text-sm">
                         Fermer
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    @endif
+
+    <!-- Modal Éditeur d'Options (Color Picker) -->
+    @if($showOptionsEditor)
+    <div class="fixed inset-0 z-[70] overflow-y-auto" aria-labelledby="options-editor-title" role="dialog" aria-modal="true">
+        <div class="flex items-end justify-center min-h-screen pt-10 px-4 pb-24 text-center sm:block sm:p-0">
+            <div class="fixed inset-0 bg-gray-900 bg-opacity-75 transition-opacity" aria-hidden="true" wire:click="closeOptionsEditor"></div>
+            <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+            <div class="relative z-10 inline-block align-bottom bg-white dark:bg-gray-800 rounded-xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-xl w-full border border-gray-200 dark:border-gray-700">
+                <div class="px-6 pt-5 pb-4">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white" id="options-editor-title">
+                            Options du menu — <span class="text-[#8b0000]">{{ $editingOptionsColumn }}</span>
+                        </h3>
+                        <button wire:click="closeOptionsEditor" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                        </button>
+                    </div>
+                    <p class="text-sm text-gray-500 mb-4">Définissez les options disponibles et choisissez librement la couleur d'affichage de chaque option dans la grille.</p>
+
+                    <div class="space-y-3 max-h-72 overflow-y-auto pr-1">
+                        @foreach($editingOptions as $i => $opt)
+                        <div class="flex items-center gap-3">
+                            <!-- Color picker -->
+                            <div class="flex-shrink-0">
+                                <label class="text-xs text-gray-500 block mb-1 text-center">Couleur</label>
+                                <input
+                                    type="color"
+                                    wire:model.live="editingOptions.{{ $i }}.color"
+                                    value="{{ $opt['color'] }}"
+                                    class="w-10 h-10 rounded-md border border-gray-300 dark:border-gray-600 cursor-pointer p-0.5 bg-white"
+                                    title="Choisir une couleur"
+                                >
+                            </div>
+                            <!-- Preview badge -->
+                            <div class="flex-shrink-0 w-4 h-4 rounded-full border border-gray-300" style="background-color: {{ $opt['color'] }}"></div>
+                            <!-- Text input -->
+                            <div class="flex-1">
+                                <label class="text-xs text-gray-500 block mb-1">Libellé de l'option</label>
+                                <input
+                                    type="text"
+                                    wire:model="editingOptions.{{ $i }}.value"
+                                    placeholder="Ex: Validé, En cours..."
+                                    class="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#8b0000]"
+                                >
+                            </div>
+                            <!-- Remove button -->
+                            <button type="button" wire:click="removeOption({{ $i }})" class="flex-shrink-0 mt-5 p-2 text-red-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-md transition" title="Supprimer">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                            </button>
+                        </div>
+                        @endforeach
+                    </div>
+
+                    <button type="button" wire:click="addOption" class="mt-4 flex items-center gap-2 text-sm text-[#8b0000] hover:text-red-800 font-medium transition">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                        Ajouter une option
+                    </button>
+                </div>
+                <div class="px-6 py-4 bg-gray-50 dark:bg-gray-800/50 flex justify-end gap-3 border-t border-gray-200 dark:border-gray-700">
+                    <button type="button" wire:click="closeOptionsEditor" class="inline-flex justify-center rounded-md border border-gray-300 dark:border-gray-600 shadow-sm px-4 py-2 bg-white dark:bg-gray-700 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600 transition">
+                        Annuler
+                    </button>
+                    <button type="button" wire:click="saveOptions" class="inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-[#8b0000] text-sm font-medium text-white hover:bg-red-800 transition">
+                        Enregistrer
                     </button>
                 </div>
             </div>
