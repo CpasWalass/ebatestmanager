@@ -292,11 +292,10 @@
 
     <!-- Modal Éditeur d'Options (Color Picker) -->
     @if($showOptionsEditor)
-    <div class="fixed inset-0 z-[70] overflow-y-auto" aria-labelledby="options-editor-title" role="dialog" aria-modal="true">
-        <div class="flex items-end justify-center min-h-screen pt-10 px-4 pb-24 text-center sm:block sm:p-0">
-            <div class="fixed inset-0 bg-gray-900 bg-opacity-75 transition-opacity" aria-hidden="true" wire:click="closeOptionsEditor"></div>
-            <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
-            <div class="relative z-10 inline-block align-bottom bg-white dark:bg-gray-800 rounded-xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-xl w-full border border-gray-200 dark:border-gray-700">
+    <div class="fixed inset-0 z-[69] bg-gray-900 bg-opacity-75" wire:click="closeOptionsEditor"></div>
+    <div class="fixed inset-0 z-[70] overflow-y-auto pointer-events-none" aria-labelledby="options-editor-title" role="dialog" aria-modal="true">
+        <div class="flex items-center justify-center min-h-screen px-4">
+            <div class="pointer-events-auto relative bg-white dark:bg-gray-800 rounded-xl text-left shadow-xl w-full max-w-xl border border-gray-200 dark:border-gray-700 my-8">
                 <div class="px-6 pt-5 pb-4">
                     <div class="flex items-center justify-between mb-4">
                         <h3 class="text-lg font-semibold text-gray-900 dark:text-white" id="options-editor-title">
