@@ -161,16 +161,6 @@
                                 <textarea wire:model="perimeter" rows="2" placeholder="Périmètre des tests..." class="mt-1 w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#8b0000]"></textarea>
                                 @error('perimeter') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
                             </div>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Développeurs assignés</label>
-                                <select multiple wire:model="developer_ids" class="mt-1 w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#8b0000] min-h-[80px]">
-                                    @foreach($this->developersList as $dev)
-                                        <option value="{{ $dev->id }}">{{ $dev->name }}</option>
-                                    @endforeach
-                                </select>
-                                <p class="mt-1 text-xs text-gray-500">Maintenez Ctrl (ou Cmd) pour en sélectionner plusieurs.</p>
-                                @error('developer_ids') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
-                            </div>
                         </div>
                         
                         <div class="mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">

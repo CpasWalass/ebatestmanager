@@ -73,24 +73,63 @@
                 <svg class="w-4 h-4 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/></svg>
                 Développeurs assignés au projet
             </h3>
-            <a href="{{ route('projets.index') }}" class="text-xs text-indigo-600 hover:underline"></a>
+            <button wire:click="openDevModal" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-medium rounded-lg transition">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                Gérer les développeurs
+            </button>
         </div>
         @php $devs = $project->developers; @endphp
         @if($devs->count() > 0)
             <div class="flex flex-wrap gap-2">
                 @foreach($devs as $dev)
-                    <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-medium bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-300">
+                    <span class="inline-flex items-center gap-1.5 pl-3 pr-1.5 py-1 rounded-full text-sm font-medium bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-300">
                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
                         {{ $dev->name }}
+                        <button wire:click="removeDeveloper({{ $dev->id }})" class="ml-0.5 w-4 h-4 flex items-center justify-center rounded-full hover:bg-indigo-200 dark:hover:bg-indigo-800 transition" title="Retirer">
+                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                        </button>
                     </span>
                 @endforeach
             </div>
         @else
-            <p class="text-sm text-gray-500 dark:text-gray-400 italic">Aucun développeur assigné. Modifiez le projet pour en ajouter.</p>
+            <p class="text-sm text-gray-500 dark:text-gray-400 italic">Aucun développeur assigné. Cliquez sur "Gérer les développeurs" pour en ajouter.</p>
         @endif
-        <p class="text-xs text-gray-400 mt-2">ℹ️ Pour modifier les développeurs, retournez sur la liste des projets et cliquez sur Modifier.</p>
+    </div>
+
+    {{-- Modal Gestion Développeurs --}}
+    @if($showDevModal)
+    <div class="fixed inset-0 z-[70] overflow-y-auto" role="dialog" aria-modal="true">
+        <div class="flex items-center justify-center min-h-screen px-4">
+            <div class="fixed inset-0 bg-gray-900/75" wire:click="$set('showDevModal', false)"></div>
+            <div class="relative z-10 bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-md border border-gray-200 dark:border-gray-700">
+                <div class="px-6 pt-5 pb-4">
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Gérer les développeurs</h3>
+                    <div class="space-y-2 max-h-64 overflow-y-auto pr-1">
+                        @forelse($this->developersList as $dev)
+                            <label class="flex items-center gap-3 p-2.5 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer transition">
+                                <input type="checkbox" wire:model="selectedDevIds" value="{{ $dev->id }}" class="w-4 h-4 text-indigo-600 rounded border-gray-300 focus:ring-indigo-500">
+                                <div class="flex items-center gap-2">
+                                    <div class="w-8 h-8 rounded-full bg-indigo-100 dark:bg-indigo-900/40 flex items-center justify-center text-indigo-700 dark:text-indigo-300 font-semibold text-sm">
+                                        {{ strtoupper(substr($dev->name, 0, 1)) }}
+                                    </div>
+                                    <span class="text-sm font-medium text-gray-900 dark:text-white">{{ $dev->name }}</span>
+                                </div>
+                            </label>
+                        @empty
+                            <p class="text-sm text-gray-500 italic">Aucun développeur disponible.</p>
+                        @endforelse
+                    </div>
+                </div>
+                <div class="px-6 py-4 border-t border-gray-200 dark:border-gray-700 flex justify-end gap-3">
+                    <button wire:click="$set('showDevModal', false)" class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 transition">Annuler</button>
+                    <button wire:click="saveDevelopers" class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg transition">Enregistrer</button>
+                </div>
+            </div>
+        </div>
     </div>
     @endif
+    @endif
+
 
     {{-- Liste des Cas de Tests --}}
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pb-24">

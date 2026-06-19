@@ -21,9 +21,20 @@ class TestCaseManager extends Component
     public array $links = [];
     public $globalExcelFile;
 
+    // Developer management
+    public bool $showDevModal = false;
+    public array $selectedDevIds = [];
+
     public function mount(Project $project): void
     {
         $this->project = $project;
+        $this->selectedDevIds = $project->developers()->pluck('users.id')->map(fn($id) => (string) $id)->toArray();
+    }
+
+    #[Computed]
+    public function developersList()
+    {
+        return \App\Models\User::role('developer')->orderBy('name')->get();
     }
 
     #[Computed]
@@ -116,6 +127,27 @@ class TestCaseManager extends Component
 
         $this->showModal = false;
         $this->reset(['name', 'links', 'editMode', 'templateIdToEdit']);
+    }
+
+    public function openDevModal(): void
+    {
+        $this->selectedDevIds = $this->project->developers()->pluck('users.id')->map(fn($id) => (string) $id)->toArray();
+        $this->showDevModal = true;
+    }
+
+    public function saveDevelopers(): void
+    {
+        $this->project->developers()->sync($this->selectedDevIds);
+        $this->project->unsetRelation('developers');
+        $this->showDevModal = false;
+        session()->flash('success', 'Développeurs mis à jour avec succès.');
+    }
+
+    public function removeDeveloper(int $userId): void
+    {
+        $this->project->developers()->detach($userId);
+        $this->project->unsetRelation('developers');
+        $this->selectedDevIds = array_filter($this->selectedDevIds, fn($id) => (int) $id !== $userId);
     }
 
     public function sendToDeveloper(): void
