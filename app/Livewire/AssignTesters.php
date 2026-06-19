@@ -62,36 +62,63 @@ class AssignTesters extends Component
     {
         $selectedIds = array_keys(array_filter($this->selectedTesters));
         
+        // Ensure project is loaded if we only have template
+        if ($this->template && !$this->project) {
+            $this->project = $this->template->project;
+        }
+
         if ($this->template) {
             // Assign to template
             TestCaseAssignment::where('template_id', $this->template->id)->whereNotIn('user_id', $selectedIds)->delete();
             
             foreach ($selectedIds as $userId) {
-                TestCaseAssignment::firstOrCreate([
+                $assignment = TestCaseAssignment::firstOrCreate([
                     'template_id' => $this->template->id,
                     'user_id' => $userId,
                 ], [
                     'scope' => 'full_case',
                     'status' => 'pending',
                 ]);
+
+                if ($assignment->wasRecentlyCreated && $this->project) {
+                    $url = route('testeur.executer', [$this->project->id, $this->template->id]);
+                    \App\Models\Message::create([
+                        'sender_id' => auth()->id(),
+                        'receiver_id' => $userId,
+                        'project_id' => $this->project->id,
+                        'type' => 'system',
+                        'content' => "Vous avez été assigné au cas de test **{$this->template->name}**. [Cliquez ici pour y accéder]($url)",
+                    ]);
+                }
             }
         } elseif ($this->project) {
             // Assign to project
             TestCaseAssignment::where('project_id', $this->project->id)->whereNotIn('user_id', $selectedIds)->delete();
             
             foreach ($selectedIds as $userId) {
-                TestCaseAssignment::firstOrCreate([
+                $assignment = TestCaseAssignment::firstOrCreate([
                     'project_id' => $this->project->id,
                     'user_id' => $userId,
                 ], [
                     'scope' => 'full_case',
                     'status' => 'pending',
                 ]);
+
+                if ($assignment->wasRecentlyCreated) {
+                    $url = route('testeur.projet.show', $this->project->id);
+                    \App\Models\Message::create([
+                        'sender_id' => auth()->id(),
+                        'receiver_id' => $userId,
+                        'project_id' => $this->project->id,
+                        'type' => 'system',
+                        'content' => "Vous avez été assigné au projet **{$this->project->name}**. [Cliquez ici pour y accéder]($url)",
+                    ]);
+                }
             }
         }
 
         $this->showModal = false;
-        session()->flash('success', 'Testeurs assignés avec succès.');
+        session()->flash('success', 'Testeurs assignés avec succès et notifiés.');
     }
 
     public function render()
