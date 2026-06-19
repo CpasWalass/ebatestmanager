@@ -53,6 +53,10 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
         $path = $export->export();
         return response()->download(storage_path('app/' . $path))->deleteFileAfterSend(true);
     })->name('projets.export');
+
+    // Profil & Paramètres
+    Route::get('/profile', \App\Livewire\UserProfile::class)->name('profile.show');
+    Route::get('/settings', \App\Livewire\UserSettings::class)->name('settings.show');
 });
 
 /*
