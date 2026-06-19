@@ -88,7 +88,7 @@
         @else
             <p class="text-sm text-gray-500 dark:text-gray-400 italic">Aucun développeur assigné. Modifiez le projet pour en ajouter.</p>
         @endif
-        <p class="text-xs text-gray-400 mt-2">ℹ️ Pour modifier les développeurs, retournez sur la liste des projets et cliquez sur ✂️ Modifier.</p>
+        <p class="text-xs text-gray-400 mt-2">ℹ️ Pour modifier les développeurs, retournez sur la liste des projets et cliquez sur Modifier.</p>
     </div>
     @endif
 

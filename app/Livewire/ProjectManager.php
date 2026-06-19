@@ -32,7 +32,7 @@ class ProjectManager extends Component
     #[Computed]
     public function developersList()
     {
-        return \App\Models\User::role('developpeur')->orderBy('name')->get();
+        return \App\Models\User::role('developer')->orderBy('name')->get();
     }
 
     #[Computed]
