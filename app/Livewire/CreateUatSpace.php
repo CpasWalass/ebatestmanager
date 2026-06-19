@@ -56,7 +56,7 @@ class CreateUatSpace extends Component
         }
 
         // Assign project to client
-        TestCaseAssignment::firstOrCreate([
+        $assignment = TestCaseAssignment::firstOrCreate([
             'project_id' => $this->project->id,
             'user_id' => $user->id,
         ], [
@@ -67,7 +67,18 @@ class CreateUatSpace extends Component
 
         $this->generatedLink = route('client.dashboard');
         
-        session()->flash('success', 'Espace UAT créé avec succès.');
+        // Envoi d'un message interne au client
+        if ($assignment->wasRecentlyCreated) {
+            \App\Models\Message::create([
+                'sender_id' => auth()->id(),
+                'receiver_id' => $user->id,
+                'project_id' => $this->project->id,
+                'type' => 'system',
+                'content' => "Bienvenue ! L'espace de recette (UAT) pour le projet **{$this->project->name}** est prêt. [Cliquez ici pour y accéder]({$this->generatedLink})",
+            ]);
+        }
+        
+        session()->flash('success', 'Espace UAT créé avec succès et notification envoyée.');
     }
 
     public function render()
