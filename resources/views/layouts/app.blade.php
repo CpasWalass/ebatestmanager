@@ -11,6 +11,11 @@
     @livewireStyles
 </head>
 <body class="bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 font-inter" style="font-family: 'Inter', sans-serif;">
+<style>
+    /* Permet de basculer le logo sans dépendre de Tailwind compilé */
+    html.dark .logo-light { display: none !important; }
+    html:not(.dark) .logo-dark { display: none !important; }
+</style>
 
 <div class="min-h-screen flex flex-col" style="padding-bottom: 90px;">
 
@@ -20,9 +25,9 @@
 
             {{-- Logo & Marque --}}
             <div class="flex items-center gap-3 min-w-0">
-                <div class="w-10 h-10 rounded-lg shadow-sm flex items-center justify-center overflow-hidden bg-white">
-                    <img src="{{ asset('images/logo.jpeg') }}" alt="Logo" class="w-full h-full object-cover dark:hidden" onerror="this.outerHTML='<span class=\'text-[#8b0000] font-bold text-sm tracking-tight\'>EB</span>'">
-                    <img src="{{ asset('images/logo-dark.png') }}" alt="Logo Dark" class="w-full h-full object-cover hidden dark:block" onerror="this.outerHTML='<span class=\'text-[#8b0000] font-bold text-sm tracking-tight\'>EB</span>'">
+                <div class="flex items-center justify-center h-10 w-10 sm:w-auto">
+                    <img src="{{ asset('images/logo.jpeg') }}" alt="Logo" class="logo-light h-10 w-auto object-contain" onerror="this.outerHTML='<span class=\'text-[#8b0000] font-bold text-sm tracking-tight\'>EB</span>'">
+                    <img src="{{ asset('images/logo-dark.png') }}" alt="Logo Dark" class="logo-dark h-10 w-auto object-contain" onerror="this.outerHTML='<span class=\'text-[#8b0000] font-bold text-sm tracking-tight\'>EB</span>'">
                 </div>
                 <div class="hidden sm:block leading-none">
                     <p class="text-[10px] font-bold text-gray-800 uppercase tracking-widest">UAT/IAT Manager</p>

@@ -53,10 +53,9 @@
             position: relative; z-index: 1;
         }
         .brand-logo img {
-            width: 52px; height: 52px;
-            border-radius: 14px;
-            object-fit: cover;
-            background: white;
+            width: auto; height: 52px;
+            max-width: 100%;
+            object-fit: contain;
         }
         .brand-logo-fallback {
             width: 52px; height: 52px;
@@ -245,14 +244,15 @@
 
     <!-- Panneau Branding -->
     <div class="brand-panel">
-        <div class="brand-logo bg-white">
+        <div class="brand-logo">
             <img src="{{ asset('images/logo.jpeg') }}" 
                  alt="Logo" 
-                 class="dark:hidden"
+                 class="logo-light"
                  onerror="this.outerHTML='<div class=\'brand-logo-fallback\'>EB</div>'">
             <img src="{{ asset('images/logo-dark.png') }}" 
                  alt="Logo Dark" 
-                 class="hidden dark:block"
+                 class="logo-dark"
+                 style="display: none;"
                  onerror="this.outerHTML='<div class=\'brand-logo-fallback\'>EB</div>'">
             <div class="brand-logo-text">
                 <span>UAT/IAT Manager</span>
