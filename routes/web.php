@@ -46,6 +46,13 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
     Route::get('/projets/{project}/cas-de-test/{template}', function (Project $project, TestCaseTemplate $template) {
         return view('projets.test-editor', compact('project', 'template'));
     })->name('test-cases.show');
+
+    // Export Excel des résultats d'un projet
+    Route::get('/projets/{project}/export', function (Project $project) {
+        $export = new \App\Exports\ProjectExcelExport($project);
+        $path = $export->export();
+        return response()->download(storage_path('app/' . $path))->deleteFileAfterSend(true);
+    })->name('projets.export');
 });
 
 /*

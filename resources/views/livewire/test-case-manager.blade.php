@@ -51,10 +51,10 @@
                     <svg class="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
                 </div>
             </label>
-            <button wire:click="exportResults" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-md font-medium text-sm flex items-center space-x-2 transition shadow-sm">
+            <a href="{{ route('projets.export', $project->id) }}" target="_blank" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-md font-medium text-sm flex items-center space-x-2 transition shadow-sm">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
                 <span>Exporter Résultats</span>
-            </button>
+            </a>
             <button wire:click="openNewModal" class="px-4 py-2 bg-[#8b0000] hover:bg-red-800 text-white rounded-md font-medium text-sm flex items-center space-x-2 transition shadow-sm">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
@@ -65,7 +65,34 @@
         @endif
     </div>
 
-    <!-- Liste des Cas de Tests -->
+    @if(auth()->check() && auth()->user()->hasRole('chef_project'))
+    {{-- Panel Développeurs Assignés --}}
+    <div class="mb-6 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-4 shadow-sm">
+        <div class="flex items-center justify-between mb-3">
+            <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300 flex items-center gap-2">
+                <svg class="w-4 h-4 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/></svg>
+                Développeurs assignés au projet
+            </h3>
+            <a href="{{ route('projets.index') }}" class="text-xs text-indigo-600 hover:underline"></a>
+        </div>
+        @php $devs = $project->developers; @endphp
+        @if($devs->count() > 0)
+            <div class="flex flex-wrap gap-2">
+                @foreach($devs as $dev)
+                    <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-medium bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-300">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                        {{ $dev->name }}
+                    </span>
+                @endforeach
+            </div>
+        @else
+            <p class="text-sm text-gray-500 dark:text-gray-400 italic">Aucun développeur assigné. Modifiez le projet pour en ajouter.</p>
+        @endif
+        <p class="text-xs text-gray-400 mt-2">ℹ️ Pour modifier les développeurs, retournez sur la liste des projets et cliquez sur ✂️ Modifier.</p>
+    </div>
+    @endif
+
+    {{-- Liste des Cas de Tests --}}
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pb-24">
         @forelse($this->templates as $template)
             @php

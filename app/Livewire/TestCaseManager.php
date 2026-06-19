@@ -172,14 +172,7 @@ class TestCaseManager extends Component
 
     public function exportResults()
     {
-        try {
-            $export = new \App\Exports\ProjectExcelExport($this->project);
-            $path = $export->export();
-            
-            return response()->download(storage_path('app/' . $path))->deleteFileAfterSend(true);
-        } catch (\Exception $e) {
-            session()->flash('error', "Erreur lors de l'export : " . $e->getMessage());
-        }
+        return redirect()->route('projets.export', $this->project->id);
     }
 
     public function render()
