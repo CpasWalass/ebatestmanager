@@ -21,11 +21,18 @@ class ProjectManager extends Component
     public string $type = 'IAT';
     public $client_id = null;
     public array $links = [];
+    public array $developer_ids = [];
 
     #[Computed]
     public function clients()
     {
         return \App\Models\Client::orderBy('name')->get();
+    }
+
+    #[Computed]
+    public function developersList()
+    {
+        return \App\Models\User::role('developpeur')->orderBy('name')->get();
     }
 
     #[Computed]
@@ -74,7 +81,7 @@ class ProjectManager extends Component
 
     public function openNewModal()
     {
-        $this->reset(['name', 'description', 'version', 'perimeter', 'type', 'client_id', 'links', 'editMode', 'projectIdToEdit']);
+        $this->reset(['name', 'description', 'version', 'perimeter', 'type', 'client_id', 'links', 'developer_ids', 'editMode', 'projectIdToEdit']);
         $this->showModal = true;
     }
 
@@ -89,6 +96,7 @@ class ProjectManager extends Component
         $this->type = $project->type ?? 'IAT';
         $this->client_id = $project->client_id;
         $this->links = is_array($project->links) ? $project->links : [];
+        $this->developer_ids = $project->developers()->pluck('users.id')->toArray();
         $this->editMode = true;
         $this->showModal = true;
     }
@@ -111,6 +119,8 @@ class ProjectManager extends Component
             'client_id'   => 'required|exists:clients,id',
             'links.*.title' => 'required|string',
             'links.*.url'   => 'required|url',
+            'developer_ids' => 'nullable|array',
+            'developer_ids.*' => 'exists:users,id',
         ], [
             'client_id.required' => 'Veuillez sélectionner un client.',
         ]);
@@ -126,9 +136,10 @@ class ProjectManager extends Component
                 'client_id'   => $this->client_id,
                 'links'       => $this->links,
             ]);
+            $project->developers()->sync($this->developer_ids);
             session()->flash('success', 'Projet mis à jour avec succès.');
         } else {
-            Project::create([
+            $project = Project::create([
                 'name'        => $this->name,
                 'description' => $this->description,
                 'version'     => $this->version,
@@ -138,11 +149,12 @@ class ProjectManager extends Component
                 'links'       => $this->links,
                 'created_by'  => auth()->id(),
             ]);
+            $project->developers()->sync($this->developer_ids);
             session()->flash('success', 'Projet créé avec succès.');
         }
 
         $this->showModal = false;
-        $this->reset(['name', 'description', 'version', 'perimeter', 'type', 'client_id', 'links', 'editMode', 'projectIdToEdit']);
+        $this->reset(['name', 'description', 'version', 'perimeter', 'type', 'client_id', 'links', 'developer_ids', 'editMode', 'projectIdToEdit']);
     }
 
     public function render()

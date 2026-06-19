@@ -57,4 +57,9 @@ class Project extends Model
     {
         return $this->hasMany(TestCaseTemplate::class);
     }
+
+    public function developers(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
+    {
+        return $this->belongsToMany(User::class, 'project_user');
+    }
 }

@@ -121,7 +121,23 @@ class TestCaseManager extends Component
     public function sendToDeveloper(): void
     {
         $this->project->update(['status' => 'in_review']);
-        session()->flash('success', 'Projet envoyé au développeur pour correction.');
+        
+        // Notify assigned developers
+        $developers = $this->project->developers;
+        if ($developers->count() > 0) {
+            foreach ($developers as $dev) {
+                \App\Models\Message::create([
+                    'sender_id' => auth()->id(),
+                    'receiver_id' => $dev->id,
+                    'project_id' => $this->project->id,
+                    'type' => 'system',
+                    'content' => "Le projet **{$this->project->name}** vous a été envoyé pour correction (des anomalies ont été remontées).",
+                ]);
+            }
+            session()->flash('success', 'Projet envoyé aux développeurs pour correction (notifications envoyées).');
+        } else {
+            session()->flash('success', 'Projet passé en statut correction (aucun développeur spécifique assigné à ce projet).');
+        }
     }
 
     public function updatedGlobalExcelFile()
@@ -151,6 +167,18 @@ class TestCaseManager extends Component
             
         } catch (\Exception $e) {
             session()->flash('error', 'Erreur lors de l\'import : ' . $e->getMessage());
+        }
+    }
+
+    public function exportResults()
+    {
+        try {
+            $export = new \App\Exports\ProjectExcelExport($this->project);
+            $path = $export->export();
+            
+            return response()->download(storage_path('app/' . $path))->deleteFileAfterSend(true);
+        } catch (\Exception $e) {
+            session()->flash('error', "Erreur lors de l'export : " . $e->getMessage());
         }
     }
 
