@@ -209,12 +209,31 @@ class ProjectExcelImport
                     $data[$field['name']] = '';
                 }
                 
+                // Build a lookup: fieldName -> [normalized_option => exact_option]
+                $selectLookup = [];
+                foreach ($fields as $field) {
+                    if ($field['type'] === 'select' && !empty($field['options'])) {
+                        $selectLookup[$field['name']] = [];
+                        foreach ($field['options'] as $opt) {
+                            $selectLookup[$field['name']][$this->normalizeText($opt)] = $opt;
+                        }
+                    }
+                }
+                
                 foreach ($fieldMap as $colIndex => $slug) {
                     $val = $cells[$colIndex] ?? '';
                     if ($val instanceof \DateTimeInterface) {
                         $val = $val->format('Y-m-d H:i:s');
                     }
-                    $data[$slug] = trim((string) $val);
+                    $val = trim((string) $val);
+                    
+                    // Normalize value for select fields
+                    if (isset($selectLookup[$slug]) && $val !== '') {
+                        $normalizedVal = $this->normalizeText($val);
+                        $val = $selectLookup[$slug][$normalizedVal] ?? $val;
+                    }
+                    
+                    $data[$slug] = $val;
                 }
                 
                 TestCase::create([
@@ -284,5 +303,20 @@ class ProjectExcelImport
         }
         
         return -1;
+    }
+
+    /**
+     * Normalize text for fuzzy comparison: lowercase, remove accents, keep only alphanumeric.
+     */
+    private function normalizeText(string $str): string
+    {
+        $str = mb_strtolower(trim($str));
+        $str = strtr(
+            utf8_decode($str),
+            utf8_decode('àáâãäçèéêëìíîïñòóôõöùúûüýÿÀÁÂÃÄÇÈÉÊËÌÍÎÏÑÒÓÔÕÖÙÚÛÜÝ'),
+            'aaaaaceeeeiiiinooooouuuuyyAAAAACEEEEIIIINOOOOOUUUUY'
+        );
+        $str = preg_replace('/[^a-z0-9]/', '', $str);
+        return $str;
     }
 }
