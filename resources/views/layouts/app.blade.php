@@ -20,8 +20,9 @@
 
             {{-- Logo & Marque --}}
             <div class="flex items-center gap-3 min-w-0">
-                <div class="flex items-center justify-center w-9 h-9 rounded-xl flex-shrink-0 bg-white border border-gray-200 overflow-hidden">
-                    <img src="{{ asset('images/logo.jpg') }}" alt="Logo" class="w-full h-full object-cover" onerror="this.outerHTML='<span class=\'text-[#8b0000] font-bold text-sm tracking-tight\'>EB</span>'">
+                <div class="w-10 h-10 rounded-lg shadow-sm flex items-center justify-center overflow-hidden bg-white">
+                    <img src="{{ asset('images/logo.jpeg') }}" alt="Logo" class="w-full h-full object-cover dark:hidden" onerror="this.outerHTML='<span class=\'text-[#8b0000] font-bold text-sm tracking-tight\'>EB</span>'">
+                    <img src="{{ asset('images/logo-dark.png') }}" alt="Logo Dark" class="w-full h-full object-cover hidden dark:block" onerror="this.outerHTML='<span class=\'text-[#8b0000] font-bold text-sm tracking-tight\'>EB</span>'">
                 </div>
                 <div class="hidden sm:block leading-none">
                     <p class="text-[10px] font-bold text-gray-800 uppercase tracking-widest">UAT/IAT Manager</p>
