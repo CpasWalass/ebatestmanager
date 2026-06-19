@@ -49,6 +49,7 @@ class ProjectExcelImport
                 'label' => 'NATURE',
                 'type'  => 'select',
                 'options' => [
+                    'Concluant',
                     'Erreurs Fonctionnelles',
                     'Erreurs de Validation / Saisie',
                     'Erreurs d\'Interface (UI/UX)',
@@ -61,6 +62,7 @@ class ProjectExcelImport
                     'Erreurs de Workflow / Navigation',
                 ],
                 'option_colors' => [
+                    'Concluant'                        => '#22c55e', // vert
                     'Erreurs Fonctionnelles'           => '#ef4444',
                     'Erreurs de Validation / Saisie'   => '#ef4444',
                     'Erreurs d\'Interface (UI/UX)'      => '#ef4444',
