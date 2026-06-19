@@ -30,7 +30,7 @@
                             @if ($avatar)
                                 <img class="h-20 w-20 object-cover rounded-full ring-4 ring-gray-50 dark:ring-gray-700" src="{{ $avatar->temporaryUrl() }}" alt="Aperçu Avatar">
                             @elseif (auth()->user()->avatar)
-                                <img class="h-20 w-20 object-cover rounded-full ring-4 ring-gray-50 dark:ring-gray-700" src="{{ Storage::url(auth()->user()->avatar) }}" alt="Avatar">
+                                <img class="h-20 w-20 object-cover rounded-full ring-4 ring-gray-50 dark:ring-gray-700" src="{{ asset('storage/' . auth()->user()->avatar) }}" alt="Avatar">
                             @else
                                 <div class="h-20 w-20 rounded-full bg-blue-100 dark:bg-blue-900/50 flex items-center justify-center text-blue-600 dark:text-blue-400 text-2xl font-bold ring-4 ring-gray-50 dark:ring-gray-700">
                                     {{ strtoupper(substr(auth()->user()->name, 0, 1)) }}

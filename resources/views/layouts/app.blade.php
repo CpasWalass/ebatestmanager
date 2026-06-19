@@ -103,7 +103,7 @@
                     <button @click="open = !open" class="flex items-center gap-2 pl-1 pr-3 py-1 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition">
                         <div class="w-8 h-8 rounded-lg flex-shrink-0 overflow-hidden">
                             @if(auth()->user()?->avatar)
-                                <img src="{{ Storage::url(auth()->user()->avatar) }}" alt="Avatar" class="w-full h-full object-cover">
+                                <img src="{{ asset('storage/' . auth()->user()->avatar) }}" alt="Avatar" class="w-full h-full object-cover">
                             @else
                                 <div class="w-full h-full flex items-center justify-center text-white font-bold text-sm" style="background: linear-gradient(135deg, #CC0000, #ff4444);">
                                     {{ auth()->user() ? strtoupper(substr(auth()->user()->name, 0, 1)) : 'U' }}
@@ -137,7 +137,7 @@
                         <div class="p-3 border-b border-gray-100 dark:border-gray-700 flex items-center gap-3">
                             <div class="w-10 h-10 rounded-full flex-shrink-0 overflow-hidden">
                                 @if(auth()->user()?->avatar)
-                                    <img src="{{ Storage::url(auth()->user()->avatar) }}" alt="Avatar" class="w-full h-full object-cover">
+                                    <img src="{{ asset('storage/' . auth()->user()->avatar) }}" alt="Avatar" class="w-full h-full object-cover">
                                 @else
                                     <div class="w-full h-full flex items-center justify-center text-white font-bold text-sm" style="background: linear-gradient(135deg, #CC0000, #ff4444);">
                                         {{ strtoupper(substr(auth()->user()?->name ?? 'U', 0, 1)) }}
