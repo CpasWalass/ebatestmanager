@@ -16,6 +16,69 @@ class ProjectExcelImport
         $this->projectId = $projectId;
     }
 
+    /**
+     * Known fields with predefined type, options and colors.
+     * These are detected by slug match during import.
+     */
+    protected static function knownFields(): array
+    {
+        return [
+            'etat_test' => [
+                'label' => 'ETAT DE TEST',
+                'type'  => 'select',
+                'options' => ['À faire', 'En cours', 'Bloqué', 'Terminé'],
+                'option_colors' => [
+                    'À faire'  => '#6b7280',
+                    'En cours' => '#f97316',
+                    'Bloqué'   => '#ef4444',
+                    'Terminé'  => '#22c55e',
+                ],
+            ],
+            'status' => [
+                'label' => 'STATUS',
+                'type'  => 'select',
+                'options' => ['Validé', 'Non validé', 'Sous réserve', 'Optimisation'],
+                'option_colors' => [
+                    'Validé'       => '#22c55e',
+                    'Non validé'   => '#ef4444',
+                    'Sous réserve' => '#a855f7',
+                    'Optimisation' => '#f97316',
+                ],
+            ],
+            'nature' => [
+                'label' => 'NATURE',
+                'type'  => 'select',
+                'options' => [
+                    'Erreurs Fonctionnelles',
+                    'Erreurs de Validation / Saisie',
+                    'Erreurs d\'Interface (UI/UX)',
+                    'Erreurs Techniques',
+                    'Erreurs de Performance',
+                    'Erreurs de Sécurité',
+                    'Erreurs de Données',
+                    'Erreurs d\'Intégration',
+                    'Erreurs de Compatibilité',
+                    'Erreurs de Workflow / Navigation',
+                ],
+                'option_colors' => [
+                    'Erreurs Fonctionnelles'           => '#ef4444',
+                    'Erreurs de Validation / Saisie'   => '#ef4444',
+                    'Erreurs d\'Interface (UI/UX)'      => '#ef4444',
+                    'Erreurs Techniques'               => '#ef4444',
+                    'Erreurs de Performance'           => '#ef4444',
+                    'Erreurs de Sécurité'              => '#ef4444',
+                    'Erreurs de Données'               => '#ef4444',
+                    'Erreurs d\'Intégration'            => '#ef4444',
+                    'Erreurs de Compatibilité'         => '#ef4444',
+                    'Erreurs de Workflow / Navigation' => '#ef4444',
+                ],
+            ],
+            // Common aliases that may appear in Excel files
+            'etat'   => 'etat_test',
+            'statut' => 'status',
+        ];
+    }
+
     public function import(string $filePath): array
     {
         $reader = new Reader();
@@ -76,20 +139,40 @@ class ProjectExcelImport
                     $counter++;
                 }
                 
-                // Heuristic for field type
-                $type = 'text';
-                if (Str::length($label) > 30 || Str::contains(mb_strtolower($label), ['description', 'resultat', 'scénario', 'scenario', 'attendu', 'obtenu', 'commentaire'])) {
-                    $type = 'textarea';
+                // Check if this slug matches a known field (with alias resolution)
+                $knownFields = self::knownFields();
+                $resolvedSlug = $slug;
+                if (isset($knownFields[$slug]) && is_string($knownFields[$slug])) {
+                    $resolvedSlug = $knownFields[$slug]; // resolve alias
                 }
                 
-                $fields[] = [
-                    'name' => $slug,
-                    'label' => $label,
-                    'type' => $type,
-                    'required' => false,
-                ];
-                
-                $fieldMap[$colIndex] = $slug;
+                if (isset($knownFields[$resolvedSlug]) && is_array($knownFields[$resolvedSlug])) {
+                    $known = $knownFields[$resolvedSlug];
+                    $fields[] = [
+                        'name'          => $resolvedSlug,
+                        'label'         => mb_strtoupper($label),
+                        'type'          => $known['type'],
+                        'required'      => false,
+                        'options'       => $known['options'],
+                        'option_colors' => $known['option_colors'],
+                    ];
+                    $fieldMap[$colIndex] = $resolvedSlug;
+                } else {
+                    // Auto-detect type
+                    $type = 'text';
+                    if (Str::length($label) > 30 || Str::contains(mb_strtolower($label), ['description', 'resultat', 'scénario', 'scenario', 'attendu', 'obtenu', 'commentaire'])) {
+                        $type = 'textarea';
+                    }
+                    
+                    $fields[] = [
+                        'name'     => $slug,
+                        'label'    => $label,
+                        'type'     => $type,
+                        'required' => false,
+                    ];
+                    
+                    $fieldMap[$colIndex] = $slug;
+                }
             }
             
             if (empty($fields)) {
