@@ -187,6 +187,11 @@
         @endforelse
     </div>
 
+    <!-- Historique du Projet -->
+    <div class="mt-8 mb-8">
+        <livewire:project-activity-log :projectId="$project->id" />
+    </div>
+
     <!-- Modal Création de Cas de Test -->
     @if($showModal)
     <div class="fixed inset-0 z-[60] overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">

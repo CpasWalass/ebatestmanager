@@ -5,10 +5,21 @@ namespace App\Models;
 use App\Models\Traits\BelongsToTenant;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Spatie\Activitylog\Traits\LogsActivity;
+use Spatie\Activitylog\LogOptions;
 
 class TestExecution extends Model
 {
-    use BelongsToTenant;
+    use BelongsToTenant, LogsActivity;
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logOnly(['status', 'comments', 'results'])
+            ->logOnlyDirty()
+            ->dontSubmitEmptyLogs()
+            ->setDescriptionForEvent(fn(string $eventName) => "Cette exécution a été {$eventName}");
+    }
 
     protected $fillable = [
         'test_case_id',
