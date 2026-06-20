@@ -51,7 +51,7 @@ class ProjectExcelExport
             $fields = is_array($template->fields) ? $template->fields : [];
             $headerCells = [];
             foreach ($fields as $field) {
-                $headerCells[] = Cell::fromValue($field['name'] ?? $field['id']);
+                $headerCells[] = Cell::fromValue($field['name'] ?? $field['id'] ?? '');
             }
             $writer->addRow(new Row($headerCells));
 
@@ -61,8 +61,8 @@ class ProjectExcelExport
                 $rowCells = [];
                 
                 foreach ($fields as $field) {
-                    $fieldId = $field['id'];
-                    $val = $data[$fieldId] ?? '';
+                    $key = $field['name'] ?? $field['id'] ?? '';
+                    $val = $data[$key] ?? '';
                     $rowCells[] = Cell::fromValue((string) $val);
                 }
                 
