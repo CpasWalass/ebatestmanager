@@ -245,14 +245,8 @@
     <!-- Panneau Branding -->
     <div class="brand-panel">
         <div class="brand-logo">
-            <img src="{{ asset('images/logo.jpeg') }}" 
-                 alt="Logo" 
-                 class="logo-light"
-                 onerror="this.outerHTML='<div class=\'brand-logo-fallback\'>EB</div>'">
             <img src="{{ asset('images/logo-dark.png') }}" 
-                 alt="Logo Dark" 
-                 class="logo-dark"
-                 style="display: none;"
+                 alt="Logo" 
                  onerror="this.outerHTML='<div class=\'brand-logo-fallback\'>EB</div>'">
             <div class="brand-logo-text">
                 <span>UAT/IAT Manager</span>
