@@ -73,9 +73,9 @@
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                                 {{ class_basename($activity->subject_type) }} #{{ $activity->subject_id }}
                             </td>
-                            <td class="px-6 py-4 text-sm text-gray-500 dark:text-gray-400 max-w-xs truncate" title="{{ json_encode($activity->properties, JSON_UNESCAPED_UNICODE) }}">
-                                @if($activity->properties->has('attributes'))
-                                    @foreach($activity->properties['attributes'] as $key => $value)
+                            <td class="px-6 py-4 text-sm text-gray-500 dark:text-gray-400 max-w-xs truncate" title="{{ json_encode($activity->attribute_changes, JSON_UNESCAPED_UNICODE) }}">
+                                @if($activity->attribute_changes && isset($activity->attribute_changes['attributes']))
+                                    @foreach($activity->attribute_changes['attributes'] as $key => $value)
                                         <span class="mr-2 border border-gray-200 dark:border-gray-600 rounded px-1">{{ $key }}</span>
                                     @endforeach
                                 @else

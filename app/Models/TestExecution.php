@@ -5,8 +5,8 @@ namespace App\Models;
 use App\Models\Traits\BelongsToTenant;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Spatie\Activitylog\Traits\LogsActivity;
-use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Models\Concerns\LogsActivity;
+use Spatie\Activitylog\Support\LogOptions;
 
 class TestExecution extends Model
 {
@@ -17,7 +17,7 @@ class TestExecution extends Model
         return LogOptions::defaults()
             ->logOnly(['status', 'comments', 'results'])
             ->logOnlyDirty()
-            ->dontSubmitEmptyLogs()
+            ->dontLogEmptyChanges()
             ->setDescriptionForEvent(fn(string $eventName) => "Cette exécution a été {$eventName}");
     }
 

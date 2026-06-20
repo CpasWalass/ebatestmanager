@@ -50,9 +50,9 @@
                                                 {{ $activity->description }}
                                             </p>
                                             
-                                            @if($activity->properties->has('attributes'))
+                                            @if($activity->attribute_changes && isset($activity->attribute_changes['attributes']))
                                                 <div class="mt-2 text-xs text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-900/50 p-2 rounded border border-gray-100 dark:border-gray-700">
-                                                    <pre class="overflow-x-auto">{{ json_encode($activity->properties['attributes'], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) }}</pre>
+                                                    <pre class="overflow-x-auto">{{ json_encode($activity->attribute_changes['attributes'], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) }}</pre>
                                                 </div>
                                             @endif
                                         </div>
