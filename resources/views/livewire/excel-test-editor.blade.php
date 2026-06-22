@@ -119,11 +119,13 @@
                                     } elseif ($isDev) {
                                         $isReadOnly = $field['name'] !== 'commentaires';
                                     }
+                                    
+                                    $cellBgClass = $badgeClass ?: ($isReadOnly ? 'bg-gray-100/50 dark:bg-gray-800/60 cursor-default' : 'bg-white dark:bg-gray-800');
                                 @endphp
                                 
-                                <td class="p-0 border-r border-gray-200 dark:border-gray-700 {{ $badgeClass }} relative" @if($inlineStyle) style="{{ $inlineStyle }}" @endif>
+                                <td class="p-0 border-r border-gray-200 dark:border-gray-700 {{ $cellBgClass }} relative transition-colors" @if($inlineStyle) style="{{ $inlineStyle }}" @endif>
                                     @if($isReadOnly)
-                                        <div class="w-full h-full min-h-[40px] px-3 py-2 text-gray-700 dark:text-gray-300 {{ $field['type'] === 'textarea' ? 'whitespace-pre-wrap' : '' }}">
+                                        <div class="w-full h-full min-h-[40px] px-3 py-2 text-gray-500 dark:text-gray-400 {{ $field['type'] === 'textarea' ? 'whitespace-pre-wrap' : '' }}">
                                             @if($field['type'] === 'url' && $val)
                                                 <a href="{{ $val }}" target="_blank" class="text-blue-500 hover:underline flex items-center gap-1">
                                                     {{ $val }}
