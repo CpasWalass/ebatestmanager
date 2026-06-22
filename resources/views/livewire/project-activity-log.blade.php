@@ -40,19 +40,69 @@
                                     </div>
                                     <div class="min-w-0 flex-1 pt-1.5 flex justify-between space-x-4">
                                         <div>
-                                            <p class="text-sm text-gray-500 dark:text-gray-400">
-                                                @if($activity->causer)
-                                                    <span class="font-medium text-gray-900 dark:text-white">{{ $activity->causer->name }}</span>
-                                                @else
-                                                    <span class="font-medium text-gray-900 dark:text-white">Système</span>
-                                                @endif
+                                            @php
+                                                $causer = $activity->causer ? $activity->causer->name : 'Système';
+                                                $action = $activity->description === 'updated' ? 'modifié' : ($activity->description === 'created' ? 'créé' : 'supprimé');
+                                                $changes = [];
+                                                $subjectName = "un élément";
                                                 
-                                                {{ $activity->description }}
+                                                if ($activity->subject_type === \App\Models\TestCase::class) {
+                                                    $newData = $activity->attribute_changes['attributes']['data'] ?? [];
+                                                    $oldData = $activity->attribute_changes['old']['data'] ?? [];
+                                                    
+                                                    foreach($newData as $key => $val) {
+                                                        $oldVal = $oldData[$key] ?? null;
+                                                        if ($val !== $oldVal) {
+                                                            $changes[] = [
+                                                                'key' => ucwords(str_replace('_', ' ', $key)),
+                                                                'old' => $oldVal,
+                                                                'new' => $val,
+                                                            ];
+                                                        }
+                                                    }
+                                                    $identifier = $newData['test_case'] ?? $newData['cas_test'] ?? "#{$activity->subject_id}";
+                                                    $subjectName = "le cas de test $identifier";
+                                                } else {
+                                                    $newAttrs = $activity->attribute_changes['attributes'] ?? [];
+                                                    $oldAttrs = $activity->attribute_changes['old'] ?? [];
+                                                    foreach($newAttrs as $key => $val) {
+                                                        if (in_array($key, ['updated_at', 'created_at', 'id'])) continue;
+                                                        $oldVal = $oldAttrs[$key] ?? null;
+                                                        if ($val !== $oldVal) {
+                                                            $changes[] = [
+                                                                'key' => ucwords(str_replace('_', ' ', $key)),
+                                                                'old' => $oldVal,
+                                                                'new' => $val,
+                                                            ];
+                                                        }
+                                                    }
+                                                    $subjectName = "le projet";
+                                                }
+                                            @endphp
+                                            <p class="text-sm text-gray-500 dark:text-gray-400">
+                                                <span class="font-medium text-gray-900 dark:text-white">{{ $causer }}</span>
+                                                a {{ $action }} {{ $subjectName }}
                                             </p>
                                             
-                                            @if($activity->attribute_changes && isset($activity->attribute_changes['attributes']))
-                                                <div class="mt-2 text-xs text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-900/50 p-2 rounded border border-gray-100 dark:border-gray-700">
-                                                    <pre class="overflow-x-auto">{{ json_encode($activity->attribute_changes['attributes'], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) }}</pre>
+                                            @if(count($changes) > 0)
+                                                <div class="mt-2 text-xs text-gray-600 dark:text-gray-300 bg-gray-50 dark:bg-gray-900/50 p-3 rounded border border-gray-100 dark:border-gray-700">
+                                                    <ul class="space-y-1.5">
+                                                        @foreach($changes as $change)
+                                                            <li class="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
+                                                                <span class="font-semibold text-gray-700 dark:text-gray-200 min-w-[120px]">{{ $change['key'] }} :</span> 
+                                                                <div class="flex items-center flex-wrap gap-2">
+                                                                    @if($change['old'])
+                                                                        <span class="line-through text-red-500/70 bg-red-50 dark:bg-red-900/20 px-1.5 py-0.5 rounded">{{ is_array($change['old']) ? json_encode($change['old']) : $change['old'] }}</span> 
+                                                                        <svg class="w-3 h-3 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+                                                                    @else
+                                                                        <span class="text-gray-400 italic">Vide</span>
+                                                                        <svg class="w-3 h-3 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+                                                                    @endif
+                                                                    <span class="text-green-600 dark:text-green-400 font-medium bg-green-50 dark:bg-green-900/20 px-1.5 py-0.5 rounded">{{ is_array($change['new']) ? json_encode($change['new']) : $change['new'] }}</span>
+                                                                </div>
+                                                            </li>
+                                                        @endforeach
+                                                    </ul>
                                                 </div>
                                             @endif
                                         </div>
