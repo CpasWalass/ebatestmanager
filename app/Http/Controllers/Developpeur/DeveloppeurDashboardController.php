@@ -44,4 +44,21 @@ class DeveloppeurDashboardController extends Controller
             'traites',
         ));
     }
+
+    public function reply(\Illuminate\Http\Request $request)
+    {
+        $request->validate([
+            'report_id' => 'required|exists:reports,id',
+            'content' => 'required|string|min:3',
+        ]);
+
+        ReportResponse::create([
+            'report_id' => $request->report_id,
+            'user_id' => auth()->id(),
+            'content' => $request->content,
+            'status' => 'done',
+        ]);
+
+        return redirect()->back()->with('success', 'Votre réponse a été envoyée avec succès.');
+    }
 }

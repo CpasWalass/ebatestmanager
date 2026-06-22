@@ -162,7 +162,7 @@
 
                     {{-- Formulaire de réponse (masqué par défaut) --}}
                     <div id="reply-{{ $rapport->id }}" class="hidden mt-4">
-                        <form action="#" method="POST" class="space-y-3">
+                        <form action="{{ route('developpeur.rapports.reply') }}" method="POST" class="space-y-3">
                             @csrf
                             <input type="hidden" name="report_id" value="{{ $rapport->id }}">
                             <div>

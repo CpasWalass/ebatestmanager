@@ -124,6 +124,9 @@ Route::middleware(['auth:sanctum', 'verified', 'role:developer'])
     ->group(function () {
         Route::get('/dashboard', [DeveloppeurDashboardController::class, 'index'])
             ->name('dashboard');
+        
+        Route::post('/rapports/reply', [DeveloppeurDashboardController::class, 'reply'])
+            ->name('rapports.reply');
     });
 
 /*
