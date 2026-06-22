@@ -172,6 +172,49 @@ class TestCaseManager extends Component
         }
     }
 
+    public function sendReportToDev(int $reportId): void
+    {
+        $report = \App\Models\Report::findOrFail($reportId);
+        $report->update(['status' => 'sent']);
+        $this->project->update(['status' => 'in_review']);
+
+        $developers = $this->project->developers;
+        
+        $stats = $report->stats;
+        $reportText = "EXECUTIVE REPORT {$this->project->name}\n\n";
+        $reportText .= "*Informations générales*\n";
+        $reportText .= "Nom du projet : {$this->project->name}\n";
+        $reportText .= "Version testée : {$report->tested_version}\n";
+        $reportText .= "Date du test : " . $report->created_at->format('d/m/Y') . "\n";
+        $reportText .= "Responsable du test : {$report->responsible}\n";
+        $reportText .= "Périmètre du test : {$report->perimeter}\n";
+        $reportText .= "Nombre total des cas de test : {$stats['total']} cas de test\n\n";
+        
+        $reportText .= "*Statistiques globales*\n";
+        $reportText .= "✅ succes : {$stats['valide']}\n";
+        $reportText .= "💣 échec : {$stats['non_valide']}\n";
+        $reportText .= "🤔 sous reserve : {$stats['sous_reserve']}\n";
+        $reportText .= "👷‍♂️ optimisation : {$stats['optimisation']}\n\n";
+        
+        $reportText .= "NB : {$report->notes}\n";
+        $reportText .= "Lien pour plus de détails : " . route('projets.show', $this->project->id);
+
+        if ($developers->count() > 0) {
+            foreach ($developers as $dev) {
+                \App\Models\Message::create([
+                    'sender_id' => auth()->id(),
+                    'receiver_id' => $dev->id,
+                    'project_id' => $this->project->id,
+                    'type' => 'system',
+                    'content' => "Le rapport de test **{$report->perimeter}** vous a été transféré :\n\n" . $reportText,
+                ]);
+            }
+            session()->flash('success', 'Le rapport a été transféré aux développeurs avec succès.');
+        } else {
+            session()->flash('error', 'Le rapport est marqué comme envoyé, mais aucun développeur n\'est assigné à ce projet.');
+        }
+    }
+
     public function updatedGlobalExcelFile()
     {
         $this->importGlobalExcel();

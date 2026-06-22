@@ -15,7 +15,8 @@ class ReportGenerator extends Component
     public ?Project $project = null;
     public ?TestCaseTemplate $template = null;
     
-    public string $title = '';
+    public string $perimeter = '';
+    public string $testedVersion = '';
     public string $conclusion = '';
     
     public array $stats = [
@@ -30,12 +31,16 @@ class ReportGenerator extends Component
     public function openModal($projectId, $templateId = null): void
     {
         $this->project = Project::find($projectId);
+        $this->perimeter = '';
+        $this->testedVersion = $this->project->version ?? '';
+        $this->conclusion = '';
+
         if ($templateId) {
             $this->template = TestCaseTemplate::find($templateId);
-            $this->title = 'Rapport de Test - ' . $this->template->name;
+            $this->perimeter = $this->template->name;
             $cases = TestCase::where('template_id', $this->template->id)->get();
         } else {
-            $this->title = 'Rapport Global - ' . $this->project->name;
+            $this->perimeter = 'Projet Complet';
             $cases = TestCase::where('project_id', $this->project->id)->get();
         }
         
@@ -52,14 +57,14 @@ class ReportGenerator extends Component
         $this->stats['optimisation'] = 0;
 
         foreach ($cases as $case) {
-            $status = strtolower($case->data['status'] ?? '');
-            if (in_array($status, ['validé', 'terminé'])) {
+            $status = strtolower($case->data['status'] ?? $case->data['etat_test'] ?? '');
+            if (in_array($status, ['validé', 'terminé', 'valide', 'termine'])) {
                 $this->stats['valide']++;
-            } elseif (in_array($status, ['non validé', 'échec'])) {
+            } elseif (in_array($status, ['non validé', 'échec', 'non valide', 'echec'])) {
                 $this->stats['non_valide']++;
-            } elseif (in_array($status, ['sous réserve'])) {
+            } elseif (in_array($status, ['sous réserve', 'sous reserve'])) {
                 $this->stats['sous_reserve']++;
-            } elseif (in_array($status, ['optimisation', 'en cours'])) {
+            } elseif (in_array($status, ['optimisation', 'en cours', 'a faire', 'à faire'])) {
                 $this->stats['optimisation']++;
             }
         }
@@ -68,18 +73,36 @@ class ReportGenerator extends Component
     public function generateReport(): void
     {
         $this->validate([
-            'title' => 'required|min:3',
+            'perimeter' => 'required|min:3',
+            'testedVersion' => 'nullable|string|max:255',
             'conclusion' => 'required|min:10',
         ]);
 
-        Report::create([
+        $reportTitle = 'EXECUTIVE REPORT ' . $this->project->name . ($this->template ? ' - ' . $this->template->name : '');
+
+        $report = Report::create([
             'project_id' => $this->project->id,
             'created_by' => auth()->id(),
-            'title' => $this->title,
+            'title' => $reportTitle,
+            'perimeter' => $this->perimeter,
+            'tested_version' => $this->testedVersion,
+            'test_date' => now(),
+            'responsible' => auth()->user()->name,
             'notes' => $this->conclusion,
             'stats' => $this->stats,
             'status' => 'submitted'
         ]);
+
+        // Notify Project Manager
+        if ($this->project->createdBy) {
+            \App\Models\Message::create([
+                'sender_id' => auth()->id(),
+                'receiver_id' => $this->project->created_by,
+                'project_id' => $this->project->id,
+                'type' => 'system',
+                'content' => "Un nouveau rapport d'exécution **({$this->perimeter})** a été généré par **" . auth()->user()->name . "** pour le projet {$this->project->name}."
+            ]);
+        }
 
         $this->showModal = false;
         session()->flash('success', 'Rapport généré et envoyé au Chef de Projet avec succès.');

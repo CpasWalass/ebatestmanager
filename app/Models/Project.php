@@ -59,6 +59,16 @@ class Project extends Model
         return $this->belongsTo(User::class, 'created_by');
     }
 
+    public function comments(): HasMany
+    {
+        return $this->hasMany(ProjectComment::class);
+    }
+
+    public function reports(): HasMany
+    {
+        return $this->hasMany(Report::class)->latest();
+    }
+
     public function testCases(): HasMany
     {
         return $this->hasMany(TestCase::class);

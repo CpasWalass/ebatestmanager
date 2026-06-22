@@ -187,6 +187,122 @@
         @endforelse
     </div>
 
+    <!-- Rapports d'exécution générés -->
+    @if(auth()->check() && auth()->user()->hasRole('chef_project'))
+    <div class="mt-12 mb-8">
+        <div class="flex items-center justify-between mb-6">
+            <h2 class="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                <svg class="w-6 h-6 text-[#8b0000]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                Rapports d'exécution (Executive Reports)
+            </h2>
+        </div>
+
+        @php $reports = $project->reports; @endphp
+        
+        @if($reports->count() > 0)
+            <div class="space-y-4">
+                @foreach($reports as $report)
+                    @php $stats = $report->stats; @endphp
+                    <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-5 shadow-sm">
+                        <div class="flex flex-col md:flex-row justify-between items-start gap-4">
+                            <div class="flex-1">
+                                <div class="flex items-center gap-3 mb-2">
+                                    <h3 class="text-lg font-bold text-gray-900 dark:text-white">{{ $report->title }}</h3>
+                                    @if($report->status === 'sent')
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300">Transféré au dev</span>
+                                    @else
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300">À vérifier</span>
+                                    @endif
+                                </div>
+                                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4 text-sm">
+                                    <div>
+                                        <span class="text-gray-500 block mb-1">Périmètre</span>
+                                        <span class="font-medium text-gray-900 dark:text-white">{{ $report->perimeter }}</span>
+                                    </div>
+                                    <div>
+                                        <span class="text-gray-500 block mb-1">Testeur</span>
+                                        <span class="font-medium text-gray-900 dark:text-white">{{ $report->responsible }}</span>
+                                    </div>
+                                    <div>
+                                        <span class="text-gray-500 block mb-1">Version</span>
+                                        <span class="font-medium text-gray-900 dark:text-white">{{ $report->tested_version ?? 'N/A' }}</span>
+                                    </div>
+                                    <div>
+                                        <span class="text-gray-500 block mb-1">Date</span>
+                                        <span class="font-medium text-gray-900 dark:text-white">{{ $report->created_at->format('d/m/Y H:i') }}</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="mt-4 p-4 bg-gray-50 dark:bg-gray-700/30 rounded-lg flex gap-6 overflow-x-auto">
+                                    <div class="flex items-center gap-2">
+                                        <span class="text-xl">✅</span>
+                                        <div>
+                                            <span class="block text-xs text-gray-500">Succès</span>
+                                            <span class="font-bold text-gray-900 dark:text-white">{{ $stats['valide'] ?? 0 }}</span>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <span class="text-xl">💣</span>
+                                        <div>
+                                            <span class="block text-xs text-gray-500">Échec</span>
+                                            <span class="font-bold text-gray-900 dark:text-white">{{ $stats['non_valide'] ?? 0 }}</span>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <span class="text-xl">🤔</span>
+                                        <div>
+                                            <span class="block text-xs text-gray-500">Sous réserve</span>
+                                            <span class="font-bold text-gray-900 dark:text-white">{{ $stats['sous_reserve'] ?? 0 }}</span>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <span class="text-xl">👷‍♂️</span>
+                                        <div>
+                                            <span class="block text-xs text-gray-500">Optimisation</span>
+                                            <span class="font-bold text-gray-900 dark:text-white">{{ $stats['optimisation'] ?? 0 }}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="mt-4">
+                                    <span class="text-sm font-semibold text-gray-700 dark:text-gray-300">NB / Conclusion :</span>
+                                    <p class="mt-1 text-sm text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-800/50 p-3 rounded-md border border-gray-100 dark:border-gray-700">{{ $report->notes }}</p>
+                                </div>
+                            </div>
+                            
+                            <div class="flex flex-col gap-2 min-w-[180px]">
+                                <a href="{{ route('projets.export', $project->id) }}" target="_blank" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-md font-medium text-sm text-center transition flex items-center justify-center gap-2">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                                    PDF / Export
+                                </a>
+                                @if($report->status !== 'sent')
+                                <button wire:click="sendReportToDev({{ $report->id }})" wire:confirm="Transférer ce rapport détaillé aux développeurs assignés ?" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md font-medium text-sm text-center transition shadow-sm flex items-center justify-center gap-2">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
+                                    Transférer au dev
+                                </button>
+                                @else
+                                <button disabled class="px-4 py-2 bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 rounded-md font-medium text-sm text-center cursor-not-allowed flex items-center justify-center gap-2 border border-green-200 dark:border-green-800">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                                    Déjà transféré
+                                </button>
+                                @endif
+                            </div>
+                        </div>
+                    </div>
+                @endforeach
+            </div>
+        @else
+            <div class="py-8 text-center bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-dashed border-gray-300 dark:border-gray-700">
+                <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                </svg>
+                <h3 class="mt-2 text-sm font-medium text-gray-900 dark:text-white">Aucun rapport</h3>
+                <p class="mt-1 text-sm text-gray-500">Les testeurs n'ont pas encore généré de rapport pour ce projet.</p>
+            </div>
+        @endif
+    </div>
+    @endif
+
     <!-- Historique du Projet -->
     <div class="mt-8 mb-8">
         <livewire:project-activity-log :projectId="$project->id" />

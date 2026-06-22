@@ -29,14 +29,21 @@
                         </div>
 
                         <div class="space-y-4">
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Titre du rapport</label>
-                                <input type="text" wire:model="title" class="mt-1 w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#8b0000]">
-                                @error('title') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Périmètre du test</label>
+                                    <input type="text" wire:model="perimeter" class="mt-1 w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#8b0000]">
+                                    @error('perimeter') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Version testée (Optionnel)</label>
+                                    <input type="text" wire:model="testedVersion" placeholder="Ex: v1.0.2" class="mt-1 w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#8b0000]">
+                                    @error('testedVersion') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
+                                </div>
                             </div>
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Conclusion & Recommandations</label>
-                                <textarea wire:model="conclusion" rows="5" class="mt-1 w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#8b0000]" placeholder="Rédigez votre synthèse ici..."></textarea>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">NB / Conclusion & Remarques</label>
+                                <textarea wire:model="conclusion" rows="4" class="mt-1 w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#8b0000]" placeholder="Ex: Tout marche globalement sauf l'interface ticket non disponible"></textarea>
                                 @error('conclusion') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
                             </div>
                         </div>
