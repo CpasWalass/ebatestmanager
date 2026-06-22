@@ -268,6 +268,23 @@
                                     <span class="text-sm font-semibold text-gray-700 dark:text-gray-300">NB / Conclusion :</span>
                                     <p class="mt-1 text-sm text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-800/50 p-3 rounded-md border border-gray-100 dark:border-gray-700">{{ $report->notes }}</p>
                                 </div>
+
+                                @if($report->responses && $report->responses->count() > 0)
+                                <div class="mt-4 border-t border-gray-100 dark:border-gray-700 pt-4">
+                                    <h4 class="text-sm font-bold text-gray-900 dark:text-white mb-3">Réponses des développeurs</h4>
+                                    <div class="space-y-3">
+                                        @foreach($report->responses as $response)
+                                        <div class="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-3 border border-blue-100 dark:border-blue-800">
+                                            <div class="flex items-center gap-2 mb-1">
+                                                <span class="font-semibold text-blue-800 dark:text-blue-300 text-sm">{{ $response->user->name ?? 'Développeur' }}</span>
+                                                <span class="text-xs text-blue-600/70 dark:text-blue-400/70">{{ $response->created_at->format('d/m/Y H:i') }}</span>
+                                            </div>
+                                            <p class="text-sm text-blue-900 dark:text-blue-200 whitespace-pre-wrap">{{ $response->content }}</p>
+                                        </div>
+                                        @endforeach
+                                    </div>
+                                </div>
+                                @endif
                             </div>
                             
                             <div class="flex flex-col gap-2 min-w-[180px]">
@@ -275,15 +292,20 @@
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
                                     PDF / Export
                                 </a>
-                                @if($report->status !== 'sent')
+                                @if(!in_array($report->status, ['sent', 'resolved']))
                                 <button wire:click="sendReportToDev({{ $report->id }})" wire:confirm="Transférer ce rapport détaillé aux développeurs assignés ?" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md font-medium text-sm text-center transition shadow-sm flex items-center justify-center gap-2">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
                                     Transférer au dev
                                 </button>
-                                @else
+                                @elseif($report->status === 'sent')
+                                <button disabled class="px-4 py-2 bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400 rounded-md font-medium text-sm text-center cursor-not-allowed flex items-center justify-center gap-2 border border-yellow-200 dark:border-yellow-800">
+                                    <svg class="w-4 h-4 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                    En attente (Dev)
+                                </button>
+                                @elseif($report->status === 'resolved')
                                 <button disabled class="px-4 py-2 bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 rounded-md font-medium text-sm text-center cursor-not-allowed flex items-center justify-center gap-2 border border-green-200 dark:border-green-800">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                                    Déjà transféré
+                                    Déjà traité
                                 </button>
                                 @endif
                             </div>

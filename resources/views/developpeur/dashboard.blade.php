@@ -138,9 +138,10 @@
 
                             @if($rapport->stats)
                             <div class="flex items-center gap-4 mt-3 text-xs">
-                                <span class="flex items-center gap-1 text-green-600">✅ {{ $rapport->stats['success'] ?? 0 }} succès</span>
-                                <span class="flex items-center gap-1 text-red-600">💣 {{ $rapport->stats['failure'] ?? 0 }} échecs</span>
-                                <span class="flex items-center gap-1 text-amber-600">🤔 {{ $rapport->stats['reserve'] ?? 0 }} sous réserve</span>
+                                <span class="flex items-center gap-1 text-green-600">✅ {{ $rapport->stats['valide'] ?? 0 }} succès</span>
+                                <span class="flex items-center gap-1 text-red-600">💣 {{ $rapport->stats['non_valide'] ?? 0 }} échecs</span>
+                                <span class="flex items-center gap-1 text-amber-600">🤔 {{ $rapport->stats['sous_reserve'] ?? 0 }} sous réserve</span>
+                                <span class="flex items-center gap-1 text-blue-600">👷‍♂️ {{ $rapport->stats['optimisation'] ?? 0 }} optimisation</span>
                             </div>
                             @endif
                         </div>
