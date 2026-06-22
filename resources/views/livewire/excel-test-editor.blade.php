@@ -111,7 +111,7 @@
                                 @php
                                     $isTester = auth()->check() && auth()->user()->hasRole('tester');
                                     $isDev = auth()->check() && auth()->user()->hasRole('developer');
-                                    $testerEditableFields = ['resultats_obtenus', 'nature', 'status', 'commentaires'];
+                                    $testerEditableFields = ['etat_test', 'resultats_obtenus', 'nature', 'status', 'commentaires'];
                                     
                                     $isReadOnly = false;
                                     if ($isTester) {
@@ -120,7 +120,7 @@
                                         $isReadOnly = $field['name'] !== 'commentaires';
                                     }
                                     
-                                    $cellBgClass = $badgeClass ?: ($isReadOnly ? 'bg-gray-100/50 dark:bg-gray-800/60 cursor-default' : 'bg-white dark:bg-gray-800');
+                                    $cellBgClass = $badgeClass ?: ($isReadOnly ? 'bg-gray-200 dark:bg-gray-800 cursor-not-allowed opacity-80' : 'bg-white dark:bg-gray-900');
                                 @endphp
                                 
                                 <td class="p-0 border-r border-gray-200 dark:border-gray-700 {{ $cellBgClass }} relative transition-colors" @if($inlineStyle) style="{{ $inlineStyle }}" @endif>
