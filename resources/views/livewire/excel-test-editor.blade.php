@@ -108,16 +108,24 @@
                                 }
                             @endphp
 
-                                @php
                                     $isTester = auth()->check() && auth()->user()->hasRole('tester');
                                     $isDev = auth()->check() && auth()->user()->hasRole('developer');
-                                    $testerEditableFields = ['etat_test', 'resultats_obtenus', 'nature', 'status', 'commentaires'];
+                                    
+                                    // Mots-clés qui rendent une colonne modifiable par le testeur
+                                    $testerEditableKeywords = ['etat', 'status', 'statut', 'result', 'nature', 'comment'];
                                     
                                     $isReadOnly = false;
                                     if ($isTester) {
-                                        $isReadOnly = !in_array($field['name'], $testerEditableFields);
+                                        $isEditableForTester = false;
+                                        foreach ($testerEditableKeywords as $keyword) {
+                                            if (str_contains(strtolower($field['name']), $keyword)) {
+                                                $isEditableForTester = true;
+                                                break;
+                                            }
+                                        }
+                                        $isReadOnly = !$isEditableForTester;
                                     } elseif ($isDev) {
-                                        $isReadOnly = $field['name'] !== 'commentaires';
+                                        $isReadOnly = !str_contains(strtolower($field['name']), 'comment');
                                     }
                                     
                                     $cellBgClass = $badgeClass ?: ($isReadOnly ? 'bg-gray-200 dark:bg-gray-800 cursor-not-allowed opacity-80' : 'bg-white dark:bg-gray-900');
