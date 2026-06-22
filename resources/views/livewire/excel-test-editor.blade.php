@@ -108,6 +108,7 @@
                                 }
                             @endphp
 
+                                @php
                                     $isTester = auth()->check() && auth()->user()->hasRole('tester');
                                     $isDev = auth()->check() && auth()->user()->hasRole('developer');
                                     
