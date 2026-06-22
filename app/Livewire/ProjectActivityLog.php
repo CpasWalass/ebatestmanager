@@ -26,11 +26,19 @@ class ProjectActivityLog extends Component
         $activities = Activity::with('causer')
             ->where(function ($query) {
                 // Activités directement sur le projet
-                $query->where('subject_type', Project::class)
+                $query->where(function($q) {
+                    $q->where('subject_type', Project::class)
                       ->where('subject_id', $this->projectId);
-                
-                // On pourrait étendre ici pour lier les TestCase et TestExecution via joins ou subqueries
-                // Pour l'instant on garde ça simple et robuste.
+                })
+                // Activités sur les cas de test de ce projet
+                ->orWhere(function($q) {
+                    $q->where('subject_type', \App\Models\TestCase::class)
+                      ->whereIn('subject_id', function($sub) {
+                          $sub->select('id')
+                              ->from('test_cases')
+                              ->where('project_id', $this->projectId);
+                      });
+                });
             })
             ->latest()
             ->paginate(15);
