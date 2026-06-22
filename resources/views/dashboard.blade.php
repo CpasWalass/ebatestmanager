@@ -101,6 +101,35 @@
             </div>
         </div>
 
+        <!-- Messages / Notifications -->
+        @if(isset($unreadMessages) && $unreadMessages->count() > 0)
+        <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-6 shadow-sm mb-6">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-lg font-bold text-blue-900 dark:text-blue-300 flex items-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
+                    Nouveaux retours développeurs ({{ $unreadMessages->count() }})
+                </h2>
+            </div>
+            <div class="space-y-3">
+                @foreach($unreadMessages as $message)
+                <div class="bg-white dark:bg-gray-800 p-4 rounded-md shadow-sm border border-blue-100 dark:border-blue-700">
+                    <div class="flex justify-between items-start mb-2">
+                        <span class="text-sm font-semibold text-gray-900 dark:text-white">{{ $message->sender->name }}</span>
+                        <span class="text-xs text-gray-500">{{ $message->created_at->diffForHumans() }}</span>
+                    </div>
+                    <p class="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-line">{{ $message->content }}</p>
+                    <div class="mt-3 text-right">
+                        <form action="{{ route('messages.read', $message->id) }}" method="POST" class="inline">
+                            @csrf
+                            <button type="submit" class="text-xs font-medium text-blue-600 hover:text-blue-800">Marquer comme lu</button>
+                        </form>
+                    </div>
+                </div>
+                @endforeach
+            </div>
+        </div>
+        @endif
+
         <!-- Main Content Grid -->
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <!-- Left Column: Active Project -->

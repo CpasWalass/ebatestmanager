@@ -61,6 +61,14 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
         return $pdf->download('rapport_' . \Illuminate\Support\Str::slug($report->perimeter ?? $report->title) . '.pdf');
     })->name('rapports.pdf');
 
+    // Marquer un message comme lu
+    Route::post('/messages/{message}/read', function (\App\Models\Message $message) {
+        if ($message->receiver_id === auth()->id()) {
+            $message->markAsRead();
+        }
+        return back();
+    })->name('messages.read');
+
     // Profil & Paramètres
     Route::get('/profile', \App\Livewire\UserProfile::class)->name('profile.show');
     Route::get('/settings', \App\Livewire\UserSettings::class)->name('settings.show');

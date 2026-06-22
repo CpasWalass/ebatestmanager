@@ -195,5 +195,34 @@
             </div>
         @endif
     </div>
+    {{-- Mes Réponses --}}
+    @if($mesReponses->count() > 0)
+    <div class="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden mt-6">
+        <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
+            <h2 class="font-semibold text-gray-900 dark:text-white">Mes dernières réponses</h2>
+            <span class="text-xs font-medium px-2.5 py-1 rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400">
+                {{ $mesReponses->count() }}
+            </span>
+        </div>
+        <div class="divide-y divide-gray-100 dark:divide-gray-700">
+            @foreach($mesReponses as $reponse)
+            <div class="px-6 py-4">
+                <div class="flex items-start justify-between">
+                    <div>
+                        <h3 class="font-semibold text-gray-900 dark:text-white">{{ $reponse->report?->title }}</h3>
+                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                            Projet : {{ $reponse->report?->project?->name }} · Envoyé le {{ $reponse->created_at->format('d/m/Y à H:i') }}
+                        </p>
+                        <div class="mt-2 text-sm text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-700/50 p-3 rounded-lg">
+                            {{ $reponse->content }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            @endforeach
+        </div>
+    </div>
+    @endif
+
 </div>
 @endsection

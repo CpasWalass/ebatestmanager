@@ -28,11 +28,18 @@ class DashboardController extends Controller
         
         $validationRate = $totalTestCases > 0 ? round(($validCases / $totalTestCases) * 100) : 0;
 
+        $unreadMessages = \App\Models\Message::where('receiver_id', auth()->id())
+            ->whereNull('read_at')
+            ->with('sender')
+            ->latest()
+            ->get();
+
         return view('dashboard', [
             'activeProjects' => $activeProjects,
             'uatProjects' => $uatProjects,
             'totalTemplates' => $totalTemplates,
             'validationRate' => $validationRate,
+            'unreadMessages' => $unreadMessages,
         ]);
     }
 }
