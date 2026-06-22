@@ -31,10 +31,36 @@ class ExcelTestEditor extends Component
     public ?string $importResult = null;
     public ?string $importError = null;
 
+    // Commit Session
+    public bool $showCommitModal = false;
+    public string $commitMessage = '';
+
     public function mount(Project $project, TestCaseTemplate $template): void
     {
         $this->project  = $project;
         $this->template = $template;
+    }
+
+    public function openCommitModal(): void
+    {
+        $this->commitMessage = '';
+        $this->showCommitModal = true;
+    }
+
+    public function commitSession(): void
+    {
+        $this->validate([
+            'commitMessage' => 'required|min:3|max:500',
+        ]);
+
+        activity()
+            ->performedOn($this->project)
+            ->causedBy(auth()->user())
+            ->log("Session de test soumise ({$this->template->name}) : " . $this->commitMessage);
+
+        $this->showCommitModal = false;
+        $this->commitMessage = '';
+        session()->flash('success', 'Votre session de tests a été validée avec succès.');
     }
 
     #[Computed]

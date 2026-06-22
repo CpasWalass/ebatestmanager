@@ -11,16 +11,7 @@ use Spatie\Activitylog\Support\LogOptions;
 
 class TestCase extends Model
 {
-    use BelongsToTenant, LogsActivity;
-
-    public function getActivitylogOptions(): LogOptions
-    {
-        return LogOptions::defaults()
-            ->logOnly(['data'])
-            ->logOnlyDirty()
-            ->dontLogEmptyChanges()
-            ->setDescriptionForEvent(fn(string $eventName) => "Ce cas de test a été {$eventName}");
-    }
+    use BelongsToTenant;
 
     protected $fillable = [
         'template_id',

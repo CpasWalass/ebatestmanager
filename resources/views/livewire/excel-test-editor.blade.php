@@ -59,11 +59,19 @@
                     <span>Ajouter une ligne</span>
                 </button>
             </div>
-            @elseif(auth()->check() && auth()->user()->hasRole('tester'))
+            @else
+            <div class="flex items-center space-x-2">
+                <button wire:click="openCommitModal" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-md font-medium text-sm flex items-center space-x-2 transition shadow-sm shadow-green-500/30">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                    <span>Soumettre ma session</span>
+                </button>
+            </div>
+            @if(auth()->check() && auth()->user()->hasRole('tester'))
             <button wire:click="$dispatch('openReportModal', { projectId: {{ $project->id }}, templateId: {{ $template->id }} })" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md font-medium text-sm flex items-center space-x-2 transition shadow-sm">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
                 <span>Générer le rapport</span>
             </button>
+            @endif
             @endif
         </div>
         <livewire:report-generator />
@@ -408,6 +416,37 @@
                     </button>
                     <button type="button" wire:click="importExcel" wire:loading.attr="disabled" class="inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-[#8b0000] text-base font-medium text-white hover:bg-red-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#8b0000] sm:text-sm disabled:opacity-50">
                         Lancer l'importation
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    </div>
+    @endif
+
+    <!-- Modal Commit Session -->
+    @if($showCommitModal)
+    <div class="fixed inset-0 z-[60] overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+        <div class="flex items-end justify-center min-h-screen pt-10 px-4 pb-24 text-center sm:block sm:p-0">
+            <div class="fixed inset-0 bg-gray-900 bg-opacity-75 transition-opacity" aria-hidden="true" wire:click="$set('showCommitModal', false)"></div>
+            <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+            <div class="relative z-10 inline-block align-bottom bg-white dark:bg-gray-800 rounded-xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg w-full border border-gray-200 dark:border-gray-700">
+                <div class="px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                    <h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-white mb-2">Soumettre votre session de tests</h3>
+                    <p class="text-sm text-gray-500 mb-4">Cette action va enregistrer proprement vos résultats dans l'historique global du projet. Entrez un message décrivant ce que vous avez testé ou trouvé.</p>
+                    
+                    <div class="mt-4">
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Message de validation (obligatoire)</label>
+                        <textarea wire:model.defer="commitMessage" rows="3" class="w-full rounded-md border-gray-300 shadow-sm focus:border-[#8b0000] focus:ring focus:ring-[#8b0000] focus:ring-opacity-50 dark:bg-gray-700 dark:border-gray-600 dark:text-white" placeholder="Ex: Tests d'inscription terminés. 2 bugs mineurs trouvés."></textarea>
+                        @error('commitMessage') <span class="text-red-500 text-xs mt-1 block">{{ $message }}</span> @enderror
+                    </div>
+                </div>
+                <div class="px-4 py-3 bg-gray-50 dark:bg-gray-800/50 sm:px-6 flex justify-end gap-3 border-t border-gray-200 dark:border-gray-700">
+                    <button type="button" wire:click="$set('showCommitModal', false)" class="inline-flex justify-center rounded-md border border-gray-300 dark:border-gray-600 shadow-sm px-4 py-2 bg-white dark:bg-gray-700 text-base font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#8b0000] sm:text-sm">
+                        Annuler
+                    </button>
+                    <button type="button" wire:click="commitSession" class="inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-green-600 text-base font-medium text-white hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-600 sm:text-sm">
+                        Soumettre au journal
                     </button>
                 </div>
             </div>
