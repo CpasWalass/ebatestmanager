@@ -134,7 +134,7 @@
                                         }
                                         $isReadOnly = !$isEditableForTester;
                                     } elseif ($isDev) {
-                                        $isReadOnly = !str_contains(strtolower($field['name']), 'comment');
+                                        $isReadOnly = !str_contains(strtolower($field['name']), 'retour_dev');
                                     }
                                     
                                     $cellBgClass = $badgeClass ?: ($isReadOnly ? 'bg-gray-200 dark:bg-gray-800 cursor-not-allowed opacity-80' : 'bg-white dark:bg-gray-900');
