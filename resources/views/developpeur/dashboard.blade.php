@@ -155,7 +155,7 @@
                                 onmouseout="this.style.background='#CC0000'">
                                 Répondre
                             </button>
-                            <a href="#" class="px-3 py-1.5 text-xs font-medium text-center rounded-lg border border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 transition text-gray-600 dark:text-gray-300">
+                            <a href="{{ route('rapports.pdf', $rapport->id) }}" target="_blank" class="px-3 py-1.5 text-xs font-medium text-center rounded-lg border border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 transition text-gray-600 dark:text-gray-300">
                                 Voir PDF
                             </a>
                         </div>

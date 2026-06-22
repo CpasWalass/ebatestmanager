@@ -54,6 +54,13 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
         return response()->download(storage_path('app/' . $path))->deleteFileAfterSend(true);
     })->name('projets.export');
 
+    // Export PDF d'un rapport
+    Route::get('/rapports/{report}/pdf', function (\App\Models\Report $report) {
+        // Optionnel : vérifier les droits d'accès
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('reports.pdf', compact('report'));
+        return $pdf->download('rapport_' . \Illuminate\Support\Str::slug($report->perimeter ?? $report->title) . '.pdf');
+    })->name('rapports.pdf');
+
     // Profil & Paramètres
     Route::get('/profile', \App\Livewire\UserProfile::class)->name('profile.show');
     Route::get('/settings', \App\Livewire\UserSettings::class)->name('settings.show');
