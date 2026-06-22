@@ -76,8 +76,13 @@ class ProjectExcelImport
                 ],
             ],
             // Common aliases that may appear in Excel files
-            'etat'   => 'etat_test',
-            'statut' => 'status',
+            'etat'          => 'etat_test',
+            'etat_de_test'  => 'etat_test',
+            'statut'        => 'status',
+            'resultat_obtenu' => 'resultats_obtenus',
+            'resultat_attendu' => 'resultats_attendus',
+            'scenario_de_test' => 'scenarios_test',
+            'scenarios_de_test' => 'scenarios_test',
         ];
     }
 
