@@ -105,10 +105,46 @@ Route::middleware(['auth:sanctum', 'verified', 'role:tester'])
         })->name('projets.index');
 
         Route::get('/projets/{project}', function (Project $project) {
+            $user = auth()->user();
+            if ($user->hasRole('developer')) {
+                if (!$project->developers()->where('users.id', $user->id)->exists()) {
+                    abort(403, "Vous n'êtes pas assigné à ce projet.");
+                }
+            }
+            if ($user->hasRole('tester')) {
+                $assignedToProject = \App\Models\TestCaseAssignment::where('user_id', $user->id)
+                    ->where('project_id', $project->id)
+                    ->exists();
+                $assignedToTemplate = \App\Models\TestCaseAssignment::where('user_id', $user->id)
+                    ->whereHas('template', function($q) use ($project) {
+                        $q->where('project_id', $project->id);
+                    })
+                    ->exists();
+                if (!$assignedToProject && !$assignedToTemplate) {
+                    abort(403, "Vous n'êtes pas assigné à ce projet.");
+                }
+            }
             return view('projets.show', compact('project'));
-        })->name('projet.show');
+        })->name('projets.show');
 
         Route::get('/projets/{project}/cas-de-test/{template}', function (Project $project, TestCaseTemplate $template) {
+            $user = auth()->user();
+            if ($user->hasRole('developer')) {
+                if (!$project->developers()->where('users.id', $user->id)->exists()) {
+                    abort(403, "Vous n'êtes pas assigné à ce projet.");
+                }
+            }
+            if ($user->hasRole('tester')) {
+                $assignedToProject = \App\Models\TestCaseAssignment::where('user_id', $user->id)
+                    ->where('project_id', $project->id)
+                    ->exists();
+                $assignedToTemplate = \App\Models\TestCaseAssignment::where('user_id', $user->id)
+                    ->where('template_id', $template->id)
+                    ->exists();
+                if (!$assignedToProject && !$assignedToTemplate) {
+                    abort(403, "Vous n'êtes pas assigné à ce cas de test.");
+                }
+            }
             return view('projets.test-editor', compact('project', 'template'));
         })->name('executer');
     });

@@ -64,6 +64,13 @@ class ProjectManager extends Component
             
             $query->whereIn('id', $allAssignedProjectIds);
         }
+
+        if (auth()->check() && auth()->user()->hasRole('developer')) {
+            $user = auth()->user();
+            $query->whereHas('developers', function($q) use ($user) {
+                $q->where('users.id', $user->id);
+            });
+        }
             
         return $query->get();
     }
