@@ -197,7 +197,7 @@
             </h2>
         </div>
 
-        @php $reports = $project->reports; @endphp
+        @php $reports = $project->reports->where('status', '!=', 'closed'); @endphp
         
         @if($reports->count() > 0)
             <div class="space-y-4">
