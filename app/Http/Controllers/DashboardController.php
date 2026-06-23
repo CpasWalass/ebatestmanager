@@ -12,7 +12,7 @@ class DashboardController extends Controller
     public function index(): View
     {
         $activeProjects = Project::count();
-        $uatProjects = Project::where('status', 'en_cours')->count();
+        $uatProjects = Project::where('status', 'in_progress')->count();
         $totalTemplates = \App\Models\TestCaseTemplate::count();
         
         $cases = TestCase::all(['data']);

@@ -226,7 +226,7 @@ class TestCaseManager extends Component
             ->count();
 
         if ($pendingReports === 0) {
-            $this->project->update(['status' => 'en_cours']);
+            $this->project->update(['status' => 'in_progress']);
         }
 
         // Notifier les développeurs que la correction est validée
