@@ -292,7 +292,7 @@
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
                                     Télécharger PDF
                                 </a>
-                                @if(!in_array($report->status, ['sent', 'resolved']))
+                                @if(!in_array($report->status, ['sent', 'resolved', 'closed']))
                                 <button wire:click="sendReportToDev({{ $report->id }})" wire:confirm="Transférer ce rapport détaillé aux développeurs assignés ?" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md font-medium text-sm text-center transition shadow-sm flex items-center justify-center gap-2">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
                                     Transférer au dev
@@ -303,10 +303,15 @@
                                     En attente (Dev)
                                 </button>
                                 @elseif($report->status === 'resolved')
-                                <button disabled class="px-4 py-2 bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 rounded-md font-medium text-sm text-center cursor-not-allowed flex items-center justify-center gap-2 border border-green-200 dark:border-green-800">
+                                <button wire:click="validateCorrection({{ $report->id }})" wire:confirm="Valider la correction du développeur et clôturer ce rapport ?" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-md font-medium text-sm text-center transition shadow-sm flex items-center justify-center gap-2">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                                    Déjà traité
+                                    Valider la correction
                                 </button>
+                                @elseif($report->status === 'closed')
+                                <span class="px-4 py-2 bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400 rounded-md font-medium text-sm text-center flex items-center justify-center gap-2 border border-gray-200 dark:border-gray-600">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                    Clôturé ✅
+                                </span>
                                 @endif
                             </div>
                         </div>

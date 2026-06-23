@@ -215,6 +215,35 @@ class TestCaseManager extends Component
         }
     }
 
+    public function validateCorrection(int $reportId): void
+    {
+        $report = \App\Models\Report::findOrFail($reportId);
+        $report->update(['status' => 'closed']);
+
+        // Repasser le projet en statut actif si plus aucun rapport n'est en attente
+        $pendingReports = \App\Models\Report::where('project_id', $this->project->id)
+            ->whereIn('status', ['sent', 'resolved'])
+            ->count();
+
+        if ($pendingReports === 0) {
+            $this->project->update(['status' => 'en_cours']);
+        }
+
+        // Notifier les développeurs que la correction est validée
+        $developers = $this->project->developers;
+        foreach ($developers as $dev) {
+            \App\Models\Message::create([
+                'sender_id'   => auth()->id(),
+                'receiver_id' => $dev->id,
+                'project_id'  => $this->project->id,
+                'type'        => 'system',
+                'content'     => "✅ Le chef de projet **" . auth()->user()->name . "** a validé votre correction sur le rapport **{$report->perimeter}**. Merci !",
+            ]);
+        }
+
+        session()->flash('success', 'Correction validée. Les développeurs ont été notifiés.');
+    }
+
     public function updatedGlobalExcelFile()
     {
         $this->importGlobalExcel();

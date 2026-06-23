@@ -38,7 +38,7 @@ class DeveloppeurDashboardController extends Controller
             ->latest()
             ->get();
 
-        $enAttente  = $rapportsRecus->count() + $projetsEnRevue->count();
+        $enAttente  = $rapportsRecus->count();
         $traites    = ReportResponse::where('user_id', $user->id)
             ->where('status', 'done')->count();
 
