@@ -13,17 +13,18 @@ use App\Models\TestCaseTemplate;
 | Page d'accueil publique
 |--------------------------------------------------------------------------
 */
+/*
 Route::get('/', function () {
     return view('welcome');
 });
-
+*/
 /*
 |--------------------------------------------------------------------------
 | Auth (login view personnalisée)
 |--------------------------------------------------------------------------
 */
 Route::middleware('guest:web')->group(function () {
-    Route::get('/login', function () {
+    Route::get('/', function () {
         return view('auth.login');
     })->name('login');
 });

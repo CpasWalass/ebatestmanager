@@ -402,11 +402,11 @@
     <div
         x-data="{ open: false }"
         x-on:open-archives.window="open = true"
-        x-cloak
     >
         {{-- Overlay --}}
         <div
             x-show="open"
+            x-cloak
             x-transition:enter="transition ease-out duration-200"
             x-transition:enter-start="opacity-0"
             x-transition:enter-end="opacity-100"
@@ -420,6 +420,7 @@
         {{-- Panneau latéral --}}
         <div
             x-show="open"
+            x-cloak
             x-transition:enter="transition ease-out duration-300"
             x-transition:enter-start="translate-x-full"
             x-transition:enter-end="translate-x-0"
