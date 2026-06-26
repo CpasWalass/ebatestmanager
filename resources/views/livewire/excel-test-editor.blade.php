@@ -10,7 +10,7 @@
                     @php
                         $isTester = auth()->check() && auth()->user()->hasRole('tester');
                         $backProjets = $isTester ? route('testeur.projets.index') : route('projets.index');
-                        $backProject = $isTester ? route('testeur.projet.show', $project) : route('projets.show', $project);
+                        $backProject = $isTester ? route('testeur.projets.show', $project) : route('projets.show', $project);
                     @endphp
                     <a href="{{ $backProjets }}" class="hover:text-gray-900 dark:hover:text-white transition">Projets</a>
                 </li>

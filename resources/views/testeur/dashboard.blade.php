@@ -144,7 +144,7 @@
                                             <span class="text-xs font-semibold text-gray-600 dark:text-gray-300 w-8 text-right">{{ $pct }}%</span>
                                         </div>
                                     </div>
-                                    <a href="{{ route('testeur.projet.show', $project->id) }}" class="flex-shrink-0 px-3 py-1.5 text-xs font-medium rounded-lg border transition"
+                                    <a href="{{ route('testeur.projets.show', $project->id) }}" class="flex-shrink-0 px-3 py-1.5 text-xs font-medium rounded-lg border transition"
                                         style="color:#CC0000; border-color:#CC0000;"
                                         onmouseover="this.style.background='#CC0000';this.style.color='white';"
                                         onmouseout="this.style.background='transparent';this.style.color='#CC0000';">

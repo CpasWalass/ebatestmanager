@@ -45,7 +45,7 @@
         @forelse($this->projects as $project)
             @php
                 $projLink = (auth()->check() && auth()->user()->hasRole('tester'))
-                    ? route('testeur.projet.show', $project)
+                    ? route('testeur.projets.show', $project)
                     : route('projets.show', $project);
             @endphp
             <a href="{{ $projLink }}" class="block bg-white dark:bg-gray-800 rounded-xl shadow-sm hover:shadow-md border border-gray-200 dark:border-gray-700 p-6 transition group cursor-pointer">
