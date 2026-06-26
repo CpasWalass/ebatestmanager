@@ -80,7 +80,7 @@
 
                 {{-- Archives rapports clôturés --}}
                 <button
-                    onclick="window.dispatchEvent(new CustomEvent('open-archives'))"
+                    onclick="Livewire.dispatch('openArchives')"
                     class="p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition hidden sm:block"
                     id="btn-apps"
                     title="Rapports archivés"

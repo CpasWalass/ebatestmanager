@@ -400,8 +400,12 @@
     {{-- Drawer : Rapports Archivés (clôturés) --}}
     @php $closedReports = $project->reports->where('status', 'closed'); @endphp
     <div
-        x-data="{ open: false }"
-        x-on:open-archives.window="open = true"
+        x-data="{
+            open: false,
+            init() {
+                Livewire.on('openArchives', () => { this.open = true })
+            }
+        }"
     >
         {{-- Overlay --}}
         <div
