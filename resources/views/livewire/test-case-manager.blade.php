@@ -399,118 +399,94 @@
 
     {{-- Drawer : Rapports Archivés (clôturés) --}}
     @php $closedReports = $project->reports->where('status', 'closed'); @endphp
-    <div
-        x-data="{
-            open: false,
-            init() {
-                Livewire.on('openArchives', () => { this.open = true })
-            }
-        }"
-    >
-        {{-- Overlay --}}
-        <div
-            x-show="open"
-            x-transition:enter="transition ease-out duration-200"
-            x-transition:enter-start="opacity-0"
-            x-transition:enter-end="opacity-100"
-            x-transition:leave="transition ease-in duration-150"
-            x-transition:leave-start="opacity-100"
-            x-transition:leave-end="opacity-0"
-            class="fixed inset-0 bg-black/40 z-[70]"
-            @click="open = false"
-            style="display:none"
-        ></div>
 
-        {{-- Panneau latéral --}}
-        <div
-            x-show="open"
-            x-transition:enter="transition ease-out duration-300"
-            x-transition:enter-start="translate-x-full"
-            x-transition:enter-end="translate-x-0"
-            x-transition:leave="transition ease-in duration-200"
-            x-transition:leave-start="translate-x-0"
-            x-transition:leave-end="translate-x-full"
-            class="fixed top-0 right-0 h-full w-full max-w-md bg-white dark:bg-gray-800 shadow-2xl z-[80] flex flex-col"
-            style="display:none"
-        >
-            {{-- Header --}}
-            <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100 dark:border-gray-700">
-                <div class="flex items-center gap-3">
-                    <div class="w-9 h-9 rounded-xl flex items-center justify-center bg-gray-100 dark:bg-gray-700">
-                        <svg class="w-5 h-5 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8l1.707 11.293A1 1 0 007.697 20h8.606a1 1 0 00.99-.707L19 8M10 12h4"/>
+    @if($showArchives)
+    {{-- Overlay --}}
+    <div
+        class="fixed inset-0 bg-black/40 z-[70]"
+        wire:click="$set('showArchives', false)"
+    ></div>
+
+    {{-- Panneau latéral --}}
+    <div class="fixed top-0 right-0 h-full w-full max-w-md bg-white dark:bg-gray-800 shadow-2xl z-[80] flex flex-col">
+        {{-- Header --}}
+        <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100 dark:border-gray-700">
+            <div class="flex items-center gap-3">
+                <div class="w-9 h-9 rounded-xl flex items-center justify-center bg-gray-100 dark:bg-gray-700">
+                    <svg class="w-5 h-5 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8l1.707 11.293A1 1 0 007.697 20h8.606a1 1 0 00.99-.707L19 8M10 12h4"/>
+                    </svg>
+                </div>
+                <div>
+                    <h2 class="font-bold text-gray-900 dark:text-white text-sm">Rapports archivés</h2>
+                    <p class="text-xs text-gray-500 dark:text-gray-400">{{ $closedReports->count() }} rapport(s) clôturé(s)</p>
+                </div>
+            </div>
+            <button wire:click="$set('showArchives', false)" class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition">
+                <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+            </button>
+        </div>
+
+        {{-- Contenu --}}
+        <div class="flex-1 overflow-y-auto p-6 space-y-4">
+            @if($closedReports->isEmpty())
+                <div class="flex flex-col items-center justify-center py-16 text-center">
+                    <div class="w-16 h-16 rounded-2xl bg-gray-100 dark:bg-gray-700 flex items-center justify-center mb-4">
+                        <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8l1.707 11.293A1 1 0 007.697 20h8.606a1 1 0 00.99-.707L19 8"/>
                         </svg>
                     </div>
-                    <div>
-                        <h2 class="font-bold text-gray-900 dark:text-white text-sm">Rapports archivés</h2>
-                        <p class="text-xs text-gray-500 dark:text-gray-400">{{ $closedReports->count() }} rapport(s) clôturé(s)</p>
+                    <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Aucun rapport archivé</p>
+                    <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">Les rapports validés apparaîtront ici</p>
+                </div>
+            @else
+                @foreach($closedReports as $report)
+                <div class="bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 rounded-xl p-4">
+                    <div class="flex items-start justify-between gap-3 mb-3">
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center gap-2 mb-1">
+                                <span class="inline-flex items-center px-2 py-0.5 text-xs font-medium rounded-full
+                                    {{ $report->type === 'iat' ? 'bg-blue-100 text-blue-700' : 'bg-purple-100 text-purple-700' }}">
+                                    {{ strtoupper($report->type) }}
+                                </span>
+                                <span class="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-full bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
+                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                                    Clôturé
+                                </span>
+                            </div>
+                            <h3 class="font-semibold text-gray-900 dark:text-white text-sm truncate">{{ $report->title }}</h3>
+                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{{ $report->perimeter }}</p>
+                        </div>
+                    </div>
+
+                    @if($report->stats)
+                    <div class="flex items-center gap-3 text-xs mb-3 flex-wrap">
+                        <span class="text-green-600">✅ {{ $report->stats['valide'] ?? 0 }}</span>
+                        <span class="text-red-600">💣 {{ $report->stats['non_valide'] ?? 0 }}</span>
+                        <span class="text-amber-600">🤔 {{ $report->stats['sous_reserve'] ?? 0 }}</span>
+                        <span class="text-blue-600">👷 {{ $report->stats['optimisation'] ?? 0 }}</span>
+                    </div>
+                    @endif
+
+                    <div class="flex items-center justify-between text-xs text-gray-400 dark:text-gray-500">
+                        <span>Par {{ $report->creator?->name }}</span>
+                        <span>{{ $report->updated_at->format('d/m/Y') }}</span>
+                    </div>
+
+                    <div class="mt-3">
+                        <a href="{{ route('rapports.pdf', $report->id) }}" target="_blank"
+                           class="w-full flex items-center justify-center gap-2 px-3 py-2 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 text-gray-700 dark:text-gray-300 text-xs font-medium rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 transition">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                            Télécharger PDF
+                        </a>
                     </div>
                 </div>
-                <button @click="open = false" class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition">
-                    <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                    </svg>
-                </button>
-            </div>
-
-            {{-- Contenu --}}
-            <div class="flex-1 overflow-y-auto p-6 space-y-4">
-                @if($closedReports->isEmpty())
-                    <div class="flex flex-col items-center justify-center py-16 text-center">
-                        <div class="w-16 h-16 rounded-2xl bg-gray-100 dark:bg-gray-700 flex items-center justify-center mb-4">
-                            <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8l1.707 11.293A1 1 0 007.697 20h8.606a1 1 0 00.99-.707L19 8"/>
-                            </svg>
-                        </div>
-                        <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Aucun rapport archivé</p>
-                        <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">Les rapports validés apparaîtront ici</p>
-                    </div>
-                @else
-                    @foreach($closedReports as $report)
-                    <div class="bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 rounded-xl p-4">
-                        <div class="flex items-start justify-between gap-3 mb-3">
-                            <div class="flex-1 min-w-0">
-                                <div class="flex items-center gap-2 mb-1">
-                                    <span class="inline-flex items-center px-2 py-0.5 text-xs font-medium rounded-full
-                                        {{ $report->type === 'iat' ? 'bg-blue-100 text-blue-700' : 'bg-purple-100 text-purple-700' }}">
-                                        {{ strtoupper($report->type) }}
-                                    </span>
-                                    <span class="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-full bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
-                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                                        Clôturé
-                                    </span>
-                                </div>
-                                <h3 class="font-semibold text-gray-900 dark:text-white text-sm truncate">{{ $report->title }}</h3>
-                                <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{{ $report->perimeter }}</p>
-                            </div>
-                        </div>
-
-                        @if($report->stats)
-                        <div class="flex items-center gap-3 text-xs mb-3 flex-wrap">
-                            <span class="text-green-600">✅ {{ $report->stats['valide'] ?? 0 }}</span>
-                            <span class="text-red-600">💣 {{ $report->stats['non_valide'] ?? 0 }}</span>
-                            <span class="text-amber-600">🤔 {{ $report->stats['sous_reserve'] ?? 0 }}</span>
-                            <span class="text-blue-600">👷 {{ $report->stats['optimisation'] ?? 0 }}</span>
-                        </div>
-                        @endif
-
-                        <div class="flex items-center justify-between text-xs text-gray-400 dark:text-gray-500">
-                            <span>Par {{ $report->creator?->name }}</span>
-                            <span>{{ $report->updated_at->format('d/m/Y') }}</span>
-                        </div>
-
-                        <div class="mt-3">
-                            <a href="{{ route('rapports.pdf', $report->id) }}" target="_blank"
-                               class="w-full flex items-center justify-center gap-2 px-3 py-2 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 text-gray-700 dark:text-gray-300 text-xs font-medium rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 transition">
-                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-                                Télécharger PDF
-                            </a>
-                        </div>
-                    </div>
-                    @endforeach
-                @endif
-            </div>
+                @endforeach
+            @endif
         </div>
     </div>
+    @endif
 
 </div>

@@ -6,6 +6,7 @@ use App\Models\Project;
 use App\Models\TestCaseTemplate;
 use Livewire\Component;
 use Livewire\Attributes\Computed;
+use Livewire\Attributes\On;
 use Livewire\WithFileUploads;
 use App\Imports\ProjectExcelImport;
 
@@ -25,10 +26,20 @@ class TestCaseManager extends Component
     public bool $showDevModal = false;
     public array $selectedDevIds = [];
 
+    // Archives drawer
+    public bool $showArchives = false;
+
+
     public function mount(Project $project): void
     {
         $this->project = $project;
         $this->selectedDevIds = $project->developers()->pluck('users.id')->map(fn($id) => (string) $id)->toArray();
+    }
+
+    #[On('openArchives')]
+    public function openArchives(): void
+    {
+        $this->showArchives = true;
     }
 
     #[Computed]
