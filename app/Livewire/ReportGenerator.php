@@ -80,6 +80,39 @@ class ReportGenerator extends Component
 
         $reportTitle = 'EXECUTIVE REPORT ' . $this->project->name . ($this->template ? ' - ' . $this->template->name : '');
 
+        // Chercher s'il y a un rapport en re-test pour ce périmètre
+        $existingReport = Report::where('project_id', $this->project->id)
+            ->where('perimeter', $this->perimeter)
+            ->where('status', 'retest')
+            ->first();
+
+        if ($existingReport) {
+            // Mettre à jour le rapport existant
+            $existingReport->update([
+                'tested_version' => $this->testedVersion,
+                'test_date' => now(),
+                'notes' => $this->conclusion,
+                'stats' => $this->stats,
+                'status' => 'draft' // Repasse en brouillon pour le chef de projet
+            ]);
+
+            // Notify Project Manager
+            if ($this->project->createdBy) {
+                \App\Models\Message::create([
+                    'sender_id' => auth()->id(),
+                    'receiver_id' => $this->project->created_by,
+                    'project_id' => $this->project->id,
+                    'type' => 'system',
+                    'content' => "Le testeur **" . auth()->user()->name . "** a mis à jour le rapport **({$this->perimeter})** suite à un re-test."
+                ]);
+            }
+
+            $this->showModal = false;
+            session()->flash('success', 'Rapport de re-test mis à jour et renvoyé au Chef de Projet.');
+            return;
+        }
+
+        // Création d'un nouveau rapport si aucun rapport en re-test n'a été trouvé
         $report = Report::create([
             'project_id' => $this->project->id,
             'created_by' => auth()->id(),
@@ -90,7 +123,7 @@ class ReportGenerator extends Component
             'responsible' => auth()->user()->name,
             'notes' => $this->conclusion,
             'stats' => $this->stats,
-            'status' => 'submitted'
+            'status' => 'draft' // Utilise draft pour être cohérent
         ]);
 
         // Notify Project Manager
