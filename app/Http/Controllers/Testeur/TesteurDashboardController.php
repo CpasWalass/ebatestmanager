@@ -47,6 +47,13 @@ class TesteurDashboardController extends Controller
             ? round(($successCount / $totalExecuted) * 100, 1)
             : 0;
 
+        // Rapports en re-test (à vérifier par le testeur suite à une correction)
+        $rapportsEnRetest = \App\Models\Report::where('status', 'retest')
+            ->whereIn('project_id', $allAssignedProjectIds)
+            ->with(['project', 'creator'])
+            ->latest()
+            ->get();
+
         return view('testeur.dashboard', compact(
             'assignedProjects',
             'totalAssigned',
@@ -56,6 +63,7 @@ class TesteurDashboardController extends Controller
             'reserveCount',
             'optimCount',
             'successRate',
+            'rapportsEnRetest',
         ));
     }
 }

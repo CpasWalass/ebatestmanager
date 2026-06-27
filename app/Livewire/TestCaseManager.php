@@ -233,7 +233,7 @@ class TestCaseManager extends Component
 
         // Repasser le projet en statut actif si plus aucun rapport n'est en attente
         $pendingReports = \App\Models\Report::where('project_id', $this->project->id)
-            ->whereIn('status', ['sent', 'resolved'])
+            ->whereIn('status', ['sent', 'resolved', 'retest'])
             ->count();
 
         if ($pendingReports === 0) {
@@ -253,6 +253,62 @@ class TestCaseManager extends Component
         }
 
         session()->flash('success', 'Correction validée. Les développeurs ont été notifiés.');
+    }
+
+    public function rejectToTester(int $reportId): void
+    {
+        $report = \App\Models\Report::findOrFail($reportId);
+        $report->update(['status' => 'retest']);
+
+        // Trouver les testeurs assignés au projet
+        $testerIds = \App\Models\TestCaseAssignment::where('project_id', $this->project->id)
+            ->pluck('user_id')
+            ->unique();
+
+        $testers = \App\Models\User::whereIn('id', $testerIds)->get();
+
+        foreach ($testers as $tester) {
+            \App\Models\Message::create([
+                'sender_id'   => auth()->id(),
+                'receiver_id' => $tester->id,
+                'project_id'  => $this->project->id,
+                'type'        => 'system',
+                'content'     => "🔄 Le chef de projet **" . auth()->user()->name . "** vous demande de **re-tester** le projet **{$this->project->name}** suite à une correction du développeur sur le rapport **{$report->perimeter}**.",
+            ]);
+        }
+
+        // Notifier les développeurs
+        foreach ($this->project->developers as $dev) {
+            \App\Models\Message::create([
+                'sender_id'   => auth()->id(),
+                'receiver_id' => $dev->id,
+                'project_id'  => $this->project->id,
+                'type'        => 'system',
+                'content'     => "🔄 Votre correction sur le rapport **{$report->perimeter}** va être re-testée par l'équipe de test.",
+            ]);
+        }
+
+        session()->flash('success', 'Rapport renvoyé au testeur pour re-test. Les testeurs et développeurs ont été notifiés.');
+    }
+
+    public function relaunchDev(int $reportId): void
+    {
+        $report = \App\Models\Report::findOrFail($reportId);
+        $report->update(['status' => 'sent']);
+        $this->project->update(['status' => 'in_review']);
+
+        $developers = $this->project->developers;
+        foreach ($developers as $dev) {
+            \App\Models\Message::create([
+                'sender_id'   => auth()->id(),
+                'receiver_id' => $dev->id,
+                'project_id'  => $this->project->id,
+                'type'        => 'system',
+                'content'     => "❌ Le chef de projet **" . auth()->user()->name . "** a vérifié et constate que la correction n'est **pas satisfaisante** sur le rapport **{$report->perimeter}**. Merci de corriger à nouveau.",
+            ]);
+        }
+
+        session()->flash('success', 'Rapport relancé auprès des développeurs.');
     }
 
     public function updatedGlobalExcelFile()

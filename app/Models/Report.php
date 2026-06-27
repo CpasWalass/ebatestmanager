@@ -79,6 +79,9 @@ class Report extends Model
             'draft'        => 'Brouillon',
             'sent'         => 'Envoyé',
             'acknowledged' => 'Pris en compte',
+            'resolved'     => 'Corrigé',
+            'retest'       => 'En re-test',
+            'closed'       => 'Clôturé',
             default        => $this->status,
         };
     }

@@ -95,6 +95,34 @@
 
         {{-- Colonne gauche : Projets assignés --}}
         <div class="lg:col-span-2 space-y-4">
+            
+            @if(isset($rapportsEnRetest) && $rapportsEnRetest->count() > 0)
+                <div class="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-2xl p-5 mb-6">
+                    <div class="flex items-center gap-3 mb-4">
+                        <div class="w-10 h-10 rounded-xl bg-amber-100 dark:bg-amber-900/50 flex items-center justify-center text-amber-600 dark:text-amber-400">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"/></svg>
+                        </div>
+                        <div>
+                            <h2 class="font-bold text-amber-900 dark:text-amber-100 text-lg">Corrections à re-tester</h2>
+                            <p class="text-sm text-amber-700 dark:text-amber-300">Le chef de projet a renvoyé ces rapports pour vérification suite aux corrections.</p>
+                        </div>
+                    </div>
+                    <div class="space-y-3">
+                        @foreach($rapportsEnRetest as $report)
+                            <div class="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm border border-amber-100 dark:border-amber-900/50 flex items-center justify-between">
+                                <div>
+                                    <h3 class="font-semibold text-gray-900 dark:text-white">{{ $report->project->name }}</h3>
+                                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Périmètre: {{ $report->perimeter }}</p>
+                                </div>
+                                <a href="{{ route('testeur.projets.show', $report->project_id) }}" class="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-lg text-sm font-medium transition shadow-sm">
+                                    Aller re-tester
+                                </a>
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+            @endif
+
             <div class="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
                 <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
                     <h2 class="font-semibold text-gray-900 dark:text-white">Mes Projets Assignés</h2>
