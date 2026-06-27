@@ -55,13 +55,17 @@ class DeveloppeurDashboardController extends Controller
     {
         $request->validate([
             'report_id' => 'required|exists:reports,id',
-            'content' => 'required|string|min:3',
+            'content' => 'nullable|string',
+        ], [
+            'report_id.required' => 'Le rapport est introuvable.',
         ]);
+
+        $content = $request->content ?: 'Correction effectuée sans commentaire additionnel.';
 
         $response = ReportResponse::create([
             'report_id' => $request->report_id,
             'user_id' => auth()->id(),
-            'content' => $request->content,
+            'content' => $content,
             'status' => 'done',
         ]);
 
@@ -76,7 +80,7 @@ class DeveloppeurDashboardController extends Controller
                 'receiver_id' => $report->project->created_by,
                 'project_id' => $report->project_id,
                 'type' => 'system',
-                'content' => "Le développeur **" . auth()->user()->name . "** a répondu au rapport **{$report->perimeter}** :\n\n\"{$request->content}\"",
+                'content' => "Le développeur **" . auth()->user()->name . "** a répondu au rapport **{$report->perimeter}** :\n\n\"{$content}\"",
             ]);
         }
 

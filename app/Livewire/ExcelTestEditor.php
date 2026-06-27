@@ -47,16 +47,30 @@ class ExcelTestEditor extends Component
         $this->showCommitModal = true;
     }
 
+    public function rules(): array
+    {
+        return [
+            'commitMessage' => 'nullable|string|max:500',
+        ];
+    }
+
+    public function messages(): array
+    {
+        return [
+            'commitMessage.max' => 'Le commentaire ne doit pas dépasser 500 caractères.',
+        ];
+    }
+
     public function commitSession(): void
     {
-        $this->validate([
-            'commitMessage' => 'required|min:3|max:500',
-        ]);
+        $this->validate();
+
+        $message = $this->commitMessage ?: 'Aucun commentaire';
 
         activity()
             ->performedOn($this->project)
             ->causedBy(auth()->user())
-            ->log("Session de test soumise ({$this->template->name}) : " . $this->commitMessage);
+            ->log("Session de test soumise ({$this->template->name}) : " . $message);
 
         $this->showCommitModal = false;
         $this->commitMessage = '';

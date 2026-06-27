@@ -70,13 +70,26 @@ class ReportGenerator extends Component
         }
     }
 
-    public function generateReport(): void
+    public function rules(): array
     {
-        $this->validate([
+        return [
             'perimeter' => 'required|min:3',
             'testedVersion' => 'nullable|string|max:255',
-            'conclusion' => 'required|min:10',
-        ]);
+            'conclusion' => 'nullable|string',
+        ];
+    }
+
+    public function messages(): array
+    {
+        return [
+            'perimeter.required' => 'Le périmètre du test est obligatoire.',
+            'perimeter.min' => 'Le périmètre doit contenir au moins 3 caractères.',
+        ];
+    }
+
+    public function generateReport(): void
+    {
+        $this->validate();
 
         $reportTitle = 'EXECUTIVE REPORT ' . $this->project->name . ($this->template ? ' - ' . $this->template->name : '');
 

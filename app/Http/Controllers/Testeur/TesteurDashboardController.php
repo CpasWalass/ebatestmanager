@@ -30,6 +30,7 @@ class TesteurDashboardController extends Controller
         $allAssignedProjectIds = array_unique(array_merge($assignedProjectIds, $assignedTemplateProjectIds));
 
         $assignedProjects = Project::whereIn('id', $allAssignedProjectIds)
+            ->whereNotIn('status', ['completed', 'archived'])
             ->withCount('testCases')
             ->get();
 
