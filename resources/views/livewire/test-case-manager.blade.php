@@ -235,28 +235,28 @@
                                 
                                 <div class="mt-4 p-4 bg-gray-50 dark:bg-gray-700/30 rounded-lg flex gap-6 overflow-x-auto">
                                     <div class="flex items-center gap-2">
-                                        <span class="text-xl">✅</span>
+                                        <span class="w-3 h-3 rounded-full bg-green-500"></span>
                                         <div>
                                             <span class="block text-xs text-gray-500">Succès</span>
                                             <span class="font-bold text-gray-900 dark:text-white">{{ $stats['valide'] ?? 0 }}</span>
                                         </div>
                                     </div>
                                     <div class="flex items-center gap-2">
-                                        <span class="text-xl">💣</span>
+                                        <span class="w-3 h-3 rounded-full bg-red-500"></span>
                                         <div>
                                             <span class="block text-xs text-gray-500">Échec</span>
                                             <span class="font-bold text-gray-900 dark:text-white">{{ $stats['non_valide'] ?? 0 }}</span>
                                         </div>
                                     </div>
                                     <div class="flex items-center gap-2">
-                                        <span class="text-xl">🤔</span>
+                                        <span class="w-3 h-3 rounded-full bg-amber-500"></span>
                                         <div>
                                             <span class="block text-xs text-gray-500">Sous réserve</span>
                                             <span class="font-bold text-gray-900 dark:text-white">{{ $stats['sous_reserve'] ?? 0 }}</span>
                                         </div>
                                     </div>
                                     <div class="flex items-center gap-2">
-                                        <span class="text-xl">👷‍♂️</span>
+                                        <span class="w-3 h-3 rounded-full bg-blue-500"></span>
                                         <div>
                                             <span class="block text-xs text-gray-500">Optimisation</span>
                                             <span class="font-bold text-gray-900 dark:text-white">{{ $stats['optimisation'] ?? 0 }}</span>
@@ -297,6 +297,10 @@
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
                                     Transférer au dev
                                 </button>
+                                <button wire:click="validateCorrection({{ $report->id }})" wire:confirm="Tout est correct, clôturer directement ce rapport ?" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-md font-medium text-sm text-center transition shadow-sm flex items-center justify-center gap-2">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                                    Valider directement
+                                </button>
                                 @elseif($report->status === 'sent')
                                 <button disabled class="px-4 py-2 bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400 rounded-md font-medium text-sm text-center cursor-not-allowed flex items-center justify-center gap-2 border border-yellow-200 dark:border-yellow-800">
                                     <svg class="w-4 h-4 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
@@ -305,15 +309,15 @@
                                 @elseif($report->status === 'resolved')
                                 <button wire:click="validateCorrection({{ $report->id }})" wire:confirm="Valider la correction du développeur et clôturer ce rapport ?" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-md font-medium text-sm text-center transition shadow-sm flex items-center justify-center gap-2">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                                    ✅ Valider
+                                    Valider la correction
                                 </button>
-                                <button wire:click="rejectToTester({{ $report->id }})" wire:confirm="Renvoyer ce rapport au testeur pour re-vérification ?" class="px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-md font-medium text-sm text-center transition shadow-sm flex items-center justify-center gap-2">
+                                <button wire:click="rejectToTester({{ $report->id }})" wire:confirm="Renvoyer ce rapport au testeur pour re-vérification ?" class="px-4 py-2 bg-orange-700 hover:bg-orange-800 text-white rounded-md font-medium text-sm text-center transition shadow-sm flex items-center justify-center gap-2">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
-                                    🔄 Renvoyer au testeur
+                                    Renvoyer au testeur
                                 </button>
                                 <button wire:click="relaunchDev({{ $report->id }})" wire:confirm="Relancer le développeur ? La correction actuelle n'est pas satisfaisante." class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-md font-medium text-sm text-center transition shadow-sm flex items-center justify-center gap-2">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"/></svg>
-                                    ❌ Relancer le dev
+                                    Relancer le dev
                                 </button>
                                 @elseif($report->status === 'retest')
                                 <button disabled class="px-4 py-2 bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400 rounded-md font-medium text-sm text-center cursor-not-allowed flex items-center justify-center gap-2 border border-amber-200 dark:border-amber-800">
@@ -470,11 +474,11 @@
                     </div>
 
                     @if($report->stats)
-                    <div class="flex items-center gap-3 text-xs mb-3 flex-wrap">
-                        <span class="text-green-600">✅ {{ $report->stats['valide'] ?? 0 }}</span>
-                        <span class="text-red-600">💣 {{ $report->stats['non_valide'] ?? 0 }}</span>
-                        <span class="text-amber-600">🤔 {{ $report->stats['sous_reserve'] ?? 0 }}</span>
-                        <span class="text-blue-600">👷 {{ $report->stats['optimisation'] ?? 0 }}</span>
+                    <div class="flex items-center gap-3 text-xs mb-3 flex-wrap font-medium">
+                        <span class="text-green-600">Validés: {{ $report->stats['valide'] ?? 0 }}</span>
+                        <span class="text-red-600">Échecs: {{ $report->stats['non_valide'] ?? 0 }}</span>
+                        <span class="text-amber-600">Sous réserve: {{ $report->stats['sous_reserve'] ?? 0 }}</span>
+                        <span class="text-blue-600">Optimisation: {{ $report->stats['optimisation'] ?? 0 }}</span>
                     </div>
                     @endif
 

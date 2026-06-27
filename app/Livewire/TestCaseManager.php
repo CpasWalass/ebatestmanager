@@ -202,10 +202,10 @@ class TestCaseManager extends Component
         $reportText .= "Nombre total des cas de test : {$stats['total']} cas de test\n\n";
         
         $reportText .= "*Statistiques globales*\n";
-        $reportText .= "✅ succes : {$stats['valide']}\n";
-        $reportText .= "💣 échec : {$stats['non_valide']}\n";
-        $reportText .= "🤔 sous reserve : {$stats['sous_reserve']}\n";
-        $reportText .= "👷‍♂️ optimisation : {$stats['optimisation']}\n\n";
+        $reportText .= "succes : {$stats['valide']}\n";
+        $reportText .= "échec : {$stats['non_valide']}\n";
+        $reportText .= "sous reserve : {$stats['sous_reserve']}\n";
+        $reportText .= "optimisation : {$stats['optimisation']}\n\n";
         
         $reportText .= "NB : {$report->notes}\n";
         $reportText .= "Lien pour plus de détails : " . route('projets.show', $this->project->id);
@@ -217,7 +217,7 @@ class TestCaseManager extends Component
                     'receiver_id' => $dev->id,
                     'project_id' => $this->project->id,
                     'type' => 'system',
-                    'content' => "Le rapport de test **{$report->perimeter}** vous a été transféré :\n\n" . $reportText,
+                    'content' => "Le rapport de test {$report->perimeter} vous a été transféré :\n\n" . $reportText,
                 ]);
             }
             session()->flash('success', 'Le rapport a été transféré aux développeurs avec succès.');
@@ -248,7 +248,7 @@ class TestCaseManager extends Component
                 'receiver_id' => $dev->id,
                 'project_id'  => $this->project->id,
                 'type'        => 'system',
-                'content'     => "✅ Le chef de projet **" . auth()->user()->name . "** a validé votre correction sur le rapport **{$report->perimeter}**. Merci !",
+                'content'     => "Le chef de projet " . auth()->user()->name . " a validé la correction sur le rapport {$report->perimeter}. Merci !",
             ]);
         }
 
@@ -273,7 +273,7 @@ class TestCaseManager extends Component
                 'receiver_id' => $tester->id,
                 'project_id'  => $this->project->id,
                 'type'        => 'system',
-                'content'     => "🔄 Le chef de projet **" . auth()->user()->name . "** vous demande de **re-tester** le projet **{$this->project->name}** suite à une correction du développeur sur le rapport **{$report->perimeter}**.",
+                'content'     => "Le chef de projet " . auth()->user()->name . " vous demande de re-tester le projet {$this->project->name} suite à une correction sur le rapport {$report->perimeter}.",
             ]);
         }
 
@@ -284,7 +284,7 @@ class TestCaseManager extends Component
                 'receiver_id' => $dev->id,
                 'project_id'  => $this->project->id,
                 'type'        => 'system',
-                'content'     => "🔄 Votre correction sur le rapport **{$report->perimeter}** va être re-testée par l'équipe de test.",
+                'content'     => "Votre correction sur le rapport {$report->perimeter} va être re-testée par l'équipe de test.",
             ]);
         }
 
@@ -304,7 +304,7 @@ class TestCaseManager extends Component
                 'receiver_id' => $dev->id,
                 'project_id'  => $this->project->id,
                 'type'        => 'system',
-                'content'     => "❌ Le chef de projet **" . auth()->user()->name . "** a vérifié et constate que la correction n'est **pas satisfaisante** sur le rapport **{$report->perimeter}**. Merci de corriger à nouveau.",
+                'content'     => "Le chef de projet " . auth()->user()->name . " a vérifié et constate que la correction n'est pas satisfaisante sur le rapport {$report->perimeter}. Merci de corriger à nouveau.",
             ]);
         }
 

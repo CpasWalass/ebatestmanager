@@ -80,7 +80,7 @@ class DeveloppeurDashboardController extends Controller
                 'receiver_id' => $report->project->created_by,
                 'project_id' => $report->project_id,
                 'type' => 'system',
-                'content' => "Le développeur **" . auth()->user()->name . "** a répondu au rapport **{$report->perimeter}** :\n\n\"{$content}\"",
+                'content' => "Le développeur " . auth()->user()->name . " a répondu au rapport {$report->perimeter} :\n\n\"{$content}\"",
             ]);
         }
 

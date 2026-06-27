@@ -116,7 +116,7 @@ class ReportGenerator extends Component
                     'receiver_id' => $this->project->created_by,
                     'project_id' => $this->project->id,
                     'type' => 'system',
-                    'content' => "Le testeur **" . auth()->user()->name . "** a mis à jour le rapport **({$this->perimeter})** suite à un re-test."
+                    'content' => "Le testeur " . auth()->user()->name . " a mis à jour le rapport ({$this->perimeter}) suite à un re-test."
                 ]);
             }
 
@@ -146,7 +146,7 @@ class ReportGenerator extends Component
                 'receiver_id' => $this->project->created_by,
                 'project_id' => $this->project->id,
                 'type' => 'system',
-                'content' => "Un nouveau rapport d'exécution **({$this->perimeter})** a été généré par **" . auth()->user()->name . "** pour le projet {$this->project->name}."
+                'content' => "Un nouveau rapport d'exécution ({$this->perimeter}) a été généré par " . auth()->user()->name . " pour le projet {$this->project->name}."
             ]);
         }
 
