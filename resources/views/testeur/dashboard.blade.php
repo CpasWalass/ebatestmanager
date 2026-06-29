@@ -29,7 +29,7 @@
         <div class="bg-white dark:bg-gray-800 rounded-2xl p-5 border border-gray-100 dark:border-gray-700 shadow-sm">
             <div class="flex items-start justify-between">
                 <div>
-                    <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Cas Assignés</p>
+                    <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Tests Assignés</p>
                     <p class="text-3xl font-bold text-gray-900 dark:text-white mt-1">{{ $totalAssigned }}</p>
                     <p class="text-xs text-gray-400 mt-1">Total à traiter</p>
                 </div>

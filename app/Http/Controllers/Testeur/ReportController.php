@@ -32,8 +32,13 @@ class ReportController extends Controller
         $allAssignedProjectIds = array_unique(array_merge($assignedProjectIds, $assignedTemplateProjectIds));
 
         // 1. Statistiques globales (en tests)
-        $assignedCases = \App\Models\TestCase::whereIn('project_id', $assignedProjectIds)
-            ->orWhereIn('template_id', $assignedTemplateIds)
+        $assignedCases = \App\Models\TestCase::whereHas('project', function($q) {
+                $q->whereNotIn('status', ['completed', 'archived']);
+            })
+            ->where(function($q) use ($assignedProjectIds, $assignedTemplateIds) {
+                $q->whereIn('project_id', $assignedProjectIds)
+                  ->orWhereIn('template_id', $assignedTemplateIds);
+            })
             ->get();
             
         $stats = \App\Models\TestCase::calculateStats($assignedCases);
@@ -49,9 +54,14 @@ class ReportController extends Controller
         $successRate = $totalExecuted > 0 ? round(($successCount / $totalExecuted) * 100, 1) : 0;
 
         // 2. Répartition par Cas de Test (Template)
-        // Récupère tous les templates que le testeur doit tester
-        $templates = \App\Models\TestCaseTemplate::whereIn('project_id', $assignedProjectIds)
-            ->orWhereIn('id', $assignedTemplateIds)
+        // Récupère tous les templates que le testeur doit tester, excluant les projets terminés
+        $templates = \App\Models\TestCaseTemplate::whereHas('project', function($q) {
+                $q->whereNotIn('status', ['completed', 'archived']);
+            })
+            ->where(function($q) use ($assignedProjectIds, $assignedTemplateIds) {
+                $q->whereIn('project_id', $assignedProjectIds)
+                  ->orWhereIn('id', $assignedTemplateIds);
+            })
             ->with(['project'])
             ->get();
             

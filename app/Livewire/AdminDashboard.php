@@ -42,7 +42,9 @@ class AdminDashboard extends Component
         $uatProjectsCount = (clone $projectsQuery)->where('status', 'in_progress')->count();
 
         // Si on filtre par testeur, on cherche les tests (TestCase) assignés
-        $testCasesQuery = TestCase::query();
+        $testCasesQuery = TestCase::whereHas('project', function($q) {
+            $q->whereNotIn('status', ['completed', 'archived']);
+        });
         if ($this->filterProject !== 'all') {
             $testCasesQuery->where('project_id', $this->filterProject);
         }
@@ -76,7 +78,14 @@ class AdminDashboard extends Component
             $assignedProjectIds = TestCaseAssignment::where('user_id', $tester->id)->whereNotNull('project_id')->pluck('project_id')->toArray();
             $assignedTemplateIds = TestCaseAssignment::where('user_id', $tester->id)->whereNotNull('template_id')->pluck('template_id')->toArray();
             
-            $assignedCases = \App\Models\TestCase::whereIn('project_id', $assignedProjectIds)->orWhereIn('template_id', $assignedTemplateIds)->get();
+            $assignedCases = \App\Models\TestCase::whereHas('project', function($q) {
+                    $q->whereNotIn('status', ['completed', 'archived']);
+                })
+                ->where(function($q) use ($assignedProjectIds, $assignedTemplateIds) {
+                    $q->whereIn('project_id', $assignedProjectIds)
+                      ->orWhereIn('template_id', $assignedTemplateIds);
+                })
+                ->get();
             $testerStats = \App\Models\TestCase::calculateStats($assignedCases);
 
             $total = $testerStats['total'];
