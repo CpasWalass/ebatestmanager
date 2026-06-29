@@ -27,10 +27,14 @@ class TesteurDashboardController extends Controller
               ->whereNotNull('template_id');
         })->pluck('project_id')->toArray();
         
+        $assignedTemplateIds = TestCaseAssignment::where('user_id', $user->id)
+            ->whereNotNull('template_id')
+            ->pluck('template_id')
+            ->toArray();
+
         $allAssignedProjectIds = array_unique(array_merge($assignedProjectIds, $assignedTemplateProjectIds));
 
         $assignedProjects = Project::whereIn('id', $allAssignedProjectIds)
-            ->whereNotIn('status', ['completed', 'archived'])
             ->with(['client', 'testCases' => function($q) use ($assignedProjectIds, $assignedTemplateIds) {
                 $q->where(function($query) use ($assignedProjectIds, $assignedTemplateIds) {
                     $query->whereIn('project_id', $assignedProjectIds)
@@ -38,11 +42,6 @@ class TesteurDashboardController extends Controller
                 });
             }])
             ->get();
-
-        $assignedTemplateIds = TestCaseAssignment::where('user_id', $user->id)
-            ->whereNotNull('template_id')
-            ->pluck('template_id')
-            ->toArray();
 
         // Stats globales du testeur (comptabiliser les tests individuels, pas les assignations de groupe)
         $assignedCases = \App\Models\TestCase::whereIn('project_id', $assignedProjectIds)
