@@ -194,17 +194,20 @@
                 <div class="space-y-3">
                     @php
                         $statsItems = [
-                            ['label' => 'Validés',      'count' => $successCount, 'color' => '#16a34a', 'emoji' => '✅'],
-                            ['label' => 'Échecs',       'count' => $failureCount, 'color' => '#CC0000',  'emoji' => '💣'],
-                            ['label' => 'Sous réserve', 'count' => $reserveCount, 'color' => '#f59e0b', 'emoji' => '🤔'],
-                            ['label' => 'Optimisation', 'count' => $optimCount,   'color' => '#3b82f6', 'emoji' => '👷'],
+                            ['label' => 'Validés',      'count' => $successCount, 'color' => '#16a34a'],
+                            ['label' => 'Échecs',       'count' => $failureCount, 'color' => '#CC0000'],
+                            ['label' => 'Sous réserve', 'count' => $reserveCount, 'color' => '#f59e0b'],
+                            ['label' => 'Optimisation', 'count' => $optimCount,   'color' => '#3b82f6'],
                         ];
                         $totalEx = max($totalExecuted, 1);
                     @endphp
                     @foreach($statsItems as $s)
                         <div>
                             <div class="flex items-center justify-between mb-1">
-                                <span class="text-sm text-gray-300">{{ $s['emoji'] }} {{ $s['label'] }}</span>
+                                <div class="flex items-center gap-2">
+                                    <span class="w-2.5 h-2.5 rounded-full" style="background:{{ $s['color'] }}"></span>
+                                    <span class="text-sm text-gray-300">{{ $s['label'] }}</span>
+                                </div>
                                 <span class="text-sm font-bold text-white">{{ $s['count'] }}</span>
                             </div>
                             <div class="h-1.5 bg-gray-700 rounded-full overflow-hidden">
@@ -238,14 +241,17 @@
                     <div class="space-y-3">
                         @foreach($recentExec as $exec)
                             <div class="flex items-start gap-3">
-                                <span class="mt-0.5 text-base leading-none">
-                                    {{ match($exec->status) {
-                                        'valide' => '✅',
-                                        'non_valide' => '💣',
-                                        'sous_reserve' => '🤔',
-                                        'optimisation' => '👷',
-                                        default => '⏳'
-                                    } }}
+                                <span class="mt-1 flex-shrink-0">
+                                    @php
+                                        $color = match($exec->status) {
+                                            'valide' => '#16a34a',
+                                            'non_valide' => '#CC0000',
+                                            'sous_reserve' => '#f59e0b',
+                                            'optimisation' => '#3b82f6',
+                                            default => '#9ca3af'
+                                        };
+                                    @endphp
+                                    <span class="inline-block w-2.5 h-2.5 rounded-full" style="background:{{ $color }}"></span>
                                 </span>
                                 <div class="flex-1 min-w-0">
                                     <p class="text-xs font-medium text-gray-900 dark:text-white truncate">
