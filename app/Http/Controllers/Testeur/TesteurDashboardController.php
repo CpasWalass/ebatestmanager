@@ -34,8 +34,16 @@ class TesteurDashboardController extends Controller
             ->withCount('testCases')
             ->get();
 
-        // Stats globales du testeur
-        $totalAssigned = TestCaseAssignment::where('user_id', $user->id)->count();
+        $assignedTemplateIds = TestCaseAssignment::where('user_id', $user->id)
+            ->whereNotNull('template_id')
+            ->pluck('template_id')
+            ->toArray();
+
+        // Stats globales du testeur (comptabiliser les tests individuels, pas les assignations de groupe)
+        $totalAssigned = \App\Models\TestCase::whereIn('project_id', $assignedProjectIds)
+            ->orWhereIn('template_id', $assignedTemplateIds)
+            ->count();
+            
         $totalExecuted = TestExecution::where('tester_id', $user->id)->count();
 
         $executions = TestExecution::where('tester_id', $user->id)->get();

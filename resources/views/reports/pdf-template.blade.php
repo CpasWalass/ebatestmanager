@@ -39,6 +39,8 @@
     <div class="header">
         <div style="display:flex; justify-content:space-between; align-items:flex-start;">
             <div>
+                <img src="data:image/jpeg;base64,{{ base64_encode(file_get_contents(public_path('images/logo.jpg'))) }}" alt="EBA Logo" style="height: 40px; margin-bottom: 15px; border-radius: 4px;">
+                <br>
                 <span class="badge">{{ strtoupper($report->type) }}</span>
                 <h1 style="margin-top:8px;">EXECUTIVE REPORT</h1>
                 <p>{{ $report->project?->name }}</p>
@@ -87,8 +89,8 @@
         @php $stats = $report->stats ?? []; @endphp
 
         <div class="total-box">
-            <span style="font-size:13px; font-weight:600;">Nombre total des cas de test</span>
-            <span style="font-size:24px; font-weight:800;">{{ $stats['total'] ?? 0 }} cas</span>
+            <span style="font-size:13px; font-weight:600;">Nombre total de tests</span>
+            <span style="font-size:24px; font-weight:800;">{{ $stats['total'] ?? 0 }} tests</span>
         </div>
 
         <div class="stats-grid">

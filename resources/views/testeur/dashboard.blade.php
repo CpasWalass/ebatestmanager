@@ -161,7 +161,7 @@
                                         </div>
                                         <p class="text-xs text-gray-500 dark:text-gray-400 mb-3">
                                             {{ $project->client?->name ?? 'Client non défini' }} ·
-                                            {{ $casCount }} cas de test assignés
+                                            {{ $casCount }} tests assignés
                                         </p>
                                         {{-- Barre de progression --}}
                                         <div class="flex items-center gap-3">

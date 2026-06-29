@@ -45,6 +45,8 @@
     <div class="header">
         <div style="display:flex; justify-content:space-between; align-items:flex-start;">
             <div>
+                <img src="data:image/jpeg;base64,{{ base64_encode(file_get_contents(public_path('images/logo.jpg'))) }}" alt="EBA Logo" style="height: 40px; margin-bottom: 15px; border-radius: 4px;">
+                <br>
                 <span class="badge">RAPPORT GLOBAL</span>
                 <h1 style="margin-top:8px;">STATISTIQUES TESTEUR</h1>
                 <p>{{ $user->name }} - {{ $user->email }}</p>
@@ -68,7 +70,7 @@
                 <div class="info-value">{{ now()->format('d/m/Y') }}</div>
             </div>
             <div class="info-item">
-                <div class="info-label">Cas de tests assignés</div>
+                <div class="info-label">Tests assignés</div>
                 <div class="info-value">{{ $totalAssigned }}</div>
             </div>
             <div class="info-item">
@@ -82,8 +84,8 @@
         <div class="section-title">Statistiques d'Exécution</div>
         
         <div class="total-box">
-            <span style="font-size:13px; font-weight:600;">Cas de tests exécutés</span>
-            <span style="font-size:24px; font-weight:800;">{{ $totalExecuted }} cas</span>
+            <span style="font-size:13px; font-weight:600;">Tests exécutés</span>
+            <span style="font-size:24px; font-weight:800;">{{ $totalExecuted }} tests</span>
         </div>
 
         <div class="stats-grid">
@@ -107,40 +109,37 @@
     </div>
 
     <div class="section">
-        <div class="section-title">Derniers Tests Exécutés (Résumé)</div>
-        @if($recentTests->count() > 0)
+        <div class="section-title">Avancement par Cas de Test</div>
+        @if(count($templatesProgress) > 0)
         <table>
             <thead>
                 <tr>
                     <th>Projet</th>
-                    <th>Date d'exécution</th>
-                    <th>Statut</th>
+                    <th>Cas de test (Template)</th>
+                    <th>Tests assignés</th>
+                    <th>Tests validés</th>
+                    <th>Progression</th>
                 </tr>
             </thead>
             <tbody>
-                @foreach($recentTests as $test)
+                @foreach($templatesProgress as $progress)
                 <tr>
-                    <td>{{ $test->testCase->project->name ?? 'Projet Inconnu' }}</td>
-                    <td>{{ $test->created_at->format('d/m/Y H:i') }}</td>
+                    <td>{{ $progress['project'] }}</td>
+                    <td>{{ $progress['name'] }}</td>
+                    <td style="text-align: center;">{{ $progress['assigned'] }}</td>
+                    <td style="text-align: center;">{{ $progress['validated'] }}</td>
                     <td>
-                        @php
-                            $badgeClass = match($test->status) {
-                                'valide' => 'bg-green',
-                                'non_valide' => 'bg-red',
-                                'sous_reserve' => 'bg-yellow',
-                                'optimisation' => 'bg-blue',
-                                default => 'bg-gray-500',
-                            };
-                            $label = str_replace('_', ' ', $test->status);
-                        @endphp
-                        <span class="status-badge {{ $badgeClass }}">{{ $label }}</span>
+                        <div style="width:100%; background:#f0f0f0; border-radius:4px; height:8px; margin-top:4px;">
+                            <div style="width: {{ $progress['percent'] }}%; background:#16a34a; height:8px; border-radius:4px;"></div>
+                        </div>
+                        <div style="font-size:9px; color:#666; margin-top:2px; text-align:right;">{{ $progress['percent'] }}%</div>
                     </td>
                 </tr>
                 @endforeach
             </tbody>
         </table>
         @else
-        <p style="font-size: 11px; color: #888;">Aucun test exécuté récemment.</p>
+        <p style="font-size: 11px; color: #888;">Aucun cas de test assigné.</p>
         @endif
     </div>
 

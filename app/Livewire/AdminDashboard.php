@@ -41,14 +41,21 @@ class AdminDashboard extends Component
         $activeProjectsCount = (clone $projectsQuery)->whereNotIn('status', ['completed', 'archived'])->count();
         $uatProjectsCount = (clone $projectsQuery)->where('status', 'in_progress')->count();
 
-        // Si on filtre par testeur, on cherche les templates assignés à ce testeur
-        $templatesQuery = TestCaseTemplate::query();
+        // Si on filtre par testeur, on cherche les tests (TestCase) assignés
+        $testCasesQuery = TestCase::query();
+        if ($this->filterProject !== 'all') {
+            $testCasesQuery->where('project_id', $this->filterProject);
+        }
         if ($this->filterTester !== 'all') {
-            $templatesQuery->whereHas('assignments', function($q) {
-                $q->where('user_id', $this->filterTester);
+            $assignedProjectIds = TestCaseAssignment::where('user_id', $this->filterTester)->whereNotNull('project_id')->pluck('project_id')->toArray();
+            $assignedTemplateIds = TestCaseAssignment::where('user_id', $this->filterTester)->whereNotNull('template_id')->pluck('template_id')->toArray();
+            
+            $testCasesQuery->where(function($q) use ($assignedProjectIds, $assignedTemplateIds) {
+                $q->whereIn('project_id', $assignedProjectIds)
+                  ->orWhereIn('template_id', $assignedTemplateIds);
             });
         }
-        $totalTemplates = $templatesQuery->count();
+        $totalTemplates = $testCasesQuery->count();
 
         // Calcul du taux de validation
         // On récupère les exécutions. Si un projet ou un testeur est filtré, on filtre les exécutions.
@@ -84,14 +91,13 @@ class AdminDashboard extends Component
             ->get();
 
         // Capacité de l'équipe (Testeurs)
-        $testersCapacity = User::role('tester')->withCount([
-            'testCaseAssignments as assigned_count',
-            'testExecutions as executed_count'
-        ])->get()->map(function($tester) {
-            $total = $tester->assigned_count;
-            $done = $tester->executed_count;
-            // On considère que si assigné > 0, charge = (restant / total) * 100
-            // Mais plus simplement, on peut juste afficher le ratio
+        $testersCapacity = User::role('tester')->get()->map(function($tester) {
+            $assignedProjectIds = TestCaseAssignment::where('user_id', $tester->id)->whereNotNull('project_id')->pluck('project_id')->toArray();
+            $assignedTemplateIds = TestCaseAssignment::where('user_id', $tester->id)->whereNotNull('template_id')->pluck('template_id')->toArray();
+            
+            $total = \App\Models\TestCase::whereIn('project_id', $assignedProjectIds)->orWhereIn('template_id', $assignedTemplateIds)->count();
+            $done = TestExecution::where('tester_id', $tester->id)->count();
+
             $percent = $total > 0 ? round(($done / $total) * 100) : 100;
             return [
                 'name' => $tester->name,
