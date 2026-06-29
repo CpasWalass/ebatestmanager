@@ -67,11 +67,11 @@
                 </div>
             </div>
 
-            <!-- Card: Cas de Test Assignés -->
+            <!-- Card: Tests Assignés -->
             <div class="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700">
                 <div class="flex items-start justify-between">
                     <div>
-                        <p class="text-gray-600 dark:text-gray-400 text-sm font-medium">Cas de Test Assignés</p>
+                        <p class="text-gray-600 dark:text-gray-400 text-sm font-medium">Tests Assignés</p>
                         <p class="text-3xl font-bold mt-2 text-gray-900 dark:text-white">{{ $totalTemplates }}</p>
                     </div>
                     <div class="w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center">

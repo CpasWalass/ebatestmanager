@@ -40,17 +40,19 @@ class TesteurDashboardController extends Controller
             ->toArray();
 
         // Stats globales du testeur (comptabiliser les tests individuels, pas les assignations de groupe)
-        $totalAssigned = \App\Models\TestCase::whereIn('project_id', $assignedProjectIds)
+        $assignedCases = \App\Models\TestCase::whereIn('project_id', $assignedProjectIds)
             ->orWhereIn('template_id', $assignedTemplateIds)
-            ->count();
+            ->get();
             
-        $totalExecuted = TestExecution::where('tester_id', $user->id)->count();
+        $stats = \App\Models\TestCase::calculateStats($assignedCases);
 
-        $executions = TestExecution::where('tester_id', $user->id)->get();
-        $successCount = $executions->where('status', 'valide')->count();
-        $failureCount = $executions->where('status', 'non_valide')->count();
-        $reserveCount = $executions->where('status', 'sous_reserve')->count();
-        $optimCount   = $executions->where('status', 'optimisation')->count();
+        $totalAssigned = $stats['total'];
+        $totalExecuted = $stats['executed'];
+        
+        $successCount = $stats['valide'];
+        $failureCount = $stats['non_valide'];
+        $reserveCount = $stats['sous_reserve'];
+        $optimCount   = $stats['optimisation'];
 
         $successRate = $totalExecuted > 0
             ? round(($successCount / $totalExecuted) * 100, 1)

@@ -57,30 +57,11 @@ class AdminDashboard extends Component
         }
         $totalTemplates = $testCasesQuery->count();
 
-        // Calcul du taux de validation
-        // On récupère les exécutions. Si un projet ou un testeur est filtré, on filtre les exécutions.
-        $executionsQuery = TestExecution::query();
-        if ($this->filterTester !== 'all') {
-            $executionsQuery->where('tester_id', $this->filterTester);
-        }
-        if ($this->filterProject !== 'all') {
-            $executionsQuery->whereHas('testCase', function($q) {
-                $q->where('project_id', $this->filterProject);
-            });
-        }
-        if ($this->filterPeriod !== 'all') {
-            $now = now();
-            if ($this->filterPeriod === 'this_month') {
-                $executionsQuery->whereMonth('created_at', $now->month)->whereYear('created_at', $now->year);
-            } elseif ($this->filterPeriod === 'last_month') {
-                $executionsQuery->whereMonth('created_at', $now->subMonth()->month)->whereYear('created_at', $now->year);
-            } elseif ($this->filterPeriod === 'this_year') {
-                $executionsQuery->whereYear('created_at', $now->year);
-            }
-        }
-
-        $totalExecutions = $executionsQuery->count();
-        $validExecutions = (clone $executionsQuery)->where('status', 'valide')->count();
+        // Calcul du taux de validation en lisant l'état des TestCase directement
+        $allTestCasesQuery = (clone $testCasesQuery)->get();
+        $adminStats = \App\Models\TestCase::calculateStats($allTestCasesQuery);
+        $totalExecutions = $adminStats['executed'];
+        $validExecutions = $adminStats['valide'];
         $validationRate = $totalExecutions > 0 ? round(($validExecutions / $totalExecutions) * 100) : 0;
 
         // Projets pour la liste principale
@@ -95,8 +76,11 @@ class AdminDashboard extends Component
             $assignedProjectIds = TestCaseAssignment::where('user_id', $tester->id)->whereNotNull('project_id')->pluck('project_id')->toArray();
             $assignedTemplateIds = TestCaseAssignment::where('user_id', $tester->id)->whereNotNull('template_id')->pluck('template_id')->toArray();
             
-            $total = \App\Models\TestCase::whereIn('project_id', $assignedProjectIds)->orWhereIn('template_id', $assignedTemplateIds)->count();
-            $done = TestExecution::where('tester_id', $tester->id)->count();
+            $assignedCases = \App\Models\TestCase::whereIn('project_id', $assignedProjectIds)->orWhereIn('template_id', $assignedTemplateIds)->get();
+            $testerStats = \App\Models\TestCase::calculateStats($assignedCases);
+
+            $total = $testerStats['total'];
+            $done = $testerStats['executed'];
 
             $percent = $total > 0 ? round(($done / $total) * 100) : 100;
             return [

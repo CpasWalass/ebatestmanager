@@ -32,17 +32,19 @@ class ReportController extends Controller
         $allAssignedProjectIds = array_unique(array_merge($assignedProjectIds, $assignedTemplateProjectIds));
 
         // 1. Statistiques globales (en tests)
-        $totalAssigned = \App\Models\TestCase::whereIn('project_id', $assignedProjectIds)
+        $assignedCases = \App\Models\TestCase::whereIn('project_id', $assignedProjectIds)
             ->orWhereIn('template_id', $assignedTemplateIds)
-            ->count();
+            ->get();
             
-        $totalExecuted = TestExecution::where('tester_id', $user->id)->count();
+        $stats = \App\Models\TestCase::calculateStats($assignedCases);
+
+        $totalAssigned = $stats['total'];
+        $totalExecuted = $stats['executed'];
         
-        $executions = TestExecution::where('tester_id', $user->id)->get();
-        $successCount = $executions->where('status', 'valide')->count();
-        $failureCount = $executions->where('status', 'non_valide')->count();
-        $reserveCount = $executions->where('status', 'sous_reserve')->count();
-        $optimCount   = $executions->where('status', 'optimisation')->count();
+        $successCount = $stats['valide'];
+        $failureCount = $stats['non_valide'];
+        $reserveCount = $stats['sous_reserve'];
+        $optimCount   = $stats['optimisation'];
 
         $successRate = $totalExecuted > 0 ? round(($successCount / $totalExecuted) * 100, 1) : 0;
 
@@ -55,15 +57,12 @@ class ReportController extends Controller
             
         $templatesProgress = [];
         foreach ($templates as $template) {
-            $testCount = \App\Models\TestCase::where('template_id', $template->id)->count();
+            $templateCases = \App\Models\TestCase::where('template_id', $template->id)->get();
+            $testCount = $templateCases->count();
             if ($testCount > 0) {
-                // Nombre de tests validés par CE testeur sur ce template
-                $validCount = TestExecution::where('tester_id', $user->id)
-                    ->whereHas('testCase', function($q) use ($template) {
-                        $q->where('template_id', $template->id);
-                    })
-                    ->where('status', 'valide')
-                    ->count();
+                // Nombre de tests validés par CE testeur sur ce template (en réalité, juste validés sur ce template)
+                $templateStats = \App\Models\TestCase::calculateStats($templateCases);
+                $validCount = $templateStats['valide'];
                     
                 $templatesProgress[] = [
                     'project' => $template->project->name ?? '—',
