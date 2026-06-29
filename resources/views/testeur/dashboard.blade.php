@@ -217,12 +217,13 @@
                     @endforeach
                 </div>
 
-                <button class="w-full mt-5 py-2.5 text-sm font-semibold text-white rounded-xl transition"
+                <a href="{{ route('testeur.rapport-global') }}" 
+                    class="block w-full text-center mt-5 py-2.5 text-sm font-semibold text-white rounded-xl transition"
                     style="background:#CC0000;"
                     onmouseover="this.style.background='#aa0000'"
                     onmouseout="this.style.background='#CC0000'">
                     Générer le Rapport
-                </button>
+                </a>
             </div>
 
             {{-- Activité récente --}}

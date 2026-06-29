@@ -116,6 +116,9 @@ Route::middleware(['auth:sanctum', 'verified', 'role:tester'])
         Route::get('/dashboard', [TesteurDashboardController::class, 'index'])
             ->name('dashboard');
 
+        Route::get('/rapport-global', [\App\Http\Controllers\Testeur\ReportController::class, 'generateGlobalReport'])
+            ->name('rapport-global');
+
         Route::get('/projets', function () {
             return view('projets.index');
         })->name('projets.index');

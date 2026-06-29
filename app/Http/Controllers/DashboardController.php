@@ -11,35 +11,6 @@ class DashboardController extends Controller
 {
     public function index(): View
     {
-        $activeProjects = Project::count();
-        $uatProjects = Project::where('status', 'in_progress')->count();
-        $totalTemplates = \App\Models\TestCaseTemplate::count();
-        
-        $cases = TestCase::all(['data']);
-        $totalTestCases = $cases->count();
-        $validCases = 0;
-        
-        foreach ($cases as $case) {
-            $status = strtolower($case->data['status'] ?? $case->data['etat_test'] ?? '');
-            if (in_array($status, ['validé', 'terminé', 'valide', 'termine'])) {
-                $validCases++;
-            }
-        }
-        
-        $validationRate = $totalTestCases > 0 ? round(($validCases / $totalTestCases) * 100) : 0;
-
-        $unreadMessages = \App\Models\Message::where('receiver_id', auth()->id())
-            ->whereNull('read_at')
-            ->with('sender')
-            ->latest()
-            ->get();
-
-        return view('dashboard', [
-            'activeProjects' => $activeProjects,
-            'uatProjects' => $uatProjects,
-            'totalTemplates' => $totalTemplates,
-            'validationRate' => $validationRate,
-            'unreadMessages' => $unreadMessages,
-        ]);
+        return view('dashboard');
     }
 }
