@@ -85,8 +85,8 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
 */
 Route::middleware(['auth:sanctum', 'verified', 'role:chef_project'])->group(function () {
 
-    Route::get('/dashboard', [DashboardController::class, 'index'])
-        ->name('dashboard');
+    Route::get('/dashboard', [\App\Livewire\AdminDashboard::class, '__invoke'])->name('dashboard');
+    Route::get('/admin/rapport-pdf', [\App\Http\Controllers\AdminReportController::class, 'generate'])->name('admin.rapport-pdf');
 
     Route::get('/equipe', function () {
         return view('users.index');

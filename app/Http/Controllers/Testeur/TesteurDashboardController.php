@@ -31,7 +31,12 @@ class TesteurDashboardController extends Controller
 
         $assignedProjects = Project::whereIn('id', $allAssignedProjectIds)
             ->whereNotIn('status', ['completed', 'archived'])
-            ->withCount('testCases')
+            ->with(['client', 'testCases' => function($q) use ($assignedProjectIds, $assignedTemplateIds) {
+                $q->where(function($query) use ($assignedProjectIds, $assignedTemplateIds) {
+                    $query->whereIn('project_id', $assignedProjectIds)
+                          ->orWhereIn('template_id', $assignedTemplateIds);
+                });
+            }])
             ->get();
 
         $assignedTemplateIds = TestCaseAssignment::where('user_id', $user->id)
