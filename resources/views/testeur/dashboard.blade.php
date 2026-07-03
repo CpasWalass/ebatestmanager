@@ -14,13 +14,6 @@
                 Bienvenue, <span class="font-semibold text-gray-700 dark:text-gray-200">{{ auth()->user()->name }}</span> · Mise à jour en temps réel
             </p>
         </div>
-        <a href="{{ route('testeur.rapport-global') }}" class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white rounded-xl transition"
-            style="background:#CC0000;">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-            </svg>
-            Exporter le Rapport PDF
-        </a>
     </div>
 
     {{-- KPI Cards --}}
@@ -216,13 +209,31 @@
                     @endforeach
                 </div>
 
-                <a href="{{ route('testeur.rapport-global') }}" 
-                    class="block w-full text-center mt-5 py-2.5 text-sm font-semibold text-white rounded-xl transition"
-                    style="background:#CC0000;"
-                    onmouseover="this.style.background='#aa0000'"
-                    onmouseout="this.style.background='#CC0000'">
-                    Générer le Rapport
-                </a>
+                {{-- Dropdown choix format rapport --}}
+                <div class="relative mt-5" x-data="{ open: false }">
+                    <button @click="open = !open" type="button"
+                        class="w-full flex items-center justify-center gap-2 py-2.5 text-sm font-semibold text-white rounded-xl transition"
+                        style="background:#CC0000;"
+                        onmouseover="this.style.background='#aa0000'"
+                        onmouseout="this.style.background='#CC0000'">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                        Générer le Rapport
+                        <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div x-show="open" @click.outside="open = false" x-cloak
+                        class="absolute bottom-full mb-1 left-0 right-0 bg-white dark:bg-gray-700 rounded-xl shadow-lg border border-gray-200 dark:border-gray-600 overflow-hidden z-50">
+                        <a href="{{ route('testeur.rapport-global', ['format' => 'pdf']) }}"
+                            class="flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-200 hover:bg-red-50 dark:hover:bg-gray-600 transition">
+                            <svg class="w-4 h-4 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+                            Exporter en PDF
+                        </a>
+                        <a href="{{ route('testeur.rapport-global', ['format' => 'word']) }}"
+                            class="flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-200 hover:bg-blue-50 dark:hover:bg-gray-600 transition border-t border-gray-100 dark:border-gray-600">
+                            <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                            Exporter en Word (.docx)
+                        </a>
+                    </div>
+                </div>
             </div>
 
             {{-- Activité récente --}}

@@ -283,7 +283,11 @@
             <h2>Connexion</h2>
             <p class="subtitle">Accédez à votre espace de gestion de tests</p>
 
-            @if ($errors->any())
+            @if (session('lockout_message'))
+                <div class="error-alert">
+                    {{ session('lockout_message') }}
+                </div>
+            @elseif ($errors->any())
                 <div class="error-alert">
                     {{ $errors->first() }}
                 </div>

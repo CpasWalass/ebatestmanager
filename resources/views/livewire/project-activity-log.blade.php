@@ -91,7 +91,7 @@
                                                     $action .= " " . $subjectName;
                                                 } else {
                                                     // It's a custom message (like our commit message)
-                                                    $action = "a dit : " . $activity->description;
+                                                    $action = " : " . $activity->description;
                                                 }
                                             @endphp
                                             <p class="text-sm text-gray-500 dark:text-gray-400">

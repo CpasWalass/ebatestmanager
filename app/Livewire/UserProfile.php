@@ -14,6 +14,7 @@ class UserProfile extends Component
     public $name;
     public $email;
     public $current_password;
+    public $temporary_password;
     public $password;
     public $password_confirmation;
     public $avatar;
@@ -52,16 +53,29 @@ class UserProfile extends Component
 
     public function updatePassword()
     {
-        $this->validate([
-            'current_password' => 'required|current_password',
-            'password' => 'required|min:8|confirmed',
-        ]);
-
         $user = auth()->user();
+
+        $rules = [
+            'current_password' => ['required', 'current_password'],
+            'password' => ['required', 'min:8', 'confirmed'],
+        ];
+
+        if ($user->must_change_password) {
+            $rules['temporary_password'] = ['required', function ($attribute, $value, $fail) use ($user) {
+                if (!Hash::check($value, $user->temporary_password_hash)) {
+                    $fail('Le mot de passe temporaire fourni est incorrect.');
+                }
+            }];
+        }
+
+        $this->validate($rules);
+
         $user->password = Hash::make($this->password);
+        $user->must_change_password = false;
+        $user->temporary_password_hash = null;
         $user->save();
 
-        $this->reset(['current_password', 'password', 'password_confirmation']);
+        $this->reset(['current_password', 'temporary_password', 'password', 'password_confirmation']);
         session()->flash('success_password', 'Mot de passe mis à jour avec succès.');
     }
 

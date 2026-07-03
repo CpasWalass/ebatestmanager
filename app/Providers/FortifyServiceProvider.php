@@ -9,10 +9,14 @@ use App\Actions\Fortify\UpdateUserProfileInformation;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
 use Laravel\Fortify\Actions\RedirectIfTwoFactorAuthenticatable;
 use Laravel\Fortify\Fortify;
+use Laravel\Fortify\Http\Requests\LoginRequest;
 
 class FortifyServiceProvider extends ServiceProvider
 {
@@ -45,10 +49,75 @@ class FortifyServiceProvider extends ServiceProvider
                 {
                     $user = auth()->user();
                     if (!$user) return redirect('/login');
+                    if ($user->must_change_password) {
+                        Auth::logout();
+                        return redirect()->route('login')->with('status', 'Veuillez changer votre mot de passe temporaire avant de continuer.');
+                    }
                     if ($user->hasRole('tester'))    return redirect()->route('testeur.dashboard');
                     if ($user->hasRole('developer')) return redirect()->route('developpeur.dashboard');
                     if ($user->hasRole('client'))    return redirect()->route('client.dashboard');
                     return redirect()->route('dashboard'); // chef_project par défaut
+                }
+            };
+        });
+
+        $this->app->singleton(\Laravel\Fortify\Contracts\AuthenticateLoginResponse::class, function () {
+            return new class {
+                public function toResponse($request)
+                {
+                    return redirect()->intended(config('fortify.home', '/home'));
+                }
+            };
+        });
+
+        $this->app->extend(\Laravel\Fortify\Http\Controllers\AuthenticatedSessionController::class, function ($controller) {
+            return new class(app(\Illuminate\Contracts\Auth\StatefulGuard::class)) extends \Laravel\Fortify\Http\Controllers\AuthenticatedSessionController {
+                public function store(LoginRequest $request)
+                {
+                    $credentials = $request->only(Fortify::username(), 'password');
+                    $user = \App\Models\User::where(Fortify::username(), $credentials[Fortify::username()])->first();
+
+                    if ($user && $user->locked_until && $user->locked_until->isFuture()) {
+                        $message = __('Votre compte est temporairement bloqué. Veuillez réessayer dans 30 minutes.');
+
+                        session()->flash('lockout_message', $message);
+
+                        throw \Illuminate\Validation\ValidationException::withMessages([
+                            Fortify::username() => $message,
+                        ]);
+                    }
+
+                    if ($user && $user->must_change_password && Hash::check($credentials['password'], $user->password)) {
+                        Auth::guard('web')->login($user, $request->filled('remember'));
+                        $user->failed_login_attempts = 0;
+                        $user->locked_until = null;
+                        $user->save();
+
+                        return redirect()->route('profile.show');
+                    }
+
+                    $authenticated = Auth::guard('web')->attempt($credentials, $request->filled('remember'));
+
+                    if (! $authenticated) {
+                        if ($user) {
+                            $user->failed_login_attempts = ($user->failed_login_attempts ?? 0) + 1;
+                            if ($user->failed_login_attempts >= 5) {
+                                $user->locked_until = now()->addMinutes(30);
+                                $user->failed_login_attempts = 0;
+                            }
+                            $user->save();
+                        }
+
+                        throw \Illuminate\Validation\ValidationException::withMessages([
+                            Fortify::username() => __('Identifiants invalides.'),
+                        ]);
+                    }
+
+                    $user->failed_login_attempts = 0;
+                    $user->locked_until = null;
+                    $user->save();
+
+                    return redirect()->intended(config('fortify.home', '/home'));
                 }
             };
         });

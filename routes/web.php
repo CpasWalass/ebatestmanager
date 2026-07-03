@@ -55,9 +55,47 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
         return response()->download(storage_path('app/' . $path))->deleteFileAfterSend(true);
     })->name('projets.export');
 
-    // Export PDF d'un rapport
-    Route::get('/rapports/{report}/pdf', function (\App\Models\Report $report) {
-        // Optionnel : vérifier les droits d'accès
+    // Export PDF ou Word d'un rapport
+    Route::get('/rapports/{report}/export', function (\Illuminate\Http\Request $request, \App\Models\Report $report) {
+        $format = $request->input('format', 'pdf');
+        $slug = \Illuminate\Support\Str::slug($report->perimeter ?? $report->title ?? 'rapport');
+        if ($format === 'word') {
+            $phpWord = new \PhpOffice\PhpWord\PhpWord();
+            $phpWord->setDefaultFontName('Arial');
+            $phpWord->setDefaultFontSize(11);
+            $section = $phpWord->addSection();
+            $phpWord->addTitleStyle(1, ['bold' => true, 'size' => 18, 'color' => 'CC0000'], ['spaceAfter' => 200]);
+            $phpWord->addTitleStyle(2, ['bold' => true, 'size' => 13, 'color' => 'CC0000'], ['spaceBefore' => 200, 'spaceAfter' => 100]);
+            $header = $section->addHeader();
+            $header->addText('e-Business Afrique - EbaTestManager', ['size' => 9, 'color' => '888888']);
+            $section->addTitle(strtoupper($report->perimeter ?? $report->title ?? 'Rapport'), 1);
+            $section->addText('Projet : ' . ($report->project->name ?? '-'), ['size' => 11, 'color' => '555555']);
+            $section->addText('Date : ' . $report->created_at->format('d/m/Y'), ['size' => 10, 'italic' => true, 'color' => '888888']);
+            $section->addTextBreak(1);
+            if ($report->findings) {
+                $section->addTitle('Constatations', 2);
+                foreach ((is_array($report->findings) ? $report->findings : [$report->findings]) as $finding) {
+                    $section->addText((string)$finding, ['size' => 10]);
+                }
+                $section->addTextBreak(1);
+            }
+            if ($report->description) {
+                $section->addTitle('Description', 2);
+                $section->addText($report->description, ['size' => 10]);
+            }
+            $footer = $section->addFooter();
+            $footer->addText('Genere le ' . now()->format('d/m/Y') . ' - EbaTestManager by e-Business Afrique', ['size' => 9, 'color' => '888888']);
+            $tempPath = storage_path('app/temp_rapport_' . $slug . '_' . time() . '.docx');
+            $writer = \PhpOffice\PhpWord\IOFactory::createWriter($phpWord, 'Word2007');
+            $writer->save($tempPath);
+            return response()->download($tempPath, 'rapport_' . $slug . '.docx')->deleteFileAfterSend(true);
+        }
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('reports.pdf', compact('report'));
+        return $pdf->download('rapport_' . $slug . '.pdf');
+    })->name('rapports.export');
+
+    // Rétro-compatibilité: ancien nom de route
+    Route::get('/rapports/{report}/pdf', function (\Illuminate\Http\Request $request, \App\Models\Report $report) {
         $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('reports.pdf', compact('report'));
         return $pdf->download('rapport_' . \Illuminate\Support\Str::slug($report->perimeter ?? $report->title) . '.pdf');
     })->name('rapports.pdf');

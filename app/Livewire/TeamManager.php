@@ -7,7 +7,6 @@ use App\Mail\WelcomeNewUser;
 use Livewire\Component;
 use Livewire\Attributes\Computed;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 
@@ -48,25 +47,25 @@ class TeamManager extends Component
             'role'  => 'required|in:chef_project,tester,developer,client',
         ]);
 
-        // For testing purposes, we set a default password
-        $defaultPassword = 'password';
+        $temporaryPassword = Str::random(12);
 
         $user = User::create([
             'name'     => $this->name,
             'email'    => $this->email,
-            'password' => Hash::make($defaultPassword),
+            'password' => Hash::make($temporaryPassword),
             'tenant_id' => auth()->user()->tenant_id,
             'is_active' => true,
+            'must_change_password' => true,
+            'temporary_password_hash' => Hash::make($temporaryPassword),
         ]);
 
         $user->assignRole($this->role);
 
-        // Envoi de l'email de bienvenue (simulé)
-        $emailStatus = "Un email a été envoyé. Le mot de passe par défaut pour les tests est : {$defaultPassword}";
+        Mail::to($user->email)->send(new WelcomeNewUser($user, $temporaryPassword));
 
         $this->showModal = false;
         $this->reset(['name', 'email', 'role']);
-        session()->flash('success', "Testeur créé avec succès. {$emailStatus}");
+        session()->flash('success', "Utilisateur créé avec succès. Un email de création a été envoyé avec un mot de passe temporaire.");
     }
 
     public function toggleActiveStatus(int $userId): void
@@ -83,6 +82,11 @@ class TeamManager extends Component
 
     public function deleteUser(int $userId): void
     {
+        if (!auth()->user()->hasRole('chef_project')) {
+            session()->flash('error', 'Vous n’avez pas les droits pour supprimer un utilisateur.');
+            return;
+        }
+
         $user = User::find($userId);
         if ($user && $user->id !== auth()->id()) {
             $user->delete();
