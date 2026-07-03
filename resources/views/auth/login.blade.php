@@ -166,6 +166,15 @@
             font-size: 13px; color: #dc2626;
             margin-bottom: 20px;
         }
+        .lockout-alert {
+            background: #fff7ed; border-color: #fed7aa;
+            color: #c2410c;
+        }
+        .lockout-alert #lockout-timer {
+            font-size: 15px;
+            font-variant-numeric: tabular-nums;
+            letter-spacing: 1px;
+        }
 
         .remember-row {
             display: flex; align-items: center; gap: 8px;
@@ -283,13 +292,42 @@
             <h2>Connexion</h2>
             <p class="subtitle">Accédez à votre espace de gestion de tests</p>
 
-            @if (session('lockout_message'))
-                <div class="error-alert">
-                    {{ session('lockout_message') }}
+            @if (session()->has('lockout_seconds'))
+                <div class="error-alert lockout-alert" id="lockout-block">
+                    <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
+                        <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>
+                        <strong>Compte temporairement bloqué</strong>
+                    </div>
+                    <p style="margin:0;font-size:13px;">Trop de tentatives incorrectes. Réessayez dans <strong id="lockout-timer">--:--</strong>.</p>
                 </div>
+                <script>
+                    (function() {
+                        let seconds = {{ session('lockout_seconds') }};
+                        const el = document.getElementById('lockout-timer');
+                        function update() {
+                            if (seconds <= 0) {
+                                document.getElementById('lockout-block').innerHTML = '<p style="margin:0;">Vous pouvez réessayer de vous connecter.</p>';
+                                return;
+                            }
+                            const m = Math.floor(seconds / 60);
+                            const s = seconds % 60;
+                            el.textContent = (m < 10 ? '0' : '') + m + ':' + (s < 10 ? '0' : '') + s;
+                            seconds--;
+                            setTimeout(update, 1000);
+                        }
+                        update();
+                    })();
+                </script>
             @elseif ($errors->any())
                 <div class="error-alert">
-                    {{ $errors->first() }}
+                    <div style="display:flex;align-items:center;gap:8px;">
+                        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                        {{ $errors->first() }}
+                    </div>
+                </div>
+            @elseif (session('status'))
+                <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:12px;padding:12px 16px;font-size:13px;color:#15803d;margin-bottom:20px;">
+                    {{ session('status') }}
                 </div>
             @endif
 

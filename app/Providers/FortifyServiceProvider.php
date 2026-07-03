@@ -49,10 +49,7 @@ class FortifyServiceProvider extends ServiceProvider
                 {
                     $user = auth()->user();
                     if (!$user) return redirect('/login');
-                    if ($user->must_change_password) {
-                        Auth::logout();
-                        return redirect()->route('login')->with('status', 'Veuillez changer votre mot de passe temporaire avant de continuer.');
-                    }
+                    // must_change_password est géré directement dans store() — on n'arrive ici que si le MDP est normal
                     if ($user->hasRole('tester'))    return redirect()->route('testeur.dashboard');
                     if ($user->hasRole('developer')) return redirect()->route('developpeur.dashboard');
                     if ($user->hasRole('client'))    return redirect()->route('client.dashboard');
@@ -78,22 +75,31 @@ class FortifyServiceProvider extends ServiceProvider
                     $user = \App\Models\User::where(Fortify::username(), $credentials[Fortify::username()])->first();
 
                     if ($user && $user->locked_until && $user->locked_until->isFuture()) {
-                        $message = __('Votre compte est temporairement bloqué. Veuillez réessayer dans 30 minutes.');
+                        $secondsLeft = (int) now()->diffInSeconds($user->locked_until, false);
+                        $minutesLeft = (int) ceil($secondsLeft / 60);
+                        $timeLabel = $minutesLeft > 1
+                            ? $minutesLeft . ' minutes'
+                            : ($secondsLeft > 1 ? $secondsLeft . ' secondes' : '1 seconde');
 
-                        session()->flash('lockout_message', $message);
+                        $message = 'Votre compte est temporairement bloqué. Veuillez réessayer dans ' . $timeLabel . '.';
+
+                        // Stocker les secondes restantes pour le compte à rebours JS
+                        session()->flash('lockout_seconds', $secondsLeft);
 
                         throw \Illuminate\Validation\ValidationException::withMessages([
                             Fortify::username() => $message,
                         ]);
                     }
 
+                    // Si l'utilisateur a un mot de passe temporaire, on le connecte et redirige vers profil
                     if ($user && $user->must_change_password && Hash::check($credentials['password'], $user->password)) {
                         Auth::guard('web')->login($user, $request->filled('remember'));
                         $user->failed_login_attempts = 0;
                         $user->locked_until = null;
                         $user->save();
 
-                        return redirect()->route('profile.show');
+                        // Ne pas déconnecter ici — laisser l'utilisateur connecté pour changer son MDP
+                        return redirect()->route('profile.show')->with('status', 'Veuillez changer votre mot de passe temporaire avant de continuer.');
                     }
 
                     $authenticated = Auth::guard('web')->attempt($credentials, $request->filled('remember'));
