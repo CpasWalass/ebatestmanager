@@ -52,11 +52,11 @@ class TeamManager extends Component
         $user = User::create([
             'name'     => $this->name,
             'email'    => $this->email,
-            'password' => Hash::make($temporaryPassword),
+            'password' => $temporaryPassword,           // Le cast 'hashed' du modèle s'en charge
             'tenant_id' => auth()->user()->tenant_id,
             'is_active' => true,
             'must_change_password' => true,
-            'temporary_password_hash' => Hash::make($temporaryPassword),
+            'temporary_password_hash' => Hash::make($temporaryPassword),  // Explicite car pas de cast
         ]);
 
         $user->assignRole($this->role);
