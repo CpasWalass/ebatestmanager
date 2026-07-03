@@ -68,6 +68,28 @@ class TeamManager extends Component
         session()->flash('success', "Utilisateur créé avec succès. Un email de création a été envoyé avec un mot de passe temporaire.");
     }
 
+    public function resendCredentials(int $userId): void
+    {
+        $user = User::find($userId);
+        if (!$user || $user->id === auth()->id()) {
+            return;
+        }
+
+        $temporaryPassword = Str::random(12);
+
+        // Mettre à jour le mot de passe sans double-hashage (le cast 'hashed' s'en charge)
+        $user->password = $temporaryPassword;
+        $user->temporary_password_hash = Hash::make($temporaryPassword);
+        $user->must_change_password = true;
+        $user->failed_login_attempts = 0;
+        $user->locked_until = null;
+        $user->save();
+
+        Mail::to($user->email)->send(new WelcomeNewUser($user, $temporaryPassword));
+
+        session()->flash('success', "Nouveaux identifiants envoyés à {$user->name} ({$user->email}).");
+    }
+
     public function toggleActiveStatus(int $userId): void
     {
         $user = User::find($userId);
