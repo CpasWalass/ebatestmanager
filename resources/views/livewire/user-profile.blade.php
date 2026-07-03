@@ -16,6 +16,25 @@
         </div>
     @endif
 
+    @if (auth()->user()->must_change_password)
+        <div class="mb-6 flex items-start gap-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-300 dark:border-amber-700 text-amber-800 dark:text-amber-300 px-5 py-4 rounded-xl shadow-sm">
+            <svg class="w-6 h-6 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+            </svg>
+            <div>
+                <p class="font-semibold text-sm">Action requise — Changement de mot de passe obligatoire</p>
+                <p class="text-sm mt-1">Vous utilisez un mot de passe temporaire. Veuillez le changer maintenant pour accéder à l'application. Rendez-vous dans la section <strong>Sécurité & Mot de passe</strong> ci-dessous.</p>
+            </div>
+        </div>
+    @elseif (session()->has('warning'))
+        <div class="mb-6 flex items-start gap-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-300 dark:border-amber-700 text-amber-800 dark:text-amber-300 px-5 py-4 rounded-xl shadow-sm">
+            <svg class="w-6 h-6 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+            </svg>
+            <p class="text-sm">{{ session('warning') }}</p>
+        </div>
+    @endif
+
     <div class="space-y-8">
         {{-- Informations du profil --}}
         <div class="bg-white dark:bg-gray-800 shadow rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">

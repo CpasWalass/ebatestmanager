@@ -19,6 +19,7 @@ return Application::configure(basePath: dirname(__DIR__))
             \App\Http\Middleware\RedirectByRole::class,
             \App\Http\Middleware\CheckIsActive::class,
             \App\Http\Middleware\BlockLockedUsers::class,
+            \App\Http\Middleware\ForcePasswordChange::class,
         ]);
         $middleware->alias([
             'role' => \Spatie\Permission\Middleware\RoleMiddleware::class,
