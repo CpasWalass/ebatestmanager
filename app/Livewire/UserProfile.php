@@ -56,11 +56,22 @@ class UserProfile extends Component
         $user = auth()->user();
 
         $rules = [
-            'current_password' => ['required', 'current_password'],
+            'current_password' => ['required'],
             'password' => ['required', 'min:8', 'confirmed'],
         ];
 
-        $this->validate($rules);
+        $messages = [
+            'password.min' => 'Le nouveau mot de passe doit contenir au moins 8 caractères.',
+            'password.confirmed' => 'La confirmation du mot de passe ne correspond pas.',
+            'current_password.required' => 'Le mot de passe actuel est requis.',
+        ];
+
+        $this->validate($rules, $messages);
+
+        if (!Hash::check($this->current_password, $user->password)) {
+            $this->addError('current_password', 'Le mot de passe actuel est incorrect.');
+            return;
+        }
 
         $wasMustChange = $user->must_change_password;
 

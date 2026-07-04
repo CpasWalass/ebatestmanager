@@ -118,7 +118,10 @@
                         </div>
 
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Nouveau mot de passe</label>
+                            <div class="flex justify-between items-end">
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Nouveau mot de passe</label>
+                                <span class="text-xs text-gray-500">(Min. 8 caractères)</span>
+                            </div>
                             <div class="relative mt-1">
                                 <input id="password" type="password" wire:model="password" class="block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm pr-10">
                                 <button type="button" class="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-500 hover:text-gray-700 dark:hover:text-gray-200" data-password-toggle data-target="password" aria-label="Afficher ou masquer le nouveau mot de passe">
