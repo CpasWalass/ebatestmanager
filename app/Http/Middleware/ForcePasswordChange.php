@@ -18,9 +18,9 @@ class ForcePasswordChange
 
         if ($user && $user->must_change_password) {
             // Routes autorisées même sans avoir changé le mot de passe
-            $allowedRoutes = ['profile.show', 'logout', 'livewire.update', 'livewire.upload-file'];
+            $allowedRoutes = ['profile.show', 'logout'];
 
-            if (!in_array($request->route()?->getName(), $allowedRoutes)) {
+            if (!in_array($request->route()?->getName(), $allowedRoutes) && !$request->is('livewire/*')) {
                 return redirect()->route('profile.show')
                     ->with('warning', 'Vous devez changer votre mot de passe temporaire avant de continuer.');
             }

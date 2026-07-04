@@ -4,7 +4,5 @@ $app = require_once __DIR__.'/bootstrap/app.php';
 $kernel = $app->make(Illuminate\Contracts\Console\Kernel::class);
 $kernel->bootstrap();
 
-$user = App\Models\User::latest('id')->first();
-echo "Dernier utilisateur créé: " . $user->email . "\n";
+$user = App\Models\User::where('email', 'Wulfredlawadan@gmail.com')->first();
 echo "Must change password: " . ($user->must_change_password ? 'Oui' : 'Non') . "\n";
-echo "Roles: " . $user->roles->pluck('name')->implode(', ') . "\n";
