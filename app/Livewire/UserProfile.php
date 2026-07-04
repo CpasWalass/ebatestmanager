@@ -60,20 +60,22 @@ class UserProfile extends Component
             'password' => ['required', 'min:8', 'confirmed'],
         ];
 
-        if ($user->must_change_password) {
-            $rules['temporary_password'] = ['required', function ($attribute, $value, $fail) use ($user) {
-                if (!Hash::check($value, $user->temporary_password_hash)) {
-                    $fail('Le mot de passe temporaire fourni est incorrect.');
-                }
-            }];
-        }
-
         $this->validate($rules);
+
+        $wasMustChange = $user->must_change_password;
 
         $user->password = Hash::make($this->password);
         $user->must_change_password = false;
         $user->temporary_password_hash = null;
         $user->save();
+
+        if ($wasMustChange) {
+            session()->flash('success', 'Mot de passe mis à jour avec succès. Bienvenue !');
+            if ($user->hasRole('tester')) return $this->redirectRoute('testeur.dashboard');
+            if ($user->hasRole('developer')) return $this->redirectRoute('developpeur.dashboard');
+            if ($user->hasRole('client')) return $this->redirectRoute('client.dashboard');
+            return $this->redirectRoute('dashboard');
+        }
 
         $this->reset(['current_password', 'temporary_password', 'password', 'password_confirmation']);
         session()->flash('success_password', 'Mot de passe mis à jour avec succès.');
