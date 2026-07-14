@@ -26,7 +26,7 @@
 <div class="container">
     <div class="header">
         <h1>🎉 Bienvenue sur EbaTestManager</h1>
-        <p>e-Business Afrique — Plateforme UAT/IAT</p>
+        <p>e-Business Afrique - Plateforme UAT/IAT</p>
     </div>
     <div class="body">
         <p>Bonjour <strong>{{ $user->name }}</strong>,</p>
@@ -40,7 +40,7 @@
         </div>
 
         <div class="warning">
-            ⚠️ <strong>Important :</strong> Pour votre sécurité, veuillez modifier votre mot de passe dès votre première connexion.
+             <strong>Important :</strong> Pour votre sécurité, veuillez modifier votre mot de passe dès votre première connexion.
         </div>
 
         <p style="margin-top: 24px;">Connectez-vous à la plateforme dès maintenant :</p>

@@ -49,7 +49,7 @@ class FortifyServiceProvider extends ServiceProvider
                 {
                     $user = auth()->user();
                     if (!$user) return redirect('/login');
-                    // must_change_password est géré directement dans store() — on n'arrive ici que si le MDP est normal
+                    // must_change_password est géré directement dans store()  on n'arrive ici que si le MDP est normal
                     if ($user->hasRole('tester'))    return redirect()->route('testeur.dashboard');
                     if ($user->hasRole('developer')) return redirect()->route('developpeur.dashboard');
                     if ($user->hasRole('client'))    return redirect()->route('client.dashboard');
@@ -123,7 +123,12 @@ class FortifyServiceProvider extends ServiceProvider
                     $user->locked_until = null;
                     $user->save();
 
-                    return redirect()->intended(config('fortify.home', '/home'));
+                    // If there's an intended URL, redirect there, otherwise use our custom role-based response
+                    if (session()->has('url.intended')) {
+                        return redirect()->intended();
+                    }
+
+                    return app(\Laravel\Fortify\Contracts\LoginResponse::class)->toResponse($request);
                 }
             };
         });

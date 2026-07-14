@@ -9,8 +9,11 @@
                 <li class="inline-flex items-center">
                     @php
                         $isTester = auth()->check() && auth()->user()->hasRole('tester');
+                        $isClient = auth()->check() && auth()->user()->hasRole('client');
                         $backProjets = $isTester ? route('testeur.projets.index') : route('projets.index');
-                        $backProject = $isTester ? route('testeur.projets.show', $project) : route('projets.show', $project);
+                        $backProject = $isTester
+                            ? route('testeur.projets.show', $project)
+                            : route('projets.show', $project);
                     @endphp
                     <a href="{{ $backProjets }}" class="hover:text-gray-900 dark:hover:text-white transition">Projets</a>
                 </li>
@@ -44,7 +47,7 @@
             <h1 class="text-xl font-bold uppercase tracking-wide text-gray-900 dark:text-white">
                 <span class="text-[#8b0000]">FICHIER UAT</span> - {{ $template->name }}
             </h1>
-            @if(!auth()->check() || (!auth()->user()->hasRole('tester') && !auth()->user()->hasRole('developer')))
+            @if(auth()->check() && auth()->user()->hasRole('chef_project'))
             <div class="flex items-center space-x-2">
                 <button wire:click="$set('showImportModal', true)" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md font-medium text-sm flex items-center space-x-2 transition shadow-sm">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
@@ -58,6 +61,12 @@
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
                     <span>Ajouter une ligne</span>
                 </button>
+            </div>
+            @elseif(auth()->check() && auth()->user()->hasRole('client'))
+            {{-- Le client voit juste un indicateur de son rôle — ses saisies se sauvegardent automatiquement --}}
+            <div class="flex items-center gap-2 px-3 py-2 bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg">
+                <svg class="w-4 h-4 text-purple-600 dark:text-purple-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                <span class="text-xs font-medium text-purple-700 dark:text-purple-300">Vue Client UAT — Vos retours se sauvegardent automatiquement</span>
             </div>
             @else
             <div class="flex items-center space-x-2">
@@ -79,17 +88,82 @@
 
     <!-- Tableur Type Excel -->
     <div class="flex-1 overflow-auto bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 pb-20">
-        <table class="w-full text-sm text-left border-collapse min-w-max">
+        <table class="w-full text-sm text-left border-collapse min-w-max" style="table-layout: fixed;">
             <thead class="text-xs text-white uppercase" style="background-color: #1a4f3e; /* Couleur verte style Excel */">
                 <tr>
                     <th scope="col" class="px-2 py-3 border-r border-[#133c2e] text-center w-10">#</th>
                     @foreach($template->fields as $field)
-                        <th scope="col" class="px-4 py-3 border-r border-[#133c2e] whitespace-nowrap">
-                            {{ $field['label'] }}
+                        <th scope="col" 
+                            class="px-4 py-3 border-r border-[#133c2e] whitespace-nowrap relative select-none"
+                            x-data="{
+                                width: {{ $field['type'] === 'textarea' ? 250 : 150 }},
+                                startX: 0,
+                                startWidth: 0,
+                                startResize(e) {
+                                    this.startX = e.pageX;
+                                    this.startWidth = this.$el.offsetWidth;
+                                    const onMouseMove = (e) => {
+                                        this.width = Math.max(60, this.startWidth + (e.pageX - this.startX));
+                                    };
+                                    const onMouseUp = () => {
+                                        document.removeEventListener('mousemove', onMouseMove);
+                                        document.removeEventListener('mouseup', onMouseUp);
+                                        document.body.style.cursor = 'default';
+                                    };
+                                    document.body.style.cursor = 'col-resize';
+                                    document.addEventListener('mousemove', onMouseMove);
+                                    document.addEventListener('mouseup', onMouseUp);
+                                }
+                            }"
+                            :style="`width: ${width}px; min-width: ${width}px; max-width: ${width}px`"
+                        >
+                            <div class="overflow-hidden text-ellipsis">{{ $field['label'] }}</div>
+                            <div class="absolute right-0 top-0 bottom-0 z-20"
+                                 style="width: 10px; cursor: col-resize; transform: translateX(5px); background: transparent;"
+                                 onmouseover="this.style.background='rgba(74, 222, 128, 0.5)'"
+                                 onmouseout="this.style.background='transparent'"
+                                 @mousedown.prevent="startResize"></div>
                         </th>
                     @endforeach
-                    @if(!auth()->check() || (!auth()->user()->hasRole('tester') && !auth()->user()->hasRole('developer')))
-                    <th scope="col" class="px-2 py-3 text-center">Actions</th>
+                    @if(auth()->check() && auth()->user()->hasRole('chef_project'))
+                    <th scope="col" class="px-2 py-3 text-center" style="width: 100px;">Actions</th>
+                    @endif
+                    {{-- Colonne AVIS CLIENT : visible client et chef --}}
+                    @if(auth()->check() && (auth()->user()->hasRole('client') || auth()->user()->hasRole('chef_project')))
+                    <th scope="col" 
+                        class="px-3 py-3 text-center border-r border-[#133c2e] whitespace-nowrap relative select-none"
+                        x-data="{
+                            width: 250,
+                            startX: 0,
+                            startWidth: 0,
+                            startResize(e) {
+                                this.startX = e.pageX;
+                                this.startWidth = this.$el.offsetWidth;
+                                const onMouseMove = (e) => {
+                                    this.width = Math.max(100, this.startWidth + (e.pageX - this.startX));
+                                };
+                                const onMouseUp = () => {
+                                    document.removeEventListener('mousemove', onMouseMove);
+                                    document.removeEventListener('mouseup', onMouseUp);
+                                    document.body.style.cursor = 'default';
+                                };
+                                document.body.style.cursor = 'col-resize';
+                                document.addEventListener('mousemove', onMouseMove);
+                                document.addEventListener('mouseup', onMouseUp);
+                            }
+                        }"
+                        :style="`width: ${width}px; min-width: ${width}px; max-width: ${width}px`"
+                    >
+                        <div class="flex items-center justify-center gap-1 overflow-hidden text-ellipsis">
+                            <svg class="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                            AVIS CLIENT
+                        </div>
+                        <div class="absolute right-0 top-0 bottom-0 z-20"
+                             style="width: 10px; cursor: col-resize; transform: translateX(5px); background: transparent;"
+                             onmouseover="this.style.background='rgba(74, 222, 128, 0.5)'"
+                             onmouseout="this.style.background='transparent'"
+                             @mousedown.prevent="startResize"></div>
+                    </th>
                     @endif
                 </tr>
             </thead>
@@ -119,9 +193,12 @@
                                 @php
                                     $isTester = auth()->check() && auth()->user()->hasRole('tester');
                                     $isDev = auth()->check() && auth()->user()->hasRole('developer');
+                                    $isClient = auth()->check() && auth()->user()->hasRole('client');
+                                    $isChef = auth()->check() && auth()->user()->hasRole('chef_project');
                                     
-                                    // Mots-clés qui rendent une colonne modifiable par le testeur
+                                    // Mots-clés qui rendent une colonne modifiable par le testeur ou le client
                                     $testerEditableKeywords = ['etat', 'status', 'statut', 'result', 'nature', 'comment'];
+                                    $clientEditableKeywords = ['client', 'uat', 'retour_client', 'validation'];
                                     
                                     $isReadOnly = false;
                                     if ($isTester) {
@@ -135,8 +212,32 @@
                                         $isReadOnly = !$isEditableForTester;
                                     } elseif ($isDev) {
                                         $isReadOnly = !str_contains(strtolower($field['name']), 'retour_dev');
+                                    } elseif ($isClient) {
+                                        $isEditableForClient = false;
+                                        foreach ($clientEditableKeywords as $keyword) {
+                                            if (str_contains(strtolower($field['name']), $keyword)) {
+                                                $isEditableForClient = true;
+                                                break;
+                                            }
+                                        }
+                                        $isReadOnly = !$isEditableForClient;
+                                    } elseif ($isChef) {
+                                        if (str_contains(strtolower($field['name']), 'retour_dev')) {
+                                            $isReadOnly = true;
+                                        }
                                     }
                                     
+                                    $allowImageUpload = false;
+                                    if (!$isReadOnly) {
+                                        if ($isTester && str_contains(strtolower($field['name']), 'comment')) $allowImageUpload = true;
+                                        if ($isDev && str_contains(strtolower($field['name']), 'retour_dev')) $allowImageUpload = true;
+                                        if ($isChef && str_contains(strtolower($field['name']), 'comment')) $allowImageUpload = true;
+                                    }
+
+                                    preg_match_all('/!\[capture\]\(([^)]+)\)/', $val, $imgMatches);
+                                    $cleanText = trim(preg_replace('/\n?!\[capture\]\([^)]+\)/', '', $val));
+                                    $existingImagesJson = json_encode($imgMatches[1] ?? []);
+
                                     $cellBgClass = $badgeClass ?: ($isReadOnly ? 'bg-gray-200 dark:bg-gray-800 cursor-not-allowed opacity-80' : 'bg-white dark:bg-gray-900');
                                 @endphp
                                 
@@ -149,7 +250,16 @@
                                                     <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
                                                 </a>
                                             @else
-                                                {{ $val }}
+                                                {{ $cleanText }}
+                                                @if(!empty($imgMatches[1]))
+                                                    <div class="mt-2 flex flex-wrap gap-2">
+                                                        @foreach($imgMatches[1] as $imgUrl)
+                                                        <a href="{{ $imgUrl }}" target="_blank">
+                                                            <img src="{{ $imgUrl }}" class="h-6 w-6 object-cover rounded border border-gray-300 dark:border-gray-600 shadow-sm hover:opacity-80 transition" alt="capture">
+                                                        </a>
+                                                        @endforeach
+                                                    </div>
+                                                @endif
                                             @endif
                                         </div>
                                     @elseif($field['type'] === 'url')
@@ -179,28 +289,225 @@
                                         @endforeach
                                     </select>
                                 @elseif($field['type'] === 'textarea')
-                                    <textarea 
-                                        wire:blur="updateCell({{ $row->id }}, '{{ $field['name'] }}', $event.target.value)"
-                                        class="w-full h-full min-h-[40px] px-3 py-2 bg-transparent border-none focus:ring-2 focus:ring-[#8b0000] focus:bg-white dark:focus:bg-gray-700 outline-none resize-none overflow-hidden"
-                                        rows="1"
-                                        oninput="this.style.height = ''; this.style.height = this.scrollHeight + 'px'"
-                                    >{{ $val }}</textarea>
+                                    @if(!$isReadOnly)
+                                        @if($allowImageUpload)
+                                        {{-- Textarea éditable avec upload image --}}
+                                        <div
+                                            x-data="cellImageUpload({{ $row->id }}, '{{ $field['name'] }}', {{ $existingImagesJson }})"
+                                            class="relative w-full h-full min-h-[40px]"
+                                        >
+                                            <textarea
+                                                x-ref="textarea"
+                                                @blur="saveCell()"
+                                                @paste="handlePaste($event)"
+                                                class="w-full h-full min-h-[40px] px-3 py-2 pb-8 bg-transparent border-none focus:ring-2 focus:ring-[#8b0000] focus:bg-white dark:focus:bg-gray-700 outline-none resize-none overflow-hidden"
+                                                rows="1"
+                                                oninput="this.style.height = ''; this.style.height = this.scrollHeight + 'px'"
+                                            >{{ $cleanText }}</textarea>
+                                            {{-- Barre basse avec bouton image --}}
+                                            <div class="absolute bottom-1 left-1 flex items-center gap-1">
+                                                <label
+                                                    class="flex items-center gap-1 px-1.5 py-0.5 rounded cursor-pointer text-[10px] font-medium transition"
+                                                    :class="uploading ? 'text-blue-500' : 'text-gray-400 hover:text-blue-500'"
+                                                    title="Joindre une capture d'écran ou coller avec Ctrl+V"
+                                                >
+                                                    <svg x-show="!uploading" class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                                                    <svg x-show="uploading" class="w-3 h-3 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+                                                    <input type="file" accept="image/*" class="hidden" @change="uploadFile($event)" :disabled="uploading">
+                                                </label>
+                                                <template x-for="(imgUrl, index) in images" :key="index">
+                                                    <div class="relative group">
+                                                        <a :href="imgUrl" target="_blank" class="flex-shrink-0 block">
+                                                            <img :src="imgUrl" class="h-6 w-6 object-cover rounded border border-gray-300 hover:opacity-80 transition" alt="capture">
+                                                        </a>
+                                                        <button type="button" @click.stop="removeImage(index)" class="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-3 h-3 flex items-center justify-center opacity-0 group-hover:opacity-100 transition shadow">
+                                                            <svg class="w-2 h-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12"/></svg>
+                                                        </button>
+                                                    </div>
+                                                </template>
+                                            </div>
+                                        </div>
+                                        @else
+                                        {{-- Textarea classique --}}
+                                        <textarea
+                                            wire:blur="updateCell({{ $row->id }}, '{{ $field['name'] }}', $event.target.value)"
+                                            class="w-full h-full min-h-[40px] px-3 py-2 bg-transparent border-none focus:ring-2 focus:ring-[#8b0000] focus:bg-white dark:focus:bg-gray-700 outline-none resize-none overflow-hidden"
+                                            rows="1"
+                                            oninput="this.style.height = ''; this.style.height = this.scrollHeight + 'px'"
+                                        >{{ $cleanText }}</textarea>
+                                        @if(count($imgMatches[1] ?? []) > 0)
+                                        <div class="px-3 pb-2 flex gap-1">
+                                            @foreach($imgMatches[1] as $imgUrl)
+                                                <a href="{{ $imgUrl }}" target="_blank" class="block">
+                                                    <img src="{{ $imgUrl }}" class="h-5 w-5 object-cover rounded border border-gray-200 hover:opacity-80 transition" title="capture">
+                                                </a>
+                                            @endforeach
+                                        </div>
+                                        @endif
+                                        @endif
+                                    @else
+                                    {{-- Textarea read-only : affiche le texte + miniatures si images intégrées --}}
+                                    <div class="w-full min-h-[40px] px-3 py-2 text-gray-500 dark:text-gray-400 whitespace-pre-wrap text-sm">
+                                        {{ $cleanText }}
+                                        @if(count($imgMatches[1] ?? []) > 0)
+                                            <div class="mt-2 flex gap-2 flex-wrap">
+                                            @foreach($imgMatches[1] as $imgUrl)
+                                                <a href="{{ $imgUrl }}" target="_blank" class="block">
+                                                    <img src="{{ $imgUrl }}" class="h-16 rounded border border-gray-200 hover:opacity-80 transition shadow-sm" alt="capture">
+                                                </a>
+                                            @endforeach
+                                            </div>
+                                        @endif
+                                    </div>
+                                    @endif
                                 @else
-                                    <input 
-                                        type="text" 
-                                        value="{{ $val }}"
-                                        wire:blur="updateCell({{ $row->id }}, '{{ $field['name'] }}', $event.target.value)"
-                                        class="w-full h-full min-h-[40px] px-3 py-2 bg-transparent border-none focus:ring-2 focus:ring-[#8b0000] focus:bg-white dark:focus:bg-gray-700 outline-none"
-                                    >
+                                    @if(!$isReadOnly)
+                                        @if($allowImageUpload)
+                                        {{-- Input text éditable avec upload image --}}
+                                        <div
+                                            x-data="cellImageUpload({{ $row->id }}, '{{ $field['name'] }}', {{ $existingImagesJson }})"
+                                            class="relative flex items-center w-full h-full min-h-[40px]"
+                                        >
+                                            <input
+                                                x-ref="textarea"
+                                                type="text"
+                                                value="{{ $cleanText }}"
+                                                @blur="saveCell()"
+                                                @paste="handlePaste($event)"
+                                                class="flex-1 h-full min-h-[40px] px-3 py-2 bg-transparent border-none focus:ring-2 focus:ring-[#8b0000] focus:bg-white dark:focus:bg-gray-700 outline-none"
+                                            >
+                                            <label
+                                                class="flex-shrink-0 p-1 cursor-pointer text-gray-300 hover:text-blue-400 transition mr-1"
+                                                :class="uploading ? 'text-blue-400' : ''"
+                                                title="Joindre une capture d'écran"
+                                            >
+                                                <svg x-show="!uploading" class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                                                <svg x-show="uploading" class="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+                                                <input type="file" accept="image/*" class="hidden" @change="uploadFile($event)" :disabled="uploading">
+                                            </label>
+                                            <template x-for="(imgUrl, index) in images" :key="index">
+                                                <div class="relative group mr-1">
+                                                    <a :href="imgUrl" target="_blank">
+                                                        <img :src="imgUrl" class="h-5 w-5 object-cover rounded border border-gray-300 hover:opacity-80 transition flex-shrink-0" title="capture">
+                                                    </a>
+                                                    <button type="button" @click.stop="removeImage(index)" class="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-3 h-3 flex items-center justify-center opacity-0 group-hover:opacity-100 transition shadow">
+                                                        <svg class="w-2 h-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12"/></svg>
+                                                    </button>
+                                                </div>
+                                            </template>
+                                        </div>
+                                        @else
+                                        {{-- Input text classique --}}
+                                        <input
+                                            type="text"
+                                            value="{{ $cleanText }}"
+                                            wire:blur="updateCell({{ $row->id }}, '{{ $field['name'] }}', $event.target.value)"
+                                            class="w-full h-full min-h-[40px] px-3 py-2 bg-transparent border-none focus:ring-2 focus:ring-[#8b0000] focus:bg-white dark:focus:bg-gray-700 outline-none"
+                                        >
+                                        @if(count($imgMatches[1] ?? []) > 0)
+                                        <div class="px-3 pb-2 flex gap-1">
+                                            @foreach($imgMatches[1] as $imgUrl)
+                                                <a href="{{ $imgUrl }}" target="_blank" class="block">
+                                                    <img src="{{ $imgUrl }}" class="h-5 w-5 object-cover rounded border border-gray-200 hover:opacity-80 transition" title="capture">
+                                                </a>
+                                            @endforeach
+                                        </div>
+                                        @endif
+                                        @endif
+                                    @else
+                                    {{-- Input text read-only --}}
+                                    <div class="w-full h-full min-h-[40px] px-3 py-2 text-gray-500 dark:text-gray-400">
+                                        {{ $cleanText }}
+                                        @if(count($imgMatches[1] ?? []) > 0)
+                                            <div class="mt-2 flex gap-2 flex-wrap">
+                                            @foreach($imgMatches[1] as $imgUrl)
+                                                <a href="{{ $imgUrl }}" target="_blank" class="block">
+                                                    <img src="{{ $imgUrl }}" class="h-16 rounded border border-gray-200 hover:opacity-80 transition shadow-sm" alt="capture">
+                                                </a>
+                                            @endforeach
+                                            </div>
+                                        @endif
+                                    </div>
+                                    @endif
                                 @endif
                             </td>
                         @endforeach
                         
-                        @if(!auth()->check() || (!auth()->user()->hasRole('tester') && !auth()->user()->hasRole('developer')))
+                        @if(auth()->check() && auth()->user()->hasRole('chef_project'))
                         <td class="px-2 py-2 text-center">
                             <button wire:click="deleteRow({{ $row->id }})" wire:confirm="Supprimer cette ligne ?" class="text-red-500 hover:text-red-700 opacity-0 group-hover:opacity-100 transition">
                                 <svg class="w-5 h-5 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                             </button>
+                        </td>
+                        @endif
+
+                        {{-- Colonne AVIS CLIENT --}}
+                        @if(auth()->check() && (auth()->user()->hasRole('client') || auth()->user()->hasRole('chef_project')))
+                        <td class="px-3 py-2 border-l-2 border-purple-200 dark:border-purple-700 bg-purple-50/30 dark:bg-purple-900/10">
+                            @php
+                                $clientStatus = $row->client_status ?? 'pending';
+                                $statusConfig = match($clientStatus) {
+                                    'validated' => ['label' => 'Validé',    'class' => 'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300',  'icon' => '✅'],
+                                    'rejected'  => ['label' => 'Rejeté',   'class' => 'bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300',    'icon' => '❌'],
+                                    default     => ['label' => 'En attente','class' => 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400', 'icon' => '⏳'],
+                                };
+                            @endphp
+                            <div class="flex flex-col gap-2 min-w-[140px]">
+                                {{-- Badge statut --}}
+                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold {{ $statusConfig['class'] }}">
+                                    {{ $statusConfig['icon'] }} {{ $statusConfig['label'] }}
+                                </span>
+
+                                {{-- Commentaire du client (visible chef) --}}
+                                @if($row->client_comment)
+                                <div class="text-xs text-gray-600 dark:text-gray-400 bg-white dark:bg-gray-800 rounded p-1.5 border border-gray-200 dark:border-gray-600 max-w-[200px]">
+                                    @php
+                                        preg_match_all('/!\[capture\]\(([^)]+)\)/', $row->client_comment, $cm);
+                                        $cleanComment = preg_replace('/\n?!\[capture\]\([^)]+\)/', '', $row->client_comment);
+                                    @endphp
+                                    <p class="line-clamp-3">{{ $cleanComment }}</p>
+                                    @foreach($cm[1] as $cUrl)
+                                    <a href="{{ $cUrl }}" target="_blank" class="mt-1 block">
+                                        <img src="{{ $cUrl }}" class="h-6 rounded border border-gray-200 hover:opacity-80 transition" alt="capture client">
+                                    </a>
+                                    @endforeach
+                                </div>
+                                @endif
+
+                                {{-- Boutons d'action (client uniquement) --}}
+                                @if(auth()->user()->hasRole('client'))
+                                <div class="flex gap-1">
+                                    @if($clientStatus !== 'validated')
+                                    <button
+                                        wire:click="validateCase({{ $row->id }})"
+                                        wire:loading.attr="disabled"
+                                        class="flex items-center gap-1 px-2 py-1 rounded-md bg-green-600 hover:bg-green-700 text-white text-[11px] font-semibold transition shadow-sm"
+                                        title="Valider ce cas de test"
+                                    >
+                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+                                        OK
+                                    </button>
+                                    @endif
+                                    @if($clientStatus !== 'rejected')
+                                    <button
+                                        wire:click="openRejectModal({{ $row->id }})"
+                                        class="flex items-center gap-1 px-2 py-1 rounded-md bg-red-600 hover:bg-red-700 text-white text-[11px] font-semibold transition shadow-sm"
+                                        title="Rejeter ce cas de test"
+                                    >
+                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
+                                        KO
+                                    </button>
+                                    @endif
+                                    @if($clientStatus !== 'pending')
+                                    <button
+                                        wire:click="validateCase({{ $row->id }})" {{-- reset via revalider --}}
+                                        class="px-2 py-1 rounded-md bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-600 dark:text-gray-300 text-[10px] transition"
+                                        title="Réinitialiser l'avis"
+                                    >↺</button>
+                                    @endif
+                                </div>
+                                @endif
+                            </div>
                         </td>
                         @endif
                     </tr>
@@ -226,12 +533,77 @@
         }
         table td textarea {
             white-space: pre-wrap;
-            min-width: 150px;
+            min-width: 100px;
         }
         table th {
             letter-spacing: 0.05em;
         }
     </style>
+
+    {{-- Alpine.js : upload image dans les cellules (testeur, développeur, chef, client) --}}
+    <script>
+    function cellImageUpload(rowId, fieldName, existingImages = []) {
+        return {
+            uploading: false,
+            images: existingImages,
+
+            async handlePaste(event) {
+                const items = event.clipboardData?.items;
+                if (!items) return;
+                for (const item of items) {
+                    if (item.type.startsWith('image/')) {
+                        event.preventDefault();
+                        await this.doUpload(item.getAsFile());
+                        return;
+                    }
+                }
+            },
+
+            async uploadFile(event) {
+                const file = event.target.files[0];
+                if (file) await this.doUpload(file);
+                event.target.value = '';
+            },
+
+            async doUpload(file) {
+                this.uploading = true;
+                try {
+                    const fd = new FormData();
+                    fd.append('image', file);
+                    fd.append('_token', document.querySelector('meta[name="csrf-token"]').content);
+                    const res = await fetch('/upload-image', { method: 'POST', body: fd });
+                    if (!res.ok) { this.uploading = false; return; }
+                    const data = await res.json();
+                    if (data.url) {
+                        this.images.push(data.url);
+                        this.saveCell();
+                    }
+                } catch(e) { console.error('Upload error', e); }
+                this.uploading = false;
+            },
+
+            removeImage(index) {
+                this.images.splice(index, 1);
+                this.saveCell();
+            },
+
+            saveCell() {
+                const el = this.$refs.textarea;
+                if (!el) return;
+                const textValue = el.value.trim();
+                const mdImages = this.images.map(url => `![capture](${url})`).join('\n');
+                
+                // On assemble le texte et les images (avec un saut de ligne si on a les deux)
+                let finalValue = textValue;
+                if (mdImages) {
+                    finalValue = textValue ? textValue + '\n\n' + mdImages : mdImages;
+                }
+                
+                this.$wire.updateCell(rowId, fieldName, finalValue);
+            }
+        };
+    }
+    </script>
 
     <!-- Modal Gestion des Colonnes -->
     @if($showColumnModal)
@@ -421,10 +793,9 @@
             </div>
         </div>
     </div>
-    </div>
     @endif
 
-    <!-- Modal Commit Session -->
+    {{-- Modal Commit Session (Testeur) --}}
     @if($showCommitModal)
     <div class="fixed inset-0 z-[60] overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
         <div class="flex items-end justify-center min-h-screen pt-10 px-4 pb-24 text-center sm:block sm:p-0">
@@ -433,24 +804,92 @@
             <div class="relative z-10 inline-block align-bottom bg-white dark:bg-gray-800 rounded-xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg w-full border border-gray-200 dark:border-gray-700">
                 <div class="px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
                     <h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-white mb-2">Soumettre votre session de tests</h3>
-                    <p class="text-sm text-gray-500 mb-4">Cette action va enregistrer proprement vos résultats dans l'historique global du projet. Entrez un message décrivant ce que vous avez testé ou trouvé.</p>
-                    
+                    <p class="text-sm text-gray-500 mb-4">Décrivez ce que vous avez testé ou trouvé. Vous pouvez joindre une capture d'écran (📷) ou coller une image avec Ctrl+V.</p>
                     <div class="mt-4">
                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Message de validation (obligatoire)</label>
-                        <textarea wire:model.defer="commitMessage" rows="3" class="w-full rounded-md border-gray-300 shadow-sm focus:border-[#8b0000] focus:ring focus:ring-[#8b0000] focus:ring-opacity-50 dark:bg-gray-700 dark:border-gray-600 dark:text-white" placeholder="Ex: Tests d'inscription terminés. 2 bugs mineurs trouvés."></textarea>
+                        <x-rich-textarea
+                            wire-model="commitMessage"
+                            placeholder="Ex: Tests d'inscription terminés. 2 bugs mineurs trouvés..."
+                            :rows="4"
+                        />
                         @error('commitMessage') <span class="text-red-500 text-xs mt-1 block">{{ $message }}</span> @enderror
                     </div>
                 </div>
                 <div class="px-4 py-3 bg-gray-50 dark:bg-gray-800/50 sm:px-6 flex justify-end gap-3 border-t border-gray-200 dark:border-gray-700">
-                    <button type="button" wire:click="$set('showCommitModal', false)" class="inline-flex justify-center rounded-md border border-gray-300 dark:border-gray-600 shadow-sm px-4 py-2 bg-white dark:bg-gray-700 text-base font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#8b0000] sm:text-sm">
+                    <button type="button" wire:click="$set('showCommitModal', false)" class="inline-flex justify-center rounded-md border border-gray-300 dark:border-gray-600 shadow-sm px-4 py-2 bg-white dark:bg-gray-700 text-base font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600 sm:text-sm">Annuler</button>
+                    <button type="button" wire:click="commitSession" class="inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-green-600 text-base font-medium text-white hover:bg-green-700 sm:text-sm">Soumettre au journal</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    @endif
+
+    {{-- Modal Rejet Client UAT --}}
+    @if($showRejectModal)
+    <div class="fixed inset-0 z-[70] overflow-y-auto" aria-labelledby="reject-modal-title" role="dialog" aria-modal="true">
+        <div class="flex items-center justify-center min-h-screen px-4 pb-24 text-center sm:p-0">
+            <div class="fixed inset-0 bg-gray-900 bg-opacity-80 transition-opacity" aria-hidden="true"></div>
+            <div class="relative z-10 inline-block bg-white dark:bg-gray-800 rounded-2xl text-left overflow-hidden shadow-2xl transform transition-all w-full max-w-lg border border-red-200 dark:border-red-800">
+
+                {{-- En-tête modal --}}
+                <div class="px-6 pt-5 pb-4 border-b border-gray-200 dark:border-gray-700">
+                    <div class="flex items-center gap-3">
+                        <div class="flex-shrink-0 w-10 h-10 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center">
+                            <svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                        </div>
+                        <div>
+                            <h3 class="text-base font-semibold text-gray-900 dark:text-white" id="reject-modal-title">Signaler un problème</h3>
+                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Ce cas de test sera marqué comme <strong>rejeté</strong> et le chef de projet sera notifié.</p>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Résumé du cas --}}
+                @if($rejectCaseSummary)
+                <div class="px-6 py-3 bg-gray-50 dark:bg-gray-900/50 border-b border-gray-200 dark:border-gray-700">
+                    <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Cas de test concerné</p>
+                    <p class="text-sm text-gray-800 dark:text-gray-200 font-medium line-clamp-2">{{ $rejectCaseSummary }}</p>
+                </div>
+                @endif
+
+                {{-- Formulaire --}}
+                <div class="px-6 py-4">
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Décrivez le problème constaté <span class="text-red-500">*</span>
+                    </label>
+                    <x-rich-textarea
+                        wire-model="rejectComment"
+                        placeholder="Décrivez le problème : ce qui ne fonctionne pas, ce que vous attendiez... Vous pouvez coller une capture d'écran avec Ctrl+V."
+                        :rows="5"
+                        id="reject-comment-textarea"
+                    />
+                    @error('rejectComment')
+                    <p class="mt-1 text-xs text-red-500">{{ $message }}</p>
+                    @enderror
+                </div>
+
+                {{-- Actions --}}
+                <div class="px-6 py-4 bg-gray-50 dark:bg-gray-800/50 flex flex-col sm:flex-row justify-end gap-2 border-t border-gray-200 dark:border-gray-700">
+                    <button
+                        type="button"
+                        wire:click="cancelRejection"
+                        class="inline-flex justify-center rounded-lg border border-gray-300 dark:border-gray-600 px-4 py-2 bg-white dark:bg-gray-700 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600 transition"
+                    >
                         Annuler
                     </button>
-                    <button type="button" wire:click="commitSession" class="inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-green-600 text-base font-medium text-white hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-600 sm:text-sm">
-                        Soumettre au journal
+                    <button
+                        type="button"
+                        wire:click="submitRejection"
+                        wire:loading.attr="disabled"
+                        class="inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 bg-red-600 hover:bg-red-700 text-sm font-semibold text-white transition shadow-sm disabled:opacity-50"
+                    >
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                        Soumettre le rejet
                     </button>
                 </div>
             </div>
         </div>
     </div>
     @endif
+
 </div>

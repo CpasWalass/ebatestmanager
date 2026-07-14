@@ -87,7 +87,7 @@ class AssignTesters extends Component
                         'receiver_id' => $userId,
                         'project_id' => $this->project->id,
                         'type' => 'system',
-                        'content' => "Vous avez été assigné au cas de test **{$this->template->name}**. [Cliquez ici pour y accéder]($url)",
+                        'content' => "Vous avez été assigné au cas de test {$this->template->name}. [Cliquez ici pour y accéder]($url)",
                     ]);
                 }
             }
@@ -111,7 +111,7 @@ class AssignTesters extends Component
                         'receiver_id' => $userId,
                         'project_id' => $this->project->id,
                         'type' => 'system',
-                        'content' => "Vous avez été assigné au projet **{$this->project->name}**. [Cliquez ici pour y accéder]($url)",
+                        'content' => "Vous avez été assigné au projet {$this->project->name}. [Cliquez ici pour y accéder]($url)",
                     ]);
                 }
             }

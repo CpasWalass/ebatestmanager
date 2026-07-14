@@ -74,7 +74,7 @@ class CreateUatSpace extends Component
                 'receiver_id' => $user->id,
                 'project_id' => $this->project->id,
                 'type' => 'system',
-                'content' => "Bienvenue ! L'espace de recette (UAT) pour le projet **{$this->project->name}** est prêt. [Cliquez ici pour y accéder]({$this->generatedLink})",
+                'content' => "Bienvenue ! L'espace de recette (UAT) pour le projet {$this->project->name} est prêt. [Cliquez ici pour y accéder]({$this->generatedLink})",
             ]);
         }
         

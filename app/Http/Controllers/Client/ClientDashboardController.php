@@ -24,7 +24,15 @@ class ClientDashboardController extends Controller
             ->toArray();
 
         $projets = Project::whereIn('id', $assignedProjectIds)
-            ->with('testCases')
+            ->where(function ($query) {
+                $query->where('type', 'UAT')
+                      ->orWhereHas('testCases', function ($q) {
+                          $q->where('type', 'uat');
+                      });
+            })
+            ->with(['testCases' => function($q) {
+                $q->where('type', 'uat');
+            }])
             ->get();
 
         // Récupérer les rapports (seulement ceux finalisés pour le client)

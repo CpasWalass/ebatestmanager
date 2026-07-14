@@ -188,9 +188,49 @@
                                     Ce que j'ai corrigé / mes commentaires
                                 </label>
                                 <textarea name="content" rows="3"
-                                    class="w-full text-sm px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:border-transparent resize-none"
+                                    x-ref="devtextarea_{{ $rapport->id }}"
+                                    @paste="await handleDevPaste($event, '{{ $rapport->id }}')"
+                                    x-data
+                                    class="w-full text-sm px-3 py-2 pb-8 border border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:border-transparent resize-none"
                                     style="--tw-ring-color:#CC0000"
-                                    placeholder="Décrivez les corrections apportées..."></textarea>
+                                    placeholder="Décrivez les corrections apportées... (collez une image avec Ctrl+V)"></textarea>
+
+                                {{-- Barre d'outils image --}}
+                                <div
+                                    x-data="devImageUpload('{{ $rapport->id }}')"
+                                    class="flex items-center gap-2 mt-1"
+                                >
+                                    <label
+                                        class="flex items-center gap-1.5 px-2 py-1 rounded-lg cursor-pointer text-xs font-medium transition"
+                                        :class="uploading
+                                            ? 'bg-blue-100 text-blue-600 cursor-wait'
+                                            : 'bg-gray-100 dark:bg-gray-600 text-gray-500 dark:text-gray-300 hover:bg-red-50 hover:text-[#CC0000]'"
+                                        title="Joindre une capture d'écran"
+                                    >
+                                        <svg x-show="!uploading" class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/>
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                        </svg>
+                                        <svg x-show="uploading" class="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24">
+                                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                                        </svg>
+                                        <span x-text="uploading ? 'Envoi...' : 'Image'"></span>
+                                        <input type="file" accept="image/*" class="hidden" @change="uploadFile($event)" :disabled="uploading">
+                                    </label>
+
+                                    <span class="text-xs text-gray-400 dark:text-gray-500">ou collez avec Ctrl+V</span>
+
+                                    {{-- Miniatures des images uploadées --}}
+                                    <div class="flex items-center gap-1 ml-auto">
+                                        <template x-for="img in images" :key="img.url">
+                                            <a :href="img.url" target="_blank">
+                                                <img :src="img.url" class="h-7 w-7 object-cover rounded border border-gray-300 hover:opacity-80 transition" :title="img.name">
+                                            </a>
+                                        </template>
+                                    </div>
+                                </div>
+
                             </div>
                             <div class="flex items-center gap-3">
                                 <button type="submit" class="px-4 py-2 text-xs font-medium text-white rounded-xl transition"
@@ -231,8 +271,18 @@
                             Projet : {{ $reponse->report?->project?->name }} · Envoyé le {{ $reponse->created_at->format('d/m/Y à H:i') }}
                         </p>
                         <div class="mt-2 text-sm text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-700/50 p-3 rounded-lg">
-                            {{ $reponse->content }}
+                            @php
+                                preg_match_all('/!\[capture\]\(([^)]+)\)/', $reponse->content, $rImgs);
+                                $rText = preg_replace('/\n?!\[capture\]\([^)]+\)/', '', $reponse->content);
+                            @endphp
+                            <p class="whitespace-pre-wrap">{{ $rText }}</p>
+                            @foreach($rImgs[1] as $rImg)
+                            <a href="{{ $rImg }}" target="_blank" class="mt-2 block">
+                                <img src="{{ $rImg }}" class="max-h-40 rounded-lg border border-gray-200 dark:border-gray-600 hover:opacity-80 transition shadow-sm" alt="capture développeur">
+                            </a>
+                            @endforeach
                         </div>
+
                     </div>
                 </div>
             </div>
@@ -241,5 +291,85 @@
     </div>
     @endif
 
+
 </div>
+
+@push('scripts')
+<script>
+/**
+ * Alpine.js — upload d'image dans le textarea de réponse dev
+ * Utilisé dans les formulaires HTML classiques (non-Livewire).
+ */
+function devImageUpload(rapportId) {
+    return {
+        uploading: false,
+        images: [],
+
+        async uploadFile(event) {
+            const file = event.target.files[0];
+            if (file) await this.doUpload(file);
+            event.target.value = '';
+        },
+
+        async doUpload(file) {
+            this.uploading = true;
+            try {
+                const fd = new FormData();
+                fd.append('image', file);
+                fd.append('_token', document.querySelector('meta[name="csrf-token"]').content);
+
+                const res = await fetch('/upload-image', { method: 'POST', body: fd });
+                if (!res.ok) { this.uploading = false; return; }
+                const data = await res.json();
+
+                if (data.url) {
+                    // Injecter l'URL dans le textarea associé à ce rapport
+                    const ta = document.querySelector(`[x-ref="devtextarea_${rapportId}"]`)
+                            || document.getElementById(`devta-${rapportId}`);
+                    if (ta) {
+                        ta.value = (ta.value || '') + `\n![capture](${data.url})`;
+                    }
+                    this.images.push({ url: data.url, name: data.name });
+                }
+            } catch (e) {
+                console.error('Upload error:', e);
+            }
+            this.uploading = false;
+        }
+    };
+}
+
+/**
+ * Gestionnaire de coller (Ctrl+V) sur le textarea dev.
+ * Appelé via @paste sur le textarea directement.
+ */
+async function handleDevPaste(event, rapportId) {
+    const items = event.clipboardData?.items;
+    if (!items) return;
+    for (const item of items) {
+        if (item.type.startsWith('image/')) {
+            event.preventDefault();
+            const file = item.getAsFile();
+
+            const fd = new FormData();
+            fd.append('image', file);
+            fd.append('_token', document.querySelector('meta[name="csrf-token"]').content);
+
+            try {
+                const res = await fetch('/upload-image', { method: 'POST', body: fd });
+                if (!res.ok) return;
+                const data = await res.json();
+                if (data.url) {
+                    event.target.value = (event.target.value || '') + `\n![capture](${data.url})`;
+                }
+            } catch (e) {
+                console.error('Paste upload error:', e);
+            }
+            return;
+        }
+    }
+}
+</script>
+@endpush
+
 @endsection

@@ -46,7 +46,7 @@ class ProjectManager extends Component
             $query->where('status', $this->statusFilter);
         }
             
-        if (auth()->check() && auth()->user()->hasRole('tester')) {
+        if (auth()->check() && (auth()->user()->hasRole('tester') || auth()->user()->hasRole('client'))) {
             $user = auth()->user();
             $assignedProjectIds = \App\Models\TestCaseAssignment::where('user_id', $user->id)
                 ->whereNotNull('project_id')
@@ -63,6 +63,16 @@ class ProjectManager extends Component
             $allAssignedProjectIds = array_unique(array_merge($assignedProjectIds, $assignedTemplateProjectIds));
             
             $query->whereIn('id', $allAssignedProjectIds);
+
+            // Si c'est un client, filtrer en plus sur le type UAT
+            if ($user->hasRole('client')) {
+                $query->where(function ($q) {
+                    $q->where('type', 'UAT')
+                      ->orWhereHas('testCases', function ($subQ) {
+                          $subQ->where('type', 'uat');
+                      });
+                });
+            }
         }
 
         if (auth()->check() && auth()->user()->hasRole('developer')) {

@@ -54,11 +54,12 @@ class TestCaseManager extends Component
         $query = TestCaseTemplate::where('project_id', $this->project->id)
             ->withCount('testCases')
             ->latest();
-            
-        if (auth()->check() && auth()->user()->hasRole('tester')) {
+
+        // Filtre pour les testeurs ET les clients : ils ne voient que les templates qui leur sont assignés
+        if (auth()->check() && (auth()->user()->hasRole('tester') || auth()->user()->hasRole('client'))) {
             $user = auth()->user();
             
-            // Si le testeur est assigné à TOUT le projet, il voit tous les templates
+            // Si l'utilisateur est assigné à TOUT le projet, il voit tous les templates
             $assignedToProject = \App\Models\TestCaseAssignment::where('user_id', $user->id)
                 ->where('project_id', $this->project->id)
                 ->exists();
@@ -140,6 +141,42 @@ class TestCaseManager extends Component
         $this->reset(['name', 'links', 'editMode', 'templateIdToEdit']);
     }
 
+    public function promoteToUat(): void
+    {
+        $this->project->update(['type' => 'UAT']);
+        
+        // Also update all test cases to type UAT
+        \App\Models\TestCase::where('project_id', $this->project->id)
+            ->update(['type' => 'uat']);
+            
+        session()->flash('success', 'Le projet est passé en phase UAT avec succès. Les clients peuvent désormais consulter et valider les cas de test.');
+    }
+
+    public function revertToIat(): void
+    {
+        $this->project->update(['type' => 'IAT']);
+        
+        \App\Models\TestCase::where('project_id', $this->project->id)
+            ->update([
+                'type' => 'iat',
+                'client_status' => 'pending'
+            ]);
+
+        // Notify testers and devs
+        $developers = $this->project->developers;
+        foreach ($developers as $dev) {
+            \App\Models\Message::create([
+                'sender_id' => auth()->id(),
+                'receiver_id' => $dev->id,
+                'project_id' => $this->project->id,
+                'type' => 'system',
+                'content' => "Le projet {$this->project->name} a été renvoyé en phase IAT suite aux retours du client.",
+            ]);
+        }
+            
+        session()->flash('success', 'Le projet a été renvoyé en phase IAT pour de nouveaux tests (le statut des tests clients a été réinitialisé).');
+    }
+
     public function openDevModal(): void
     {
         $this->selectedDevIds = $this->project->developers()->pluck('users.id')->map(fn($id) => (string) $id)->toArray();
@@ -174,7 +211,7 @@ class TestCaseManager extends Component
                     'receiver_id' => $dev->id,
                     'project_id' => $this->project->id,
                     'type' => 'system',
-                    'content' => "Le projet **{$this->project->name}** vous a été envoyé pour correction (des anomalies ont été remontées).",
+                    'content' => "Le projet {$this->project->name} vous a été envoyé pour correction (des anomalies ont été remontées).",
                 ]);
             }
             session()->flash('success', 'Projet envoyé aux développeurs pour correction (notifications envoyées).');

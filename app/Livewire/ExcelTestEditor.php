@@ -35,6 +35,12 @@ class ExcelTestEditor extends Component
     public bool $showCommitModal = false;
     public string $commitMessage = '';
 
+    // === Validation Client UAT ===
+    public bool $showRejectModal = false;
+    public ?int $rejectingCaseId = null;
+    public string $rejectComment = '';
+    public ?string $rejectCaseSummary = null; // résumé du cas pour l'affichage dans le modal
+
     public function mount(Project $project, TestCaseTemplate $template): void
     {
         $this->project  = $project;
@@ -77,6 +83,127 @@ class ExcelTestEditor extends Component
         session()->flash('success', 'Votre session de tests a été validée avec succès.');
     }
 
+    // =========================================================================
+    // Validation Client UAT
+    // =========================================================================
+
+    /**
+     * Le client valide un cas de test.
+     */
+    public function validateCase(int $id): void
+    {
+        $user = auth()->user();
+        if (!$user || !$user->hasRole('client')) {
+            return;
+        }
+
+        $testCase = TestCase::findOrFail($id);
+        $testCase->update([
+            'client_status'  => 'validated',
+            'client_comment' => null,
+        ]);
+
+        // Notifier le chef de projet
+        $this->notifyChefOnClientAction($testCase, 'validated');
+
+        session()->flash('success', 'Cas de test validé ✅');
+    }
+
+    /**
+     * Ouvre le modal de rejet pour un cas de test.
+     */
+    public function openRejectModal(int $id): void
+    {
+        $user = auth()->user();
+        if (!$user || !$user->hasRole('client')) {
+            return;
+        }
+
+        $testCase = TestCase::findOrFail($id);
+
+        // Construire un résumé lisible du cas pour l'afficher dans le modal
+        $data = $testCase->data ?? [];
+        $summary = $data['cas_test'] ?? $data['fonctionnalites'] ?? $data['scenarios_test'] ?? ('Cas #' . $id);
+
+        $this->rejectingCaseId  = $id;
+        $this->rejectComment    = $testCase->client_comment ?? '';
+        $this->rejectCaseSummary = (string) $summary;
+        $this->showRejectModal  = true;
+    }
+
+    /**
+     * Soumet le rejet du client avec commentaire (et éventuellement une image intégrée).
+     */
+    public function submitRejection(): void
+    {
+        $user = auth()->user();
+        if (!$user || !$user->hasRole('client') || !$this->rejectingCaseId) {
+            return;
+        }
+
+        $this->validate([
+            'rejectComment' => 'required|string|min:5',
+        ], [
+            'rejectComment.required' => 'Veuillez expliquer la raison du rejet.',
+            'rejectComment.min'      => 'Le commentaire doit contenir au moins 5 caractères.',
+        ]);
+
+        $testCase = TestCase::findOrFail($this->rejectingCaseId);
+        $testCase->update([
+            'client_status'  => 'rejected',
+            'client_comment' => $this->rejectComment,
+        ]);
+
+        // Notifier le chef de projet
+        $this->notifyChefOnClientAction($testCase, 'rejected');
+
+        $this->cancelRejection();
+        session()->flash('success', 'Rejet soumis avec votre commentaire ❌');
+    }
+
+    /**
+     * Annule le modal de rejet.
+     */
+    public function cancelRejection(): void
+    {
+        $this->showRejectModal   = false;
+        $this->rejectingCaseId   = null;
+        $this->rejectComment     = '';
+        $this->rejectCaseSummary = null;
+    }
+
+    /**
+     * Envoie une notification interne au(x) chef(s) de projet.
+     */
+    private function notifyChefOnClientAction(\App\Models\TestCase $testCase, string $action): void
+    {
+        $client = auth()->user();
+        $data   = $testCase->data ?? [];
+        $casLabel = $data['cas_test'] ?? $data['fonctionnalites'] ?? ('Cas #' . $testCase->id);
+
+        // Trouver le chef de projet (créateur du projet ou tout utilisateur chef_project du tenant)
+        $chefs = \App\Models\User::role('chef_project')->get();
+
+        foreach ($chefs as $chef) {
+            if ($action === 'validated') {
+                $content = "✅ {$client->name} a validé le cas de test « {$casLabel} » du projet {$this->project->name}.";
+            } else {
+                $content = "❌ {$client->name} a rejeté le cas de test « {$casLabel} » du projet {$this->project->name}.\n\n"
+                    . "Commentaire client :\n{$this->rejectComment}";
+            }
+
+            \App\Models\Message::create([
+                'sender_id'   => $client->id,
+                'receiver_id' => $chef->id,
+                'project_id'  => $this->project->id,
+                'type'        => 'client_validation',
+                'content'     => $content,
+            ]);
+        }
+    }
+
+
+
     #[Computed]
     public function rows()
     {
@@ -101,6 +228,44 @@ class ExcelTestEditor extends Component
 
     public function updateCell(int $id, string $field, string $value): void
     {
+        $user = auth()->user();
+
+        // Vérification côté serveur des droits de modification par colonne
+        if ($user && $user->hasRole('client')) {
+            $clientEditableKeywords = ['client', 'uat', 'retour_client', 'validation'];
+            $isEditable = false;
+            foreach ($clientEditableKeywords as $keyword) {
+                if (str_contains(strtolower($field), $keyword)) {
+                    $isEditable = true;
+                    break;
+                }
+            }
+            if (!$isEditable) {
+                // Silently ignore unauthorized edits
+                return;
+            }
+        }
+
+        if ($user && $user->hasRole('tester')) {
+            $testerEditableKeywords = ['etat', 'status', 'statut', 'result', 'nature', 'comment'];
+            $isEditable = false;
+            foreach ($testerEditableKeywords as $keyword) {
+                if (str_contains(strtolower($field), $keyword)) {
+                    $isEditable = true;
+                    break;
+                }
+            }
+            if (!$isEditable) {
+                return;
+            }
+        }
+
+        if ($user && $user->hasRole('developer')) {
+            if (!str_contains(strtolower($field), 'retour_dev')) {
+                return;
+            }
+        }
+
         $testCase = TestCase::find($id);
         if ($testCase) {
             $data          = $testCase->data ?? [];

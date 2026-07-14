@@ -13,13 +13,6 @@
                 Suivi de vos projets et rapports de recette (UAT)
             </p>
         </div>
-        <a href="{{ route('client.test-cases') }}" class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white rounded-xl transition"
-            style="background:#8b0000;">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-            </svg>
-            Nouveau Test UAT
-        </a>
     </div>
 
     {{-- KPI Cards --}}
@@ -72,6 +65,47 @@
         </div>
     </div>
 
+    {{-- Liste des Projets --}}
+    <div class="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden mt-6">
+        <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
+            <h2 class="font-semibold text-gray-900 dark:text-white">Vos Projets</h2>
+        </div>
+
+        @if($projets->isEmpty())
+            <div class="flex flex-col items-center justify-center py-16 text-center">
+                <div class="w-16 h-16 rounded-2xl bg-gray-100 dark:bg-gray-700 flex items-center justify-center mb-4">
+                    <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/>
+                    </svg>
+                </div>
+                <p class="text-gray-500 dark:text-gray-400 font-medium">Aucun projet ne vous est actuellement associé. Veuillez contacter votre Chef de projet.</p>
+            </div>
+        @else
+            <div class="divide-y divide-gray-100 dark:divide-gray-700">
+                @foreach($projets as $projet)
+                <div class="px-6 py-4 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-750 transition">
+                    <div>
+                        <div class="flex items-center gap-2 mb-1">
+                            <h3 class="font-semibold text-gray-900 dark:text-white">{{ $projet->name }}</h3>
+                            @if($projet->type === 'UAT')
+                            <span class="inline-flex items-center px-2 py-0.5 text-xs font-medium rounded-full bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400">
+                                Phase UAT
+                            </span>
+                            @endif
+                        </div>
+                        <p class="text-xs text-gray-500 dark:text-gray-400">
+                            {{ $projet->description ?? 'Aucune description' }}
+                        </p>
+                    </div>
+                    <a href="{{ route('projets.show', $projet->id) }}" class="px-4 py-2 text-sm font-medium rounded-xl border border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 transition text-gray-600 dark:text-gray-300">
+                        Consulter
+                    </a>
+                </div>
+                @endforeach
+            </div>
+        @endif
+    </div>
+
     {{-- Rapports Disponibles --}}
     <div class="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden mt-6">
         <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
@@ -105,7 +139,7 @@
                             Publié le {{ $rapport->created_at->format('d/m/Y') }}
                         </p>
                     </div>
-                    <a href="#" class="px-4 py-2 text-sm font-medium rounded-xl border border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 transition text-gray-600 dark:text-gray-300">
+                    <a href="{{ route('rapports.export', ['report' => $rapport->id, 'format' => 'pdf']) }}" class="px-4 py-2 text-sm font-medium rounded-xl border border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 transition text-gray-600 dark:text-gray-300">
                         Télécharger PDF
                     </a>
                 </div>

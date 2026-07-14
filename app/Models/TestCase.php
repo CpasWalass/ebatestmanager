@@ -18,6 +18,9 @@ class TestCase extends Model
         'project_id',
         'data',
         'tenant_id',
+        'type',
+        'client_status',
+        'client_comment',
     ];
 
     protected $casts = [

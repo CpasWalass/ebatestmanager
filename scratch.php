@@ -1,18 +1,14 @@
 <?php
+
 require __DIR__.'/vendor/autoload.php';
 $app = require_once __DIR__.'/bootstrap/app.php';
-$kernel = $app->make(Illuminate\Contracts\Http\Kernel::class);
+$kernel = $app->make(Illuminate\Contracts\Console\Kernel::class);
+$kernel->bootstrap();
 
-$user = \App\Models\User::where('email', 'chef@ebatest.local')->first();
+$u = \App\Models\User::find(1); 
+echo "User 1 roles: " . json_encode($u->getRoleNames());
 
-$request = Illuminate\Http\Request::create('/users', 'GET');
-$app->make('auth')->login($user);
-
-$response = $kernel->handle($request);
-echo "Status: " . $response->getStatusCode() . "\n";
-if ($response->getStatusCode() == 302) {
-    echo "Redirect: " . $response->headers->get('Location') . "\n";
-} else {
-    echo "Response size: " . strlen($response->getContent()) . "\n";
-    // echo substr($response->getContent(), 0, 500);
+$u2 = \App\Models\User::where('email', 'b.houeto@bubedra.bj')->first();
+if ($u2) {
+    echo "\nUser b.houeto roles: " . json_encode($u2->getRoleNames());
 }

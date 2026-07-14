@@ -30,36 +30,64 @@
         </div>
         
         @if(auth()->check() && auth()->user()->hasRole('chef_project'))
-        <div class="flex flex-wrap items-center gap-3">
-            <button wire:click="$dispatch('openAssignModal', { projectId: {{ $project->id }} })" class="px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-md font-medium text-sm transition shadow-sm flex items-center gap-1.5">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
-                Assigner testeurs
-            </button>
-            <button wire:click="sendToDeveloper" wire:confirm="Êtes-vous sûr de vouloir envoyer ce projet au développeur ?" class="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md font-medium text-sm transition shadow-sm flex items-center gap-1.5">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/></svg>
-                Envoyer au dev
-            </button>
-            <button wire:click="$dispatch('openUatModal', { projectId: {{ $project->id }} })" class="px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-md font-medium text-sm flex items-center space-x-2 transition shadow-sm">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"/></svg>
-                Créer un nouvel espace 
-            </button>
-            <label for="globalExcelUpload" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-md font-medium text-sm flex items-center space-x-2 transition shadow-sm cursor-pointer relative overflow-hidden">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
-                <span>Import Classeur</span>
-                <input type="file" id="globalExcelUpload" wire:model.live="globalExcelFile" accept=".xlsx,.xls,.csv" class="hidden">
-                <div wire:loading wire:target="globalExcelFile" class="absolute inset-0 bg-green-700 flex items-center justify-center">
-                    <svg class="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+        <div class="flex items-center gap-2" x-data="{ openActions:false }">
+            <!-- toolbar: actions fréquentes, style discret et groupé -->
+            <div class="flex items-center gap-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-1 shadow-sm">
+                <label for="globalExcelUpload" class="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition cursor-pointer relative" title="Importer un classeur Excel">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+                    <span class="hidden sm:inline">Import</span>
+                    <input type="file" id="globalExcelUpload" wire:model.live="globalExcelFile" accept=".xlsx,.xls,.csv" class="hidden">
+                    <div wire:loading wire:target="globalExcelFile" class="absolute inset-0 bg-gray-100 dark:bg-gray-700 flex items-center justify-center rounded-lg">
+                        <svg class="animate-spin h-4 w-4 text-gray-500" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                    </div>
+                </label>
+                <div class="w-px h-5 bg-gray-200 dark:bg-gray-700"></div>
+                <a href="{{ route('projets.export', $project->id) }}" target="_blank" class="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition" title="Exporter les résultats">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                    <span class="hidden sm:inline">Export</span>
+                </a>
+            </div>
+
+            <!-- menu Actions : regroupe tout ce qui dépend de la phase du projet -->
+            <div class="relative">
+                <button @click="openActions=!openActions" class="flex items-center gap-1.5 px-3 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl font-medium text-sm shadow-sm transition">
+                    Actions
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                </button>
+                <div x-show="openActions" x-cloak @click.outside="openActions=false"
+                    x-transition:enter="transition ease-out duration-150" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
+                    class="absolute right-0 top-full mt-2 w-64 bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-100 dark:border-gray-700 overflow-hidden z-50 py-1">
+                    <button wire:click="$dispatch('openAssignModal', { projectId: {{ $project->id }} })" class="w-full text-left flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition">
+                        <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/></svg>
+                        Assigner des testeurs
+                    </button>
+                    <button wire:click="$dispatch('openUatModal', { projectId: {{ $project->id }} })" class="w-full text-left flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition">
+                        <svg class="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"/></svg>
+                        Créer un espace
+                    </button>
+                    <button wire:click="sendToDeveloper" wire:confirm="Êtes-vous sûr de vouloir envoyer ce projet au développeur ?" class="w-full text-left flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition">
+                        <svg class="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/></svg>
+                        Envoyer au dev
+                    </button>
+                    <div class="border-t border-gray-100 dark:border-gray-700 my-1"></div>
+                    @if($project->type === 'IAT')
+                    <button wire:click="promoteToUat" wire:confirm="Êtes-vous sûr de vouloir valider ce projet et le passer en phase UAT (Recette Client) ?" class="w-full text-left flex items-center gap-3 px-4 py-2.5 text-sm text-purple-700 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/20 transition">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"/></svg>
+                        Passer en UAT
+                    </button>
+                    @else
+                    <button wire:click="revertToIat" wire:confirm="Êtes-vous sûr de vouloir relancer le cycle IAT ? Cela réinitialisera les statuts de validation client." class="w-full text-left flex items-center gap-3 px-4 py-2.5 text-sm text-amber-700 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                        Relancer cycle IAT
+                    </button>
+                    @endif
                 </div>
-            </label>
-            <a href="{{ route('projets.export', $project->id) }}" target="_blank" class="px-4 py-2 bg-gray-800 hover:bg-gray-900 dark:bg-gray-700 dark:hover:bg-gray-600 text-white rounded-md font-medium text-sm flex items-center space-x-2 transition shadow-sm">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
-                <span>Exporter Résultats</span>
-            </a>
-            <button wire:click="openNewModal" class="px-4 py-2 bg-[#8b0000] hover:bg-red-800 text-white rounded-md font-medium text-sm flex items-center space-x-2 transition shadow-sm">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
-                </svg>
-                <span>Nouveau Cas</span>
+            </div>
+
+            <!-- action primaire : seule à garder une couleur pleine -->
+            <button wire:click="openNewModal" class="px-4 py-2 text-white rounded-xl font-medium text-sm flex items-center gap-2 shadow-sm transition hover:brightness-110 hover:-translate-y-0.5" style="background:#8b0000;">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                Nouveau Cas
             </button>
         </div>
         @endif
@@ -67,13 +95,13 @@
 
     @if(auth()->check() && auth()->user()->hasRole('chef_project'))
     {{-- Panel Développeurs Assignés --}}
-    <div class="mb-6 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-4 shadow-sm">
+    <div class="mb-6 bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-2xl p-5 shadow-sm">
         <div class="flex items-center justify-between mb-3">
             <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300 flex items-center gap-2">
                 <svg class="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/></svg>
                 Développeurs assignés au projet
             </h3>
-            <button wire:click="openDevModal" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium rounded-lg transition">
+            <button wire:click="openDevModal" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-lg transition hover:-translate-y-0.5">
                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
                 Gérer les développeurs
             </button>
@@ -131,51 +159,163 @@
     @endif
 
 
+    {{-- =====================================================================
+         Section Retours Client UAT (chef projet uniquement, projet en UAT)
+    ====================================================================== --}}
+    @if(auth()->check() && auth()->user()->hasRole('chef_project') && $project->type === 'UAT')
+    @php
+        $allCases      = \App\Models\TestCase::where('project_id', $project->id)->get();
+        $totalCases    = $allCases->count();
+        $validatedCases= $allCases->where('client_status', 'validated')->count();
+        $rejectedCases = $allCases->where('client_status', 'rejected')->count();
+        $pendingCases  = $allCases->where('client_status', 'pending')->count();
+        $progressPct   = $totalCases > 0 ? round(($validatedCases / $totalCases) * 100) : 0;
+        $rejectedList  = $allCases->where('client_status', 'rejected')->filter(fn($c) => $c->client_comment);
+    @endphp
+
+    <div class="mb-6 bg-white dark:bg-gray-800 border border-purple-200 dark:border-purple-800 rounded-xl p-5 shadow-sm">
+        {{-- En-tête --}}
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-sm font-semibold text-purple-800 dark:text-purple-300 flex items-center gap-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                Retours Client UAT
+            </h3>
+            <span class="text-xs font-semibold px-2 py-1 rounded-full bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300">
+                {{ $progressPct }}% validés
+            </span>
+        </div>
+
+        {{-- Compteurs --}}
+        <div class="grid grid-cols-3 gap-3 mb-4">
+            <div class="flex flex-col items-center p-3 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
+                <span class="text-2xl font-bold text-green-700 dark:text-green-400">{{ $validatedCases }}</span>
+                <span class="text-xs text-green-600 dark:text-green-500 mt-0.5">✅ Validés</span>
+            </div>
+            <div class="flex flex-col items-center p-3 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-800">
+                <span class="text-2xl font-bold text-red-700 dark:text-red-400">{{ $rejectedCases }}</span>
+                <span class="text-xs text-red-600 dark:text-red-500 mt-0.5">❌ Rejetés</span>
+            </div>
+            <div class="flex flex-col items-center p-3 bg-gray-50 dark:bg-gray-900/30 rounded-lg border border-gray-200 dark:border-gray-700">
+                <span class="text-2xl font-bold text-gray-600 dark:text-gray-400">{{ $pendingCases }}</span>
+                <span class="text-xs text-gray-500 mt-0.5">⏳ En attente</span>
+            </div>
+        </div>
+
+        {{-- Barre de progression --}}
+        @if($totalCases > 0)
+        <div class="mb-4">
+            <div class="flex justify-between text-xs text-gray-500 mb-1">
+                <span>Progression de validation</span>
+                <span>{{ $validatedCases }}/{{ $totalCases }}</span>
+            </div>
+            <div class="w-full h-2.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                <div class="h-full bg-gradient-to-r from-green-500 to-green-400 rounded-full transition-all duration-500"
+                    style="width: {{ $progressPct }}%">
+                </div>
+            </div>
+        </div>
+        @endif
+
+        {{-- Liste des rejets avec commentaires --}}
+        @if($rejectedList->isNotEmpty())
+        <div class="border-t border-gray-200 dark:border-gray-700 pt-4">
+            <h4 class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3 flex items-center gap-1.5">
+                <svg class="w-3.5 h-3.5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                Problèmes signalés par le client
+            </h4>
+            <div class="space-y-3">
+                @foreach($rejectedList as $rCase)
+                @php
+                    $rData     = $rCase->data ?? [];
+                    $rLabel    = $rData['cas_test'] ?? $rData['fonctionnalites'] ?? ('Cas #' . $rCase->id);
+                    $rTemplate = $rCase->template;
+                    preg_match_all('/!\[capture\]\(([^)]+)\)/', $rCase->client_comment, $rImgs);
+                    $rText = preg_replace('/\n?!\[capture\]\([^)]+\)/', '', $rCase->client_comment);
+                @endphp
+                <div class="p-3 bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-800 rounded-lg">
+                    <div class="flex items-start justify-between gap-2 mb-2">
+                        <div>
+                            <p class="text-sm font-medium text-gray-900 dark:text-white line-clamp-1">{{ $rLabel }}</p>
+                            @if($rTemplate)
+                            <p class="text-xs text-gray-500 dark:text-gray-400">{{ $rTemplate->name }}</p>
+                            @endif
+                        </div>
+                        <span class="flex-shrink-0 px-2 py-0.5 rounded-full text-[10px] font-bold bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400">❌ REJETÉ</span>
+                    </div>
+                    <p class="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap">{{ $rText }}</p>
+                    @foreach($rImgs[1] as $rImg)
+                    <a href="{{ $rImg }}" target="_blank" class="mt-2 block">
+                        <img src="{{ $rImg }}" class="max-h-24 rounded-lg border border-red-200 hover:opacity-80 transition shadow-sm" alt="capture client">
+                    </a>
+                    @endforeach
+                </div>
+                @endforeach
+            </div>
+        </div>
+        @elseif($rejectedCases === 0 && $totalCases > 0)
+        <p class="text-xs text-green-600 dark:text-green-400 italic">Aucun problème signalé par le client pour le moment.</p>
+        @endif
+    </div>
+    @endif
+
     {{-- Liste des Cas de Tests --}}
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pb-24">
         @forelse($this->templates as $template)
             @php
-                $link = (auth()->check() && auth()->user()->hasRole('tester'))
+                $isTesteur = auth()->check() && auth()->user()->hasRole('tester');
+                $link = $isTesteur
                     ? route('testeur.executer', [$project, $template])
                     : route('test-cases.show', [$project, $template]);
+                $hasTests = $template->test_cases_count > 0;
             @endphp
-            <a href="{{ $link }}" class="block bg-white dark:bg-gray-800 rounded-xl shadow-sm hover:shadow-md border border-gray-200 dark:border-gray-700 p-6 transition group cursor-pointer">
-                <div class="flex items-start gap-4 mb-4">
-                    <div class="w-12 h-12 rounded-lg bg-red-50 dark:bg-red-900/20 text-[#8b0000] dark:text-red-400 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+            <div class="group h-full">
+                <a href="{{ $link }}" class="card-inner block h-full bg-white dark:bg-gray-800 rounded-2xl shadow-sm hover:shadow-md border border-gray-100 dark:border-gray-700 p-6 transition cursor-pointer hover:-translate-y-1">
+                    <div class="flex items-start gap-4 mb-3">
+                        <div class="ring-wrap group-hover:scale-110 transition-transform">
+                            <svg viewBox="0 0 52 52">
+                                <circle class="ring-track" cx="26" cy="26" r="22" fill="none" stroke-width="4"/>
+                                @if($hasTests)
+                                <circle class="ring-progress" cx="26" cy="26" r="22" fill="none" stroke="#8b0000" stroke-width="4"
+                                    stroke-dasharray="138.2" stroke-dashoffset="55.3"/>
+                                @endif
+                            </svg>
+                            <div class="absolute inset-0 flex items-center justify-center">
+                                <svg class="w-5 h-5 {{ $hasTests ? 'text-[#8b0000]' : 'text-gray-400' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                            </div>
+                        </div>
+                        <div class="flex-1">
+                            <h3 class="text-lg font-bold text-gray-900 dark:text-white group-hover:text-[#8b0000] transition-colors line-clamp-2">{{ $template->name }}</h3>
+                            <p class="text-sm text-gray-500 mt-1">Créé le {{ $template->created_at->format('d/m/Y') }}</p>
+                        </div>
+                        @if(auth()->check() && auth()->user()->hasRole('chef_project'))
+                        <div class="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" onclick="event.preventDefault()">
+                            <button wire:click.prevent="$dispatch('openAssignModal', { templateId: {{ $template->id }} })" class="p-1.5 text-gray-500 hover:text-green-600 dark:text-gray-400 dark:hover:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-md transition" title="Assigner">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path></svg>
+                            </button>
+                            <button wire:click.prevent="editTemplate({{ $template->id }})" class="p-1.5 text-gray-500 hover:text-blue-600 dark:text-gray-400 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-md transition" title="Modifier">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                            </button>
+                            <button wire:click.prevent="deleteTemplate({{ $template->id }})" wire:confirm="Êtes-vous sûr de vouloir supprimer le cas '{{ addslashes($template->name) }}' ?" class="p-1.5 text-gray-500 hover:text-red-600 dark:text-gray-400 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-md transition" title="Supprimer">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                            </button>
+                        </div>
+                        @endif
                     </div>
-                    <div class="flex-1">
-                        <h3 class="text-lg font-bold text-gray-900 dark:text-white group-hover:text-[#8b0000] transition-colors line-clamp-2">{{ $template->name }}</h3>
-                        <p class="text-sm text-gray-500 mt-1">
-                            Créé le {{ $template->created_at->format('d/m/Y') }}
-                        </p>
-                    </div>
-                    @if(auth()->check() && auth()->user()->hasRole('chef_project'))
-                    <div class="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" onclick="event.preventDefault()">
-                        <button wire:click.prevent="$dispatch('openAssignModal', { templateId: {{ $template->id }} })" class="p-1.5 text-gray-500 hover:text-green-600 dark:text-gray-400 dark:hover:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-md transition" title="Assigner">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path></svg>
-                        </button>
-                        <button wire:click.prevent="editTemplate({{ $template->id }})" class="p-1.5 text-gray-500 hover:text-blue-600 dark:text-gray-400 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-md transition" title="Modifier">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
-                        </button>
-                        <button wire:click.prevent="deleteTemplate({{ $template->id }})" wire:confirm="Êtes-vous sûr de vouloir supprimer le cas '{{ addslashes($template->name) }}' ?" class="p-1.5 text-gray-500 hover:text-red-600 dark:text-gray-400 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-md transition" title="Supprimer">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                        </button>
+
+                    @if($hasTests)
+                    <div class="mb-3">
+                        <span class="live-badge"><span class="live-dot"></span> En cours</span>
                     </div>
                     @endif
-                </div>
 
-                <div class="flex items-center justify-between pt-4 border-t border-gray-100 dark:border-gray-700">
-                    <div class="flex items-center gap-2">
-                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300">
-                            {{ $template->test_cases_count }} tests
+                    <div class="flex items-center justify-between pt-3 border-t border-gray-100 dark:border-gray-700">
+                        <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium {{ $hasTests ? 'bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-300' : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300' }}">
+                            <span class="w-1.5 h-1.5 rounded-full {{ $hasTests ? 'bg-red-500' : 'bg-gray-400' }}"></span> {{ $template->test_cases_count }} tests
                         </span>
+                        <span class="text-sm font-medium text-blue-600 dark:text-blue-400 group-hover:underline">Ouvrir &rarr;</span>
                     </div>
-                    <span class="text-sm font-medium text-blue-600 dark:text-blue-400 group-hover:underline">
-                        Ouvrir le tableur &rarr;
-                    </span>
-                </div>
-            </a>
+                </a>
+            </div>
         @empty
             <div class="col-span-full py-12 text-center bg-white dark:bg-gray-800 rounded-xl border border-dashed border-gray-300 dark:border-gray-700">
                 <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
@@ -203,7 +343,7 @@
             <div class="space-y-4">
                 @foreach($reports as $report)
                     @php $stats = $report->stats; @endphp
-                    <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-5 shadow-sm">
+                    <div class="bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-2xl p-6 shadow-sm">
                         <div class="flex flex-col md:flex-row justify-between items-start gap-4">
                             <div class="flex-1">
                                 <div class="flex items-center gap-3 mb-2">
@@ -369,7 +509,7 @@
         <div class="flex items-end justify-center min-h-screen pt-10 px-4 pb-24 text-center sm:block sm:p-0">
             <div class="fixed inset-0 bg-gray-900 bg-opacity-75 transition-opacity" aria-hidden="true" wire:click="$set('showModal', false)"></div>
             <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
-            <div class="relative z-10 inline-block align-bottom bg-white dark:bg-gray-800 rounded-xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg w-full border border-gray-200 dark:border-gray-700">
+            <div class="relative z-10 inline-block align-bottom bg-white dark:bg-gray-800 rounded-2xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg w-full border border-gray-100 dark:border-gray-700">
                 <form wire:submit="save">
                     <div class="px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
                         <h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-white" id="modal-title">{{ $editMode ? 'Modifier le fichier ' : 'Créer un nouveau fichier ' }}</h3>

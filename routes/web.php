@@ -27,6 +27,8 @@ Route::middleware('guest:web')->group(function () {
     Route::get('/', function () {
         return view('auth.login');
     })->name('login');
+
+    Route::get('/forgot-password', \App\Livewire\Auth\ForgotPassword::class)->name('password.request');
 });
 
 /*
@@ -35,12 +37,23 @@ Route::middleware('guest:web')->group(function () {
 |--------------------------------------------------------------------------
 */
 Route::middleware(['auth:sanctum', 'verified'])->group(function () {
-    // Les projets en lecture seule — tous les rôles peuvent y accéder
     Route::get('/projets', function () {
         return view('projets.index');
     })->name('projets.index');
 
     Route::get('/projets/{project}', function (Project $project) {
+        $user = auth()->user();
+
+        // Vérification d'accès pour le client
+        if ($user && $user->hasRole('client')) {
+            $hasAccess = \App\Models\TestCaseAssignment::where('user_id', $user->id)
+                ->where('project_id', $project->id)
+                ->exists();
+            if (!$hasAccess) {
+                abort(403, "Vous n'avez pas accès à ce projet.");
+            }
+        }
+
         return view('projets.show', compact('project'));
     })->name('projets.show');
 
@@ -114,6 +127,9 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
     
     // Journal global (Admin / Chef de projet)
     Route::get('/journal-global', \App\Livewire\GlobalActivityLog::class)->name('journal.global');
+
+    // Upload d'image universel (commentaires, cellules de test, rejets client, etc.)
+    Route::post('/upload-image', [\App\Http\Controllers\ImageUploadController::class, 'upload'])->name('upload.image');
 });
 
 /*
@@ -234,7 +250,4 @@ Route::middleware(['auth:sanctum', 'verified', 'role:client'])
         Route::get('/dashboard', [ClientDashboardController::class, 'index'])
             ->name('dashboard');
 
-        Route::get('/test-cases', function () {
-            return view('client.test-cases');
-        })->name('test-cases');
     });
