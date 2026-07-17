@@ -12,14 +12,14 @@ class TenantSeeder extends Seeder
     public function run(): void
     {
         // 1. Create the tenant 'bubedra'
-        $tenantId = 'bubedra';
+        $tenantId = 'eba_togo';
         
         $tenant = Tenant::firstOrCreate(
             ['id' => $tenantId],
             [
-                'name' => 'BUBEDRA',
+                'name' => 'EBA_TOGO',
                 'data' => [
-                    'domain' => 'bubedra.ebatest.local'
+                    'domain' => 'eba_togo.ebatest.local'
                 ]
             ]
         );

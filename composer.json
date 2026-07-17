@@ -19,6 +19,7 @@
         "openspout/openspout": "^5.7",
         "phpoffice/phpword": "^1.4",
         "predis/predis": "^3.4",
+        "smalot/pdfparser": "^2.12",
         "spatie/laravel-activitylog": "^5.0",
         "spatie/laravel-permission": "^7.4",
         "stancl/tenancy": "^3.10"

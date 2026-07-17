@@ -15,7 +15,11 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // Call RolesAndPermissionsSeeder first (creates roles, permissions, and default chef user)
-        $this->call(RolesAndPermissionsSeeder::class);
+        $this->call([       
+        
+        RolesAndPermissionsSeeder::class,
+        TenantSeeder::class,
+        
+    ]);
     }
 }

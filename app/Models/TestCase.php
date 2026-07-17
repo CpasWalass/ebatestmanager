@@ -21,6 +21,7 @@ class TestCase extends Model
         'type',
         'client_status',
         'client_comment',
+        'source',
     ];
 
     protected $casts = [

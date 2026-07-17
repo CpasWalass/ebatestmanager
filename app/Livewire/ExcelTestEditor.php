@@ -8,6 +8,7 @@ use App\Models\TestCase;
 use App\Models\TestCaseTemplate;
 use Livewire\Component;
 use Livewire\Attributes\Computed;
+use Livewire\Attributes\On;
 use Livewire\WithFileUploads;
 
 class ExcelTestEditor extends Component
@@ -45,6 +46,16 @@ class ExcelTestEditor extends Component
     {
         $this->project  = $project;
         $this->template = $template;
+    }
+
+    /**
+     * Force le recalcul de la propriété computed "rows" après l'ajout
+     * de cas de test générés par l'IA (composant AiTestCaseGenerator).
+     */
+    #[On('ai-test-cases-added')]
+    public function refreshAfterAiGeneration(): void
+    {
+        unset($this->rows);
     }
 
     public function openCommitModal(): void

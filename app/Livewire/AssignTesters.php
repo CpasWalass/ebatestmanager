@@ -105,7 +105,7 @@ class AssignTesters extends Component
                 ]);
 
                 if ($assignment->wasRecentlyCreated) {
-                    $url = route('testeur.projet.show', $this->project->id);
+                    $url = route('testeur.projets.show', $this->project->id);
                     \App\Models\Message::create([
                         'sender_id' => auth()->id(),
                         'receiver_id' => $userId,

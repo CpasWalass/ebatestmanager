@@ -49,6 +49,10 @@
             </h1>
             @if(auth()->check() && auth()->user()->hasRole('chef_project'))
             <div class="flex items-center space-x-2">
+                <button wire:click="$dispatch('open-ai-generator')" class="relative px-4 py-2 bg-[#8b0000] hover:bg-[#6b0000] text-white rounded-md font-medium text-sm flex items-center space-x-2 transition shadow-sm">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/></svg>
+                    <span>Générer avec l'IA</span>
+                </button>
                 <button wire:click="$set('showImportModal', true)" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md font-medium text-sm flex items-center space-x-2 transition shadow-sm">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
                     <span>Importer Excel</span>
