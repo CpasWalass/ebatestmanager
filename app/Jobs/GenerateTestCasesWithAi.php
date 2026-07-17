@@ -5,13 +5,12 @@ namespace App\Jobs;
 use App\Models\AiGenerationRequest;
 use App\Services\GeminiTestCaseGenerator;
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Throwable;
 
-class GenerateTestCasesWithAi implements ShouldQueue
+class GenerateTestCasesWithAi
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
@@ -44,4 +43,3 @@ class GenerateTestCasesWithAi implements ShouldQueue
         }
     }
 }
-no
