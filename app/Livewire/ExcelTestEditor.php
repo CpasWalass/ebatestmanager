@@ -237,6 +237,31 @@ class ExcelTestEditor extends Component
         ]);
     }
 
+    public function clearColumnData(string $field): void
+    {
+        $user = auth()->user();
+        if (!$user || !$user->hasRole('chef_project')) {
+            session()->flash('error', "Vous n'avez pas l'autorisation de vider cette colonne.");
+            return;
+        }
+
+        $testCases = TestCase::where('template_id', $this->template->id)
+            ->where('project_id', $this->project->id)
+            ->get();
+
+        foreach ($testCases as $case) {
+            $data = $case->data ?? [];
+            if (array_key_exists($field, $data)) {
+                $data[$field] = '';
+                $case->data = $data;
+                $case->save();
+            }
+        }
+
+        unset($this->rows);
+        session()->flash('success', "Toutes les données de la colonne ont été vidées avec succès.");
+    }
+
     public function updateCell(int $id, string $field, string $value): void
     {
         $user = auth()->user();

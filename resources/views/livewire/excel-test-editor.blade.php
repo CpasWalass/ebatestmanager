@@ -98,7 +98,7 @@
                     <th scope="col" class="px-2 py-3 border-r border-[#133c2e] text-center w-10">#</th>
                     @foreach($template->fields as $field)
                         <th scope="col" 
-                            class="px-4 py-3 border-r border-[#133c2e] whitespace-nowrap relative select-none"
+                            class="px-4 py-3 border-r border-[#133c2e] whitespace-nowrap relative select-none group"
                             x-data="{
                                 width: {{ $field['type'] === 'textarea' ? 250 : 150 }},
                                 startX: 0,
@@ -121,7 +121,18 @@
                             }"
                             :style="`width: ${width}px; min-width: ${width}px; max-width: ${width}px`"
                         >
-                            <div class="overflow-hidden text-ellipsis">{{ $field['label'] }}</div>
+                            <div class="flex items-center justify-between w-full h-full pr-2">
+                                <div class="overflow-hidden text-ellipsis">{{ $field['label'] }}</div>
+                                @if(auth()->check() && auth()->user()->hasRole('chef_project'))
+                                    <button type="button" 
+                                            wire:click="clearColumnData('{{ $field['name'] }}')" 
+                                            wire:confirm="Voulez-vous vraiment vider toutes les données de la colonne {{ $field['label'] }} pour TOUS les cas de test de ce projet ?"
+                                            title="Vider toute la colonne" 
+                                            class="ml-2 text-gray-400 hover:text-[#8b0000] transition opacity-0 group-hover:opacity-100 flex-shrink-0">
+                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                                    </button>
+                                @endif
+                            </div>
                             <div class="absolute right-0 top-0 bottom-0 z-20"
                                  style="width: 10px; cursor: col-resize; transform: translateX(5px); background: transparent;"
                                  onmouseover="this.style.background='rgba(74, 222, 128, 0.5)'"

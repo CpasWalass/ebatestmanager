@@ -192,7 +192,7 @@
                                     class="px-4 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700 transition">
                                 Annuler
                             </button>
-                            <button type="button" @click="$wire.saveAiCases()"
+                            <button type="button" wire:click="saveAiCases"
                                     class="px-5 py-2 rounded-lg text-sm font-semibold text-white bg-green-600 hover:bg-green-700 transition">
                                 ✓ Ajouter {{ $selectedCount }} cas
                             </button>
