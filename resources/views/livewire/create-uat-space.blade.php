@@ -15,11 +15,9 @@
                         <div class="bg-green-50 border border-green-200 p-4 rounded-lg mb-4">
                             <h4 class="text-green-800 font-semibold mb-2">Espace UAT créé avec succès !</h4>
                             <div class="space-y-2 text-sm text-green-700">
-                                <p><strong>Lien d'accès :</strong> <a href="{{ $generatedLink }}" class="underline" target="_blank">{{ $generatedLink }}</a></p>
-                                <p><strong>Email :</strong> {{ $clientEmail }}</p>
-                                <p><strong>Mot de passe :</strong> <span class="bg-white px-2 py-1 rounded font-mono">{{ $generatedPassword }}</span></p>
+                                <p><strong>Client :</strong> {{ $clientEmail }}</p>
+                                <p class="mt-2 text-green-800">Un email sécurisé contenant le lien d'accès et le mot de passe temporaire a été envoyé à cette adresse.</p>
                             </div>
-                            <p class="text-xs text-green-600 mt-3">Communiquez ces informations au client pour qu'il puisse se connecter.</p>
                         </div>
                     @else
                         <form wire:submit="createSpace" class="space-y-4">
