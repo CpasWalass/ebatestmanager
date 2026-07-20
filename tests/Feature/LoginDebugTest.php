@@ -9,6 +9,8 @@ use App\Models\User;
 
 class LoginDebugTest extends TestCase
 {
+    use RefreshDatabase;
+
     public function test_users_route()
     {
         $user = User::where('email', 'chef@ebatest.local')->first();

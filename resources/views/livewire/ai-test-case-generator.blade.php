@@ -142,14 +142,22 @@
                     </div>
 
                     <div class="overflow-auto rounded-xl border border-gray-200 dark:border-gray-700 mb-4" style="max-height:340px;">
+                        @php
+                            $dynamicFields = [];
+                            foreach ($template->fields ?? \App\Models\TestCaseTemplate::defaultFields() as $f) {
+                                $name = strtolower($f['name']);
+                                if (!str_contains($name, 'statut') && !str_contains($name, 'etat') && !str_contains($name, 'avis') && !str_contains($name, 'comment')) {
+                                    $dynamicFields[] = $f;
+                                }
+                            }
+                        @endphp
                         <table class="w-full text-sm">
                             <thead class="sticky top-0 bg-gray-50 dark:bg-gray-900 text-xs uppercase text-gray-500 dark:text-gray-400">
                                 <tr>
                                     <th class="px-3 py-2 w-8 text-center">✓</th>
-                                    <th class="px-3 py-2 text-left">Cas de test</th>
-                                    <th class="px-3 py-2 text-left">Module</th>
-                                    <th class="px-3 py-2 text-left">Scénario</th>
-                                    <th class="px-3 py-2 text-left">Résultat attendu</th>
+                                    @foreach($dynamicFields as $field)
+                                        <th class="px-3 py-2 text-left">{{ $field['label'] }}</th>
+                                    @endforeach
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
@@ -160,22 +168,12 @@
                                                wire:model.live="reviewRows.{{ $i }}.selected"
                                                class="rounded border-gray-300">
                                     </td>
+                                    @foreach($dynamicFields as $field)
                                     <td class="px-3 py-2">
-                                        <input wire:model.blur="reviewRows.{{ $i }}.cas_test"
+                                        <input wire:model.blur="reviewRows.{{ $i }}.{{ $field['name'] }}"
                                                class="w-full bg-transparent border border-transparent hover:border-gray-300 focus:border-[#8b0000] rounded px-2 py-1 text-gray-800 dark:text-gray-200">
                                     </td>
-                                    <td class="px-3 py-2">
-                                        <input wire:model.blur="reviewRows.{{ $i }}.modules"
-                                               class="w-full bg-transparent border border-transparent hover:border-gray-300 focus:border-[#8b0000] rounded px-2 py-1 text-gray-600 dark:text-gray-300">
-                                    </td>
-                                    <td class="px-3 py-2">
-                                        <input wire:model.blur="reviewRows.{{ $i }}.scenarios_test"
-                                               class="w-full bg-transparent border border-transparent hover:border-gray-300 focus:border-[#8b0000] rounded px-2 py-1 text-gray-600 dark:text-gray-300">
-                                    </td>
-                                    <td class="px-3 py-2">
-                                        <input wire:model.blur="reviewRows.{{ $i }}.resultats_attendus"
-                                               class="w-full bg-transparent border border-transparent hover:border-gray-300 focus:border-[#8b0000] rounded px-2 py-1 text-gray-600 dark:text-gray-300">
-                                    </td>
+                                    @endforeach
                                 </tr>
                                 @endforeach
                             </tbody>

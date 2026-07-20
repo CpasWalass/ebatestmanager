@@ -67,10 +67,15 @@
                 </button>
             </div>
             @elseif(auth()->check() && auth()->user()->hasRole('client'))
-            {{-- Le client voit juste un indicateur de son rôle — ses saisies se sauvegardent automatiquement --}}
-            <div class="flex items-center gap-2 px-3 py-2 bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg">
-                <svg class="w-4 h-4 text-purple-600 dark:text-purple-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
-                <span class="text-xs font-medium text-purple-700 dark:text-purple-300">Vue Client UAT — Vos retours se sauvegardent automatiquement</span>
+            <div class="flex items-center space-x-2">
+                <button wire:click="addRow" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-md font-medium text-sm flex items-center space-x-2 transition shadow-sm">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                    <span>Ajouter une ligne</span>
+                </button>
+                <div class="flex items-center gap-2 px-3 py-2 bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg">
+                    <svg class="w-4 h-4 text-purple-600 dark:text-purple-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                    <span class="text-xs font-medium text-purple-700 dark:text-purple-300">Vue Client UAT — Vos saisies se sauvegardent automatiquement</span>
+                </div>
             </div>
             @else
             <div class="flex items-center space-x-2">
@@ -184,9 +189,12 @@
             </thead>
             <tbody>
                 @forelse($this->rows as $index => $row)
-                    <tr class="bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700/50 border-b border-gray-200 dark:border-gray-700 group transition-colors">
-                        <td class="px-2 py-2 border-r border-gray-200 dark:border-gray-700 text-center font-medium text-gray-500 bg-gray-50 dark:bg-gray-800/50">
+                    <tr wire:key="row-{{ $row->id }}" class="bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700/50 border-b border-gray-200 dark:border-gray-700 group transition-colors">
+                        <td class="px-2 py-2 border-r border-gray-200 dark:border-gray-700 text-center font-medium text-gray-500 bg-gray-50 dark:bg-gray-800/50 relative">
                             {{ $index + 1 }}
+                            @if(isset($row->data['_added_by_client']) && $row->data['_added_by_client'])
+                                <div class="absolute -top-1 -right-1 w-3 h-3 bg-purple-500 rounded-full border border-white" title="Ajouté par le client"></div>
+                            @endif
                         </td>
                         
                         @foreach($template->fields as $field)
@@ -213,7 +221,7 @@
                                     
                                     // Mots-clés qui rendent une colonne modifiable par le testeur ou le client
                                     $testerEditableKeywords = ['etat', 'status', 'statut', 'result', 'nature', 'comment'];
-                                    $clientEditableKeywords = ['client', 'uat', 'retour_client', 'validation'];
+                                    $clientEditableKeywords = ['client', 'uat', 'retour_client', 'validation', 'commentaires', 'status', 'etat', 'result', 'nature'];
                                     
                                     $isReadOnly = false;
                                     if ($isTester) {
@@ -228,11 +236,15 @@
                                     } elseif ($isDev) {
                                         $isReadOnly = !str_contains(strtolower($field['name']), 'retour_dev');
                                     } elseif ($isClient) {
-                                        $isEditableForClient = false;
-                                        foreach ($clientEditableKeywords as $keyword) {
-                                            if (str_contains(strtolower($field['name']), $keyword)) {
-                                                $isEditableForClient = true;
-                                                break;
+                                        if (isset($row->data['_added_by_client']) && $row->data['_added_by_client']) {
+                                            $isEditableForClient = true;
+                                        } else {
+                                            $isEditableForClient = false;
+                                            foreach ($clientEditableKeywords as $keyword) {
+                                                if (str_contains(strtolower($field['name']), $keyword)) {
+                                                    $isEditableForClient = true;
+                                                    break;
+                                                }
                                             }
                                         }
                                         $isReadOnly = !$isEditableForClient;
@@ -448,12 +460,14 @@
                             </td>
                         @endforeach
                         
-                        @if(auth()->check() && auth()->user()->hasRole('chef_project'))
+                        @if(auth()->check() && (auth()->user()->hasRole('chef_project') || (auth()->user()->hasRole('client') && isset($row->data['_added_by_client']))))
                         <td class="px-2 py-2 text-center">
                             <button wire:click="deleteRow({{ $row->id }})" wire:confirm="Supprimer cette ligne ?" class="text-red-500 hover:text-red-700 opacity-0 group-hover:opacity-100 transition">
                                 <svg class="w-5 h-5 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                             </button>
                         </td>
+                        @elseif(auth()->check() && auth()->user()->hasRole('chef_project'))
+                        <td class="px-2 py-2"></td>
                         @endif
 
                         {{-- Colonne AVIS CLIENT --}}
@@ -494,6 +508,7 @@
                                 <div class="flex gap-1">
                                     @if($clientStatus !== 'validated')
                                     <button
+                                        type="button"
                                         wire:click="validateCase({{ $row->id }})"
                                         wire:loading.attr="disabled"
                                         class="flex items-center gap-1 px-2 py-1 rounded-md bg-green-600 hover:bg-green-700 text-white text-[11px] font-semibold transition shadow-sm"
@@ -505,6 +520,7 @@
                                     @endif
                                     @if($clientStatus !== 'rejected')
                                     <button
+                                        type="button"
                                         wire:click="openRejectModal({{ $row->id }})"
                                         class="flex items-center gap-1 px-2 py-1 rounded-md bg-red-600 hover:bg-red-700 text-white text-[11px] font-semibold transition shadow-sm"
                                         title="Rejeter ce cas de test"
@@ -515,6 +531,7 @@
                                     @endif
                                     @if($clientStatus !== 'pending')
                                     <button
+                                        type="button"
                                         wire:click="validateCase({{ $row->id }})" {{-- reset via revalider --}}
                                         class="px-2 py-1 rounded-md bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-600 dark:text-gray-300 text-[10px] transition"
                                         title="Réinitialiser l'avis"

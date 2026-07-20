@@ -173,6 +173,20 @@ class TestCaseManager extends Component
                 'content' => "Le projet {$this->project->name} a été renvoyé en phase IAT suite aux retours du client.",
             ]);
         }
+
+        $testerIds = \App\Models\TestCaseAssignment::where('project_id', $this->project->id)
+            ->pluck('user_id')
+            ->unique();
+            
+        foreach ($testerIds as $testerId) {
+            \App\Models\Message::create([
+                'sender_id' => auth()->id(),
+                'receiver_id' => $testerId,
+                'project_id' => $this->project->id,
+                'type' => 'system',
+                'content' => "Le projet {$this->project->name} a été renvoyé en phase IAT suite aux retours du client.",
+            ]);
+        }
             
         session()->flash('success', 'Le projet a été renvoyé en phase IAT pour de nouveaux tests (le statut des tests clients a été réinitialisé).');
     }

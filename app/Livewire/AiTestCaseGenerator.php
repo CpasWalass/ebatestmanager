@@ -118,8 +118,14 @@ class AiTestCaseGenerator extends Component
         }
 
         if ($genRequest->status === 'completed' && ! empty($genRequest->proposed_cases)) {
+            // Création d'un squelette vide avec tous les champs du template pour éviter les "Undefined array key"
+            $defaultFields = [];
+            foreach ($this->template->fields ?? \App\Models\TestCaseTemplate::defaultFields() as $f) {
+                $defaultFields[$f['name']] = '';
+            }
+
             $this->reviewRows = collect($genRequest->proposed_cases)
-                ->map(fn ($c) => array_merge($c, ['selected' => true]))
+                ->map(fn ($c) => array_merge($defaultFields, (array) $c, ['selected' => true]))
                 ->values()
                 ->all();
         } else {

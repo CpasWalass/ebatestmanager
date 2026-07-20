@@ -80,7 +80,7 @@ class GeminiTestCaseGenerator
     public function generate(string $sourceText, TestCaseTemplate $template): array
     {
         $fields = $template->fields ?? TestCaseTemplate::defaultFields();
-        $writableFields = array_values(array_filter($fields, fn ($f) => in_array($f['name'], $this->generatableFieldNames(), true)));
+        $writableFields = $this->getWritableFields($fields);
 
         $prompt = $this->buildPrompt($sourceText, $writableFields);
 
@@ -122,13 +122,27 @@ class GeminiTestCaseGenerator
     }
 
     /**
-     * Champs que l'on demande à l'IA de remplir. Les champs de suivi
-     * (statut, commentaires, résultats obtenus...) restent gérés par
-     * l'équipe au fil de l'exécution et ne sont jamais générés.
+     * Détermine les champs que l'IA doit remplir.
+     * Gère les templates par défaut et personnalisés.
      */
-    private function generatableFieldNames(): array
+    private function getWritableFields(array $fields): array
     {
-        return ['cas_test', 'modules', 'fonctionnalites', 'scenarios_test', 'resultats_attendus'];
+        $hasDefaultFields = collect($fields)->contains('name', 'cas_test');
+        
+        if ($hasDefaultFields) {
+            $allowed = ['cas_test', 'modules', 'fonctionnalites', 'scenarios_test', 'resultats_attendus'];
+            return array_values(array_filter($fields, fn ($f) => in_array($f['name'], $allowed, true)));
+        }
+        
+        // Template personnalisé : on demande à l'IA de remplir tous les champs
+        // sauf ceux qui ressemblent à du suivi (statut, état, commentaire)
+        return array_values(array_filter($fields, function ($f) {
+            $name = strtolower($f['name']);
+            if (str_contains($name, 'statut') || str_contains($name, 'etat') || str_contains($name, 'avis') || str_contains($name, 'comment')) {
+                return false;
+            }
+            return true;
+        }));
     }
 
     private function buildPrompt(string $sourceText, array $fields): string
@@ -172,7 +186,11 @@ PROMPT;
                 }
                 return $clean;
             })
-            ->filter(fn ($case) => $case['cas_test'] !== '')
+            ->filter(function ($case) {
+                // On garde le cas s'il a au moins un champ non vide
+                $nonEmpty = array_filter($case, fn($val) => trim((string)$val) !== '');
+                return count($nonEmpty) > 0;
+            })
             ->values()
             ->all();
     }

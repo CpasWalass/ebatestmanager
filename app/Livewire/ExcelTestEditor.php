@@ -230,9 +230,14 @@ class ExcelTestEditor extends Component
             $data[$field['name']] = '';
         }
 
+        if (auth()->check() && auth()->user()->hasRole('client')) {
+            $data['_added_by_client'] = true;
+        }
+
         TestCase::create([
             'project_id'  => $this->project->id,
             'template_id' => $this->template->id,
+            'type'        => $this->project->type === 'UAT' ? 'uat' : 'iat',
             'data'        => $data,
         ]);
     }
@@ -266,16 +271,25 @@ class ExcelTestEditor extends Component
     {
         $user = auth()->user();
 
-        // Vérification côté serveur des droits de modification par colonne
         if ($user && $user->hasRole('client')) {
-            $clientEditableKeywords = ['client', 'uat', 'retour_client', 'validation'];
+            $testCase = TestCase::find($id);
+            if (!$testCase) return;
+
+            $isAddedByClient = isset($testCase->data['_added_by_client']) && $testCase->data['_added_by_client'];
+            $clientEditableKeywords = ['client', 'uat', 'retour_client', 'validation', 'commentaires', 'status', 'etat', 'result', 'nature'];
+            
             $isEditable = false;
-            foreach ($clientEditableKeywords as $keyword) {
-                if (str_contains(strtolower($field), $keyword)) {
-                    $isEditable = true;
-                    break;
+            if ($isAddedByClient) {
+                $isEditable = true;
+            } else {
+                foreach ($clientEditableKeywords as $keyword) {
+                    if (str_contains(strtolower($field), $keyword)) {
+                        $isEditable = true;
+                        break;
+                    }
                 }
             }
+
             if (!$isEditable) {
                 // Silently ignore unauthorized edits
                 return;

@@ -73,6 +73,17 @@ class DeveloppeurDashboardController extends Controller
         $report = Report::find($request->report_id);
         $report->update(['status' => 'resolved']);
 
+        // Si tous les rapports du projet sont résolus, on repasse le projet en actif
+        if ($report->project) {
+            $remainingReports = Report::where('project_id', $report->project_id)
+                ->where('status', 'sent')
+                ->count();
+                
+            if ($remainingReports === 0) {
+                $report->project->update(['status' => 'active']);
+            }
+        }
+
         // Notifier le chef de projet
         if ($report->project && $report->project->createdBy) {
             \App\Models\Message::create([

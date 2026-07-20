@@ -62,7 +62,8 @@ class LoginSecurityFlowTest extends TestCase
         ]);
 
         $response->assertRedirect('/login');
-        $response->assertSessionHasErrors('email');
-        $response->assertSessionHas('lockout_message', 'Votre compte est temporairement bloqué. Veuillez réessayer dans 30 minutes.');
+        $response->assertSessionHasErrors([
+            'email' => 'Votre compte est temporairement bloqué. Veuillez réessayer dans 30 minutes.'
+        ]);
     }
 }

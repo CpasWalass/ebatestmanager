@@ -56,7 +56,20 @@
                         <span class="inline-block px-2.5 py-1 bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300 text-[10px] font-bold rounded-md uppercase tracking-wider mb-3">
                             {{ $project->type ?? 'Web' }}
                         </span>
-                        <h3 class="text-xl font-bold text-gray-900 dark:text-white group-hover:text-[#8b0000] transition-colors line-clamp-1">{{ $project->name }}</h3>
+                        @php
+                            $rejectedUatCount = \App\Models\TestCase::where('project_id', $project->id)
+                                ->where('client_status', 'rejected')
+                                ->count();
+                        @endphp
+                        <div class="flex items-center gap-2">
+                            <h3 class="text-xl font-bold text-gray-900 dark:text-white group-hover:text-[#8b0000] transition-colors line-clamp-1">{{ $project->name }}</h3>
+                            @if($rejectedUatCount > 0)
+                            <span class="relative flex h-3 w-3" title="{{ $rejectedUatCount }} cas rejetés en UAT">
+                              <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                              <span class="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
+                            </span>
+                            @endif
+                        </div>
                     </div>
                     <div class="flex flex-col items-end gap-2">
                         @php
