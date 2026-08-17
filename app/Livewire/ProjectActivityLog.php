@@ -2,9 +2,10 @@
 
 namespace App\Livewire;
 
+use App\Models\Project;
+use App\Models\TestCase;
 use Livewire\Component;
 use Livewire\WithPagination;
-use App\Models\Project;
 use Spatie\Activitylog\Models\Activity;
 
 class ProjectActivityLog extends Component
@@ -13,38 +14,40 @@ class ProjectActivityLog extends Component
 
     public $projectId;
 
-    public function mount($projectId)
+    public ?Project $project = null;
+
+    public function mount($projectId): void
     {
+        $this->project = Project::findOrFail($projectId);
+        $this->authorize('view', $this->project);
+
         $this->projectId = $projectId;
     }
 
     public function render()
     {
-        // On récupère l'activité liée au projet, à ses cas de tests, ou ses exécutions
-        // Simplification pour l'exemple : tout ce qui a un subject_type et subject_id lié
-        
+        // Activité liée au projet lui-même, ou à ses cas de test.
         $activities = Activity::with('causer')
             ->where(function ($query) {
-                // Activités directement sur le projet
-                $query->where(function($q) {
+                $query->where(function ($q) {
                     $q->where('subject_type', Project::class)
-                      ->where('subject_id', $this->projectId);
+                        ->where('subject_id', $this->projectId);
                 })
-                // Activités sur les cas de test de ce projet
-                ->orWhere(function($q) {
-                    $q->where('subject_type', \App\Models\TestCase::class)
-                      ->whereIn('subject_id', function($sub) {
-                          $sub->select('id')
-                              ->from('test_cases')
-                              ->where('project_id', $this->projectId);
-                      });
-                });
+                    ->orWhere(function ($q) {
+                        $q->where('subject_type', TestCase::class)
+                            ->whereIn('subject_id', function ($sub) {
+                                $sub->select('id')
+                                    ->from('test_cases')
+                                    ->where('project_id', $this->projectId);
+                            });
+                    });
             })
             ->latest()
             ->paginate(15);
 
         return view('livewire.project-activity-log', [
-            'activities' => $activities
+            'activities' => $activities,
+            'project' => $this->project,
         ]);
     }
 }

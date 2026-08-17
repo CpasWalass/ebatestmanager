@@ -5,16 +5,6 @@
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: sans-serif; font-size: 12px; color: #1a1a1a; line-height: 1.5; }
-        .header {
-            background-color: #CC0000;
-            color: #ffffff;
-            padding: 5px 15px;
-            border-radius: 6px;
-            margin-bottom: 15px;
-        }
-        .header h1 { font-size: 20px; font-weight: 800; letter-spacing: -0.5px; }
-        .header p { font-size: 11px; opacity: 0.85; margin-top: 2px; }
-        .badge { display: inline-block; background: rgba(255,255,255,0.2); padding: 3px 10px; border-radius: 20px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
         .section { padding: 20px 30px; border-bottom: 1px solid #f0f0f0; }
         .section-title { font-size: 13px; font-weight: 700; color: #CC0000; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px; }
         .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-top: 12px; }
@@ -34,34 +24,17 @@
         th, td { text-align: left; padding: 8px; border-bottom: 1px solid #ddd; }
         th { font-size: 10px; text-transform: uppercase; color: #888; letter-spacing: 0.5px; }
         td { font-size: 11px; }
-        .filters { font-size: 10px; color: #666; margin-bottom: 20px; }
     </style>
 </head>
 <body>
 
-    <div class="header">
-        <div style="display:flex; justify-content:space-between; align-items:flex-start;">
-            <div>
-                <img src="data:image/jpeg;base64,{{ base64_encode(file_get_contents(public_path('images/logo.jpg'))) }}" alt="EBA Logo" style="height: 24px; margin-bottom: 8px; border-radius: 4px;">
-                <br>
-                <span class="badge">RAPPORT GLOBAL ADMINISTRATEUR</span>
-                <h1 style="margin-top:4px;">STATISTIQUES & CAPACITÉ D'ÉQUIPE</h1>
-            </div>
-            <div style="text-align:right; font-size:11px; opacity:0.85;">
-                <div>e-Business Afrique</div>
-                <div>EbaTestManager</div>
-            </div>
-        </div>
-    </div>
+    @include('pdf.partials.header', [
+        'category' => 'Rapport global administrateur',
+        'title' => "Statistiques & capacité d'équipe",
+        'filtersText' => 'Période : ' . ($filterPeriod === 'all' ? 'Toutes' : ($filterPeriod === 'this_month' ? 'Ce mois-ci' : ($filterPeriod === 'last_month' ? 'Le mois dernier' : 'Cette année'))) . ' | Projet : ' . ($filterProject === 'all' ? 'Tous' : $filterProject) . ' | Testeur : ' . ($filterTester === 'all' ? 'Tous' : $filterTester),
+    ])
 
     <div class="section">
-        <div class="filters">
-            <strong>Filtres appliqués :</strong>
-            Période : {{ $filterPeriod === 'all' ? 'Toutes' : ($filterPeriod === 'this_month' ? 'Ce mois-ci' : ($filterPeriod === 'last_month' ? 'Le mois dernier' : 'Cette année')) }} |
-            Projet ID : {{ $filterProject === 'all' ? 'Tous' : $filterProject }} |
-            Testeur ID : {{ $filterTester === 'all' ? 'Tous' : $filterTester }}
-        </div>
-        
         <div class="section-title">Indicateurs Clés</div>
         <div class="stats-grid">
             <div class="stat-box success">

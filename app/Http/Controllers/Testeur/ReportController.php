@@ -3,11 +3,13 @@
 namespace App\Http\Controllers\Testeur;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
-use Barryvdh\DomPDF\Facade\Pdf;
+use App\Models\TestCase;
 use App\Models\TestCaseAssignment;
-use PhpOffice\PhpWord\PhpWord;
+use App\Models\TestCaseTemplate;
+use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Http\Request;
 use PhpOffice\PhpWord\IOFactory;
+use PhpOffice\PhpWord\PhpWord;
 
 class ReportController extends Controller
 {
@@ -21,70 +23,70 @@ class ReportController extends Controller
             ->whereNotNull('project_id')
             ->pluck('project_id')
             ->toArray();
-            
+
         $assignedTemplateIds = TestCaseAssignment::where('user_id', $user->id)
             ->whereNotNull('template_id')
             ->pluck('template_id')
             ->toArray();
-            
-        $assignedTemplateProjectIds = \App\Models\TestCaseTemplate::whereIn('id', $assignedTemplateIds)
+
+        $assignedTemplateProjectIds = TestCaseTemplate::whereIn('id', $assignedTemplateIds)
             ->pluck('project_id')
             ->toArray();
-            
+
         $allAssignedProjectIds = array_unique(array_merge($assignedProjectIds, $assignedTemplateProjectIds));
 
         // 1. Statistiques globales (en tests) - exclure projets terminés/archivés
-        $assignedCases = \App\Models\TestCase::whereHas('project', function($q) {
-                $q->whereNotIn('status', ['completed', 'archived']);
-            })
-            ->where(function($q) use ($assignedProjectIds, $assignedTemplateIds) {
+        $assignedCases = TestCase::whereHas('project', function ($q) {
+            $q->whereNotIn('status', ['completed', 'archived']);
+        })
+            ->where(function ($q) use ($assignedProjectIds, $assignedTemplateIds) {
                 $q->whereIn('project_id', $assignedProjectIds)
-                  ->orWhereIn('template_id', $assignedTemplateIds);
+                    ->orWhereIn('template_id', $assignedTemplateIds);
             })
             ->get();
-            
-        $stats = \App\Models\TestCase::calculateStats($assignedCases);
+
+        $stats = TestCase::statsFor($assignedCases);
 
         $totalAssigned = $stats['total'];
         $totalExecuted = $stats['executed'];
-        
+
         $successCount = $stats['valide'];
         $failureCount = $stats['non_valide'];
         $reserveCount = $stats['sous_reserve'];
-        $optimCount   = $stats['optimisation'];
+        $optimCount = $stats['optimisation'];
 
         $successRate = $totalExecuted > 0 ? round(($successCount / $totalExecuted) * 100, 1) : 0;
 
         // 2. Répartition par Template (Cas de Test) - exclure projets terminés/archivés
-        $templates = \App\Models\TestCaseTemplate::whereHas('project', function($q) {
-                $q->whereNotIn('status', ['completed', 'archived']);
-            })
-            ->where(function($q) use ($assignedProjectIds, $assignedTemplateIds) {
+        $templates = TestCaseTemplate::whereHas('project', function ($q) {
+            $q->whereNotIn('status', ['completed', 'archived']);
+        })
+            ->where(function ($q) use ($assignedProjectIds, $assignedTemplateIds) {
                 $q->whereIn('project_id', $assignedProjectIds)
-                  ->orWhereIn('id', $assignedTemplateIds);
+                    ->orWhereIn('id', $assignedTemplateIds);
             })
             ->with(['project'])
             ->get();
-            
+
         $templatesProgress = [];
         foreach ($templates as $template) {
-            $templateCases = \App\Models\TestCase::where('template_id', $template->id)->get();
+            $templateCases = TestCase::where('template_id', $template->id)->get();
             $testCount = $templateCases->count();
             if ($testCount > 0) {
-                $templateStats = \App\Models\TestCase::calculateStats($templateCases);
+                $templateStats = TestCase::statsFor($templateCases);
                 $validCount = $templateStats['valide'];
-                    
+
                 $templatesProgress[] = [
-                    'project'   => $template->project->name ?? '—',
-                    'name'      => $template->name,
-                    'assigned'  => $testCount,
+                    'project' => $template->project->name ?? '—',
+                    'name' => $template->name,
+                    'assigned' => $testCount,
                     'validated' => $validCount,
-                    'percent'   => round(($validCount / $testCount) * 100)
+                    'percent' => round(($validCount / $testCount) * 100),
                 ];
             }
         }
 
-        $filename = 'rapport-global-testeur-' . \Str::slug($user->name) . '-' . date('Ymd');
+        $filename = 'rapport-global-testeur-'.\Str::slug($user->name).'-'.date('Ymd');
 
         if ($format === 'word') {
             return $this->generateWord($user, $totalAssigned, $totalExecuted, $successCount, $failureCount, $reserveCount, $optimCount, $successRate, $templatesProgress, $filename);
@@ -103,12 +105,12 @@ class ReportController extends Controller
             'templatesProgress'
         ))->setPaper('a4', 'portrait')->setOption('defaultFont', 'sans-serif');
 
-        return $pdf->download($filename . '.pdf');
+        return $pdf->download($filename.'.pdf');
     }
 
     private function generateWord($user, $totalAssigned, $totalExecuted, $successCount, $failureCount, $reserveCount, $optimCount, $successRate, $templatesProgress, $filename)
     {
-        $phpWord = new PhpWord();
+        $phpWord = new PhpWord;
         $phpWord->setDefaultFontName('Arial');
         $phpWord->setDefaultFontSize(11);
 
@@ -124,8 +126,8 @@ class ReportController extends Controller
 
         // Titre principal
         $section->addTitle('STATISTIQUES TESTEUR', 1);
-        $section->addText($user->name . ' — ' . $user->email, ['size' => 11, 'color' => '555555']);
-        $section->addText('Rapport généré le ' . now()->format('d/m/Y à H:i'), ['size' => 10, 'color' => '888888', 'italic' => true]);
+        $section->addText($user->name.' — '.$user->email, ['size' => 11, 'color' => '555555']);
+        $section->addText('Rapport généré le '.now()->format('d/m/Y à H:i'), ['size' => 10, 'color' => '888888', 'italic' => true]);
         $section->addTextBreak(1);
 
         // Informations générales
@@ -137,13 +139,13 @@ class ReportController extends Controller
         $rows = [
             ['Tests assignés', $totalAssigned],
             ['Tests exécutés', $totalExecuted],
-            ['Taux de validation globale', $successRate . '%'],
+            ['Taux de validation globale', $successRate.'%'],
             ['Date du rapport', now()->format('d/m/Y')],
         ];
         foreach ($rows as [$label, $value]) {
             $row = $infoTable->addRow();
             $row->addCell(3000)->addText($label, $labelStyle);
-            $row->addCell(5000)->addText((string)$value, $valueStyle);
+            $row->addCell(5000)->addText((string) $value, $valueStyle);
         }
         $section->addTextBreak(1);
 
@@ -163,12 +165,12 @@ class ReportController extends Controller
         foreach ($statRows as [$label, $count, $color]) {
             $row = $statsTable->addRow();
             $row->addCell(3000)->addText($label, ['color' => $color, 'bold' => true]);
-            $row->addCell(2000)->addText((string)$count, ['color' => $color, 'bold' => true]);
+            $row->addCell(2000)->addText((string) $count, ['color' => $color, 'bold' => true]);
         }
         $section->addTextBreak(1);
 
         // Avancement par Cas de Test
-        if (!empty($templatesProgress)) {
+        if (! empty($templatesProgress)) {
             $section->addTitle('Avancement par Cas de Test', 2);
             $tplTable = $section->addTable(['borderColor' => 'DDDDDD', 'borderSize' => 6, 'cellMargin' => 80]);
             $hRow = $tplTable->addRow();
@@ -179,20 +181,20 @@ class ReportController extends Controller
                 $row = $tplTable->addRow();
                 $row->addCell(null)->addText($p['project'], ['size' => 10]);
                 $row->addCell(null)->addText($p['name'], ['size' => 10]);
-                $row->addCell(null)->addText((string)$p['assigned'], ['size' => 10]);
-                $row->addCell(null)->addText((string)$p['validated'], ['size' => 10]);
-                $row->addCell(null)->addText($p['percent'] . '%', ['size' => 10, 'bold' => true]);
+                $row->addCell(null)->addText((string) $p['assigned'], ['size' => 10]);
+                $row->addCell(null)->addText((string) $p['validated'], ['size' => 10]);
+                $row->addCell(null)->addText($p['percent'].'%', ['size' => 10, 'bold' => true]);
             }
         }
 
         // Pied de page
         $footer = $section->addFooter();
-        $footer->addText('Généré le ' . now()->format('d/m/Y à H:i') . ' — EbaTestManager by e-Business Afrique', ['size' => 9, 'color' => '888888']);
+        $footer->addText('Généré le '.now()->format('d/m/Y à H:i').' — EbaTestManager by e-Business Afrique', ['size' => 9, 'color' => '888888']);
 
-        $tempPath = storage_path('app/temp_' . $filename . '.docx');
+        $tempPath = storage_path('app/temp_'.$filename.'.docx');
         $writer = IOFactory::createWriter($phpWord, 'Word2007');
         $writer->save($tempPath);
 
-        return response()->download($tempPath, $filename . '.docx')->deleteFileAfterSend(true);
+        return response()->download($tempPath, $filename.'.docx')->deleteFileAfterSend(true);
     }
 }

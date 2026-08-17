@@ -1,4 +1,6 @@
 <div>
+    <x-flash-message />
+
     {{-- Header --}}
     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
         <div>
@@ -135,8 +137,13 @@
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Adresse email</label>
-                        <input type="email" wire:model="email" class="w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#8b0000]">
-                        @error('email') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
+                        <input type="email" wire:model="email" class="w-full rounded-xl border bg-white dark:bg-gray-700 px-4 py-2 text-sm focus:outline-none focus:ring-2 {{ $errors->has('email') ? 'border-red-500 dark:border-red-500 focus:ring-red-500' : 'border-gray-300 dark:border-gray-600 focus:ring-[#8b0000]' }}">
+                        @error('email')
+                            <p class="mt-1.5 text-red-600 dark:text-red-400 text-xs font-semibold flex items-start gap-1.5">
+                                <svg class="w-3.5 h-3.5 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
+                                <span>{{ $message }}</span>
+                            </p>
+                        @enderror
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Rôle</label>

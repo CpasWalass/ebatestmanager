@@ -133,7 +133,16 @@
         <div style="margin-bottom:15px; padding:10px; border-left:3px solid #1d4ed8; background:#eff6ff;">
             <strong>{{ $response->user->name ?? 'Développeur' }}</strong> ({{ $response->created_at->format('d/m/Y H:i') }})<br>
             <div style="margin-top:5px;">
-                {!! nl2br(e($response->content)) !!}
+                @php
+                    preg_match_all('/!\[capture\]\(([^)]+)\)/', $response->content, $rImgs);
+                    $rText = preg_replace('/\n?!\[capture\]\([^)]+\)/', '', $response->content);
+                @endphp
+                <p>{!! nl2br(e($rText)) !!}</p>
+                @foreach($rImgs[1] as $rImg)
+                <a href="{{ $rImg }}" target="_blank">
+                    <img src="{{ $rImg }}" style="max-height:160px; border-radius:6px; border:1px solid #d1d5db; margin-top:6px;" alt="capture développeur">
+                </a>
+                @endforeach
             </div>
         </div>
     @endforeach

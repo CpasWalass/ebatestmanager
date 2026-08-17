@@ -2,6 +2,8 @@
 
 
 <div>
+    <x-flash-message />
+
     <!-- En-tête -->
     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
         <div>
@@ -40,9 +42,24 @@
         </div>
     </div>
 
-    <!-- Grille des projets -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pb-24">
-        @forelse($this->projects as $project)
+    {{-- Onglets Actifs / Clôturés --}}
+    <div x-data="{ tab: 'actifs' }" class="space-y-6">
+        <div class="flex gap-1 bg-gray-100 dark:bg-gray-800 rounded-xl p-1 w-fit">
+            <button @click="tab = 'actifs'"
+                :class="tab === 'actifs' ? 'bg-white dark:bg-gray-700 shadow text-gray-900 dark:text-white' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700'"
+                class="px-5 py-2 text-sm font-semibold rounded-lg transition">
+                🗂 Projets Actifs
+            </button>
+            <button @click="tab = 'clotures'"
+                :class="tab === 'clotures' ? 'bg-white dark:bg-gray-700 shadow text-gray-900 dark:text-white' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700'"
+                class="px-5 py-2 text-sm font-semibold rounded-lg transition">
+                ✅ Projets Clôturés
+            </button>
+        </div>
+
+    {{-- Grille des projets Actifs --}}
+    <div x-show="tab === 'actifs'" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pb-24">
+        @forelse($this->projects->where('status', '!=', 'completed') as $project)
             @php
                 if (auth()->check() && auth()->user()->hasRole('tester')) {
                     $projLink = route('testeur.projets.show', $project);
@@ -57,19 +74,19 @@
                             {{ $project->type ?? 'Web' }}
                         </span>
                         @php
-                            $rejectedUatCount = \App\Models\TestCase::where('project_id', $project->id)
-                                ->where('client_status', 'rejected')
-                                ->count();
-                        @endphp
-                        <div class="flex items-center gap-2">
-                            <h3 class="text-xl font-bold text-gray-900 dark:text-white group-hover:text-[#8b0000] transition-colors line-clamp-1">{{ $project->name }}</h3>
-                            @if($rejectedUatCount > 0)
-                            <span class="relative flex h-3 w-3" title="{{ $rejectedUatCount }} cas rejetés en UAT">
-                              <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                              <span class="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
-                            </span>
-                            @endif
-                        </div>
+            $rejectedUatCount = \App\Models\TestCase::where('project_id', $project->id)
+                ->where('client_status', 'rejected')
+                ->count();
+        @endphp
+        <div class="flex items-center gap-2 flex-wrap">
+            <h3 class="text-xl font-bold text-gray-900 dark:text-white group-hover:text-[#8b0000] transition-colors line-clamp-1">{{ $project->name }}</h3>
+            @if($rejectedUatCount > 0)
+            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold" style="background:rgba(220,38,38,0.1);color:#b91c1c;border:1px solid rgba(220,38,38,0.2);">
+                <svg class="w-2.5 h-2.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
+                {{ $rejectedUatCount }} rejet{{ $rejectedUatCount > 1 ? 's' : '' }} UAT
+            </span>
+            @endif
+        </div>
                     </div>
                     <div class="flex flex-col items-end gap-2">
                         @php
@@ -118,10 +135,49 @@
             </a>
         @empty
             <div class="col-span-full py-12 text-center text-gray-500 dark:text-gray-400">
-                Aucun projet trouvé.
+                Aucun projet actif trouvé.
             </div>
         @endforelse
     </div>
+
+    {{-- Grille des projets Clôturés --}}
+    <div x-show="tab === 'clotures'" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pb-24">
+        @forelse($this->projects->where('status', 'completed') as $project)
+            @php
+                if (auth()->check() && auth()->user()->hasRole('tester')) {
+                    $projLink = route('testeur.projets.show', $project);
+                } else {
+                    $projLink = route('projets.show', $project);
+                }
+            @endphp
+            <a href="{{ $projLink }}" class="block bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 transition group cursor-pointer hover:-translate-y-1 hover:shadow-md">
+                <div class="flex justify-between items-start mb-4">
+                    <div>
+                        <span class="inline-block px-2.5 py-1 bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 text-[10px] font-bold rounded-md uppercase tracking-wider mb-3">{{ $project->type ?? 'Web' }}</span>
+                        <h3 class="text-xl font-bold text-gray-900 dark:text-white group-hover:text-green-700 transition-colors line-clamp-1">{{ $project->name }}</h3>
+                    </div>
+                    <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400 border border-green-200 dark:border-green-700">
+                        <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+                        Clôturé
+                    </span>
+                </div>
+                <p class="text-sm text-gray-600 dark:text-gray-400 mb-6 line-clamp-2 min-h-[40px]">{{ $project->description ?: 'Aucune description pour ce projet.' }}</p>
+                <div class="flex items-center justify-between pt-4 border-t border-green-100 dark:border-green-800">
+                    <div class="flex items-center gap-2">
+                        <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                        <span class="text-xs font-medium text-gray-500">{{ $project->test_cases_count }} tests</span>
+                    </div>
+                    <span class="text-xs font-medium text-gray-400">{{ $project->created_at->format('d/m/Y') }}</span>
+                </div>
+            </a>
+        @empty
+            <div class="col-span-full py-12 text-center text-gray-500 dark:text-gray-400">
+                Aucun projet clôturé.
+            </div>
+        @endforelse
+    </div>
+
+    </div>{{-- end x-data tabs --}}
 
     <!-- Modal Création de projet -->
     @if($showModal)
@@ -165,8 +221,8 @@
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Type de test</label>
                                     <select wire:model="type" class="mt-1 w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#8b0000]">
-                                        <option value="IAT">IAT</option>
-                                        <option value="UAT">UAT</option>
+                                        <option value="iat">IAT</option>
+                                        <option value="uat">UAT</option>
                                     </select>
                                     @error('type') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
                                 </div>

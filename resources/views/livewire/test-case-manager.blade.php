@@ -70,7 +70,7 @@
                         Envoyer au dev
                     </button>
                     <div class="border-t border-gray-100 dark:border-gray-700 my-1"></div>
-                    @if($project->type === 'IAT')
+                    @if($project->type === 'iat')
                     <button wire:click="promoteToUat" wire:confirm="Êtes-vous sûr de vouloir valider ce projet et le passer en phase UAT (Recette Client) ?" class="w-full text-left flex items-center gap-3 px-4 py-2.5 text-sm text-purple-700 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/20 transition">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"/></svg>
                         Passer en UAT
@@ -80,6 +80,13 @@
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
                         Relancer cycle IAT
                     </button>
+                    @if($project->status !== 'completed')
+                    <div class="border-t border-gray-100 dark:border-gray-700 my-1"></div>
+                    <button wire:click="closeProject" wire:confirm="Êtes-vous sûr de vouloir clôturer ce projet de manière définitive ?" class="w-full text-left flex items-center gap-3 px-4 py-2.5 text-sm text-green-700 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20 transition">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                        Clôturer le projet
+                    </button>
+                    @endif
                     @endif
                 </div>
             </div>
@@ -162,7 +169,7 @@
     {{-- =====================================================================
          Section Retours Client UAT (chef projet uniquement, projet en UAT)
     ====================================================================== --}}
-    @if(auth()->check() && auth()->user()->hasRole('chef_project') && $project->type === 'UAT')
+    @if(auth()->check() && auth()->user()->hasRole('chef_project') && $project->type === 'uat')
     @php
         $allCases      = \App\Models\TestCase::where('project_id', $project->id)->get();
         $totalCases    = $allCases->count();
@@ -419,7 +426,16 @@
                                                 <span class="font-semibold text-blue-800 dark:text-blue-300 text-sm">{{ $response->user->name ?? 'Développeur' }}</span>
                                                 <span class="text-xs text-blue-600/70 dark:text-blue-400/70">{{ $response->created_at->format('d/m/Y H:i') }}</span>
                                             </div>
-                                            <p class="text-sm text-blue-900 dark:text-blue-200 whitespace-pre-wrap">{{ $response->content }}</p>
+                                            @php
+                                                preg_match_all('/!\[capture\]\(([^)]+)\)/', $response->content, $rImgs);
+                                                $rText = preg_replace('/\n?!\[capture\]\([^)]+\)/', '', $response->content);
+                                            @endphp
+                                            <p class="text-sm text-blue-900 dark:text-blue-200 whitespace-pre-wrap">{{ $rText }}</p>
+                                            @foreach($rImgs[1] as $rImg)
+                                            <a href="{{ $rImg }}" target="_blank" class="block mt-2">
+                                                <img src="{{ $rImg }}" class="max-h-40 rounded-lg border border-gray-200 dark:border-gray-600 hover:opacity-80 transition shadow-sm" alt="capture développeur">
+                                            </a>
+                                            @endforeach
                                         </div>
                                         @endforeach
                                     </div>

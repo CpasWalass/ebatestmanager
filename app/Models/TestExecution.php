@@ -18,7 +18,13 @@ class TestExecution extends Model
             ->logOnly(['status', 'comments', 'results'])
             ->logOnlyDirty()
             ->dontLogEmptyChanges()
-            ->setDescriptionForEvent(fn(string $eventName) => "Cette exécution a été {$eventName}");
+            ->setDescriptionForEvent(fn (string $eventName) => 'Cette exécution a été '.match ($eventName) {
+                'created' => 'créée',
+                'updated' => 'mise à jour',
+                'deleted' => 'supprimée',
+                'restored' => 'restaurée',
+                default => $eventName,
+            });
     }
 
     protected $fillable = [
@@ -36,8 +42,8 @@ class TestExecution extends Model
     ];
 
     protected $casts = [
-        'results'      => 'array',
-        'started_at'   => 'datetime',
+        'results' => 'array',
+        'started_at' => 'datetime',
         'completed_at' => 'datetime',
     ];
 
@@ -45,8 +51,8 @@ class TestExecution extends Model
      * Libellés des statuts
      */
     public static array $statusLabels = [
-        'valide'       => 'Validé',
-        'non_valide'   => 'Non validé',
+        'valide' => 'Validé',
+        'non_valide' => 'Non validé',
         'sous_reserve' => 'Sous réserve',
         'optimisation' => 'Optimisation',
     ];

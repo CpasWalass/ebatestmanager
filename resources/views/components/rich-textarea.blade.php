@@ -122,6 +122,7 @@
     <textarea
         id="{{ $id }}"
         x-ref="textarea"
+        data-rich-clean="true"
         @if($wireModel) wire:model="{{ $wireModel }}" @endif
         @paste="handlePaste($event)"
         rows="{{ $rows }}"
@@ -199,3 +200,20 @@
         <p class="mt-1 text-xs text-red-500" x-text="uploadError"></p>
     </template>
 </div>
+
+@once
+@push('scripts')
+<script>
+    document.addEventListener('livewire:init', () => {
+        Livewire.hook('morph.updated', ({ el }) => {
+            if (el instanceof HTMLTextAreaElement && el.dataset.richClean === 'true') {
+                const cleaned = el.value.replace(/\n?!\[capture\]\([^)]+\)/g, '').trim();
+                if (el.value !== cleaned) {
+                    el.value = cleaned;
+                }
+            }
+        });
+    });
+</script>
+@endpush
+@endonce

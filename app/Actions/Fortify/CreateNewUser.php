@@ -5,7 +5,6 @@ namespace App\Actions\Fortify;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Laravel\Fortify\Contracts\CreatesNewUsers;
@@ -23,6 +22,8 @@ class CreateNewUser implements CreatesNewUsers
      */
     public function create(array $input): User
     {
+        $input['email'] = strtolower(trim($input['email'] ?? ''));
+
         Validator::make($input, [
             'name' => ['required', 'string', 'max:255'],
             'email' => [
@@ -30,12 +31,10 @@ class CreateNewUser implements CreatesNewUsers
                 'string',
                 'email',
                 'max:255',
-                Rule::unique(User::class),
+                Rule::unique(User::class, 'email')->where(fn ($q) => $q->whereRaw('LOWER(email) = ?', [$input['email']])),
             ],
             'password' => $this->passwordRules(),
         ])->validate();
-
-        $temporaryPassword = Str::random(12);
 
         return User::create([
             'name' => $input['name'],

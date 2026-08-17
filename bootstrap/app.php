@@ -1,34 +1,38 @@
 <?php
 
+use App\Http\Middleware\CheckIsActive;
+use App\Http\Middleware\ForcePasswordChange;
+use App\Http\Middleware\RedirectByRole;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
-use Illuminate\Http\Request;
+use Spatie\Permission\Middleware\PermissionMiddleware;
+use Spatie\Permission\Middleware\RoleMiddleware;
+use Spatie\Permission\Middleware\RoleOrPermissionMiddleware;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
         web: __DIR__.'/../routes/web.php',
-        api: __DIR__.'/../routes/api.php',
         commands: __DIR__.'/../routes/console.php',
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        // IdentifyTenant / EagerLoadTenant / BlockLockedUsers retirés :
+        // tenancy simplifiée (un seul tenant, plus de résolution dynamique),
+        // et le verrouillage de compte est désormais géré dans
+        // FortifyServiceProvider::authenticateUsing() (voir README_REFONTE.md).
         $middleware->web(append: [
-            \App\Http\Middleware\IdentifyTenant::class,
-            \App\Http\Middleware\EagerLoadTenant::class,
-            \App\Http\Middleware\RedirectByRole::class,
-            \App\Http\Middleware\CheckIsActive::class,
-            \App\Http\Middleware\BlockLockedUsers::class,
-            \App\Http\Middleware\ForcePasswordChange::class,
+            RedirectByRole::class,
+            CheckIsActive::class,
+            ForcePasswordChange::class,
         ]);
+
         $middleware->alias([
-            'role' => \Spatie\Permission\Middleware\RoleMiddleware::class,
-            'permission' => \Spatie\Permission\Middleware\PermissionMiddleware::class,
-            'role_or_permission' => \Spatie\Permission\Middleware\RoleOrPermissionMiddleware::class,
+            'role' => RoleMiddleware::class,
+            'permission' => PermissionMiddleware::class,
+            'role_or_permission' => RoleOrPermissionMiddleware::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        $exceptions->shouldRenderJsonWhen(
-            fn (Request $request) => $request->is('api/*'),
-        );
+        //
     })->create();

@@ -139,7 +139,7 @@
                         @foreach($assignedProjects as $project)
                             @php
                                 $casCount = $project->testCases->count();
-                                $projectStats = \App\Models\TestCase::calculateStats($project->testCases);
+                                $projectStats = \App\Models\TestCase::statsFor($project->testCases);
                                 $executed = $projectStats['executed'];
                                 $pct = $casCount > 0 ? round(($executed / $casCount) * 100) : 0;
                             @endphp
@@ -282,12 +282,3 @@
 </div>
 @endsection
 
-@section('fab')
-<a href="#"
-    class="fixed bottom-24 right-6 w-13 h-13 flex items-center justify-center rounded-2xl text-white shadow-lg transition hover:scale-110 active:scale-95 z-50"
-    style="background:#CC0000; width:52px; height:52px; box-shadow: 0 4px 20px rgba(204,0,0,0.4);">
-    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-    </svg>
-</a>
-@endsection

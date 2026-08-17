@@ -3,12 +3,15 @@
 namespace App\Livewire;
 
 use App\Imports\TestCaseExcelImport;
+use App\Models\Message;
 use App\Models\Project;
 use App\Models\TestCase;
 use App\Models\TestCaseTemplate;
-use Livewire\Component;
+use App\Models\User;
+use App\Support\ProjectAccess;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\On;
+use Livewire\Component;
 use Livewire\WithFileUploads;
 
 class ExcelTestEditor extends Component
@@ -16,42 +19,72 @@ class ExcelTestEditor extends Component
     use WithFileUploads;
 
     public Project $project;
+
     public TestCaseTemplate $template;
 
     public bool $showColumnModal = false;
+
     public string $newColumnName = '';
+
     public string $newColumnType = 'text';
 
-    // Options editor
     public ?string $editingOptionsColumn = null;
+
     public array $editingOptions = [];
+
     public bool $showOptionsEditor = false;
 
     public $excelFile = null;
+
     public bool $showImportModal = false;
+
     public ?string $importResult = null;
+
     public ?string $importError = null;
 
-    // Commit Session
     public bool $showCommitModal = false;
+
     public string $commitMessage = '';
 
-    // === Validation Client UAT ===
     public bool $showRejectModal = false;
+
     public ?int $rejectingCaseId = null;
+
     public string $rejectComment = '';
-    public ?string $rejectCaseSummary = null; // résumé du cas pour l'affichage dans le modal
+
+    public ?string $rejectCaseSummary = null;
 
     public function mount(Project $project, TestCaseTemplate $template): void
     {
-        $this->project  = $project;
+        $this->authorize('view', $project);
+
+        $this->project = $project;
         $this->template = $template;
     }
 
     /**
-     * Force le recalcul de la propriété computed "rows" après l'ajout
-     * de cas de test générés par l'IA (composant AiTestCaseGenerator).
+     * Un utilisateur peut agir sur les DONNÉES (lignes/cellules) de ce template
+     * s'il est chef de projet, développeur du projet, ou explicitement assigné
+     * (projet entier ou ce template précisément). Avant cette réécriture, rien
+     * ne vérifiait qu'un développeur ou un testeur assigné à un AUTRE projet ne
+     * pouvait pas modifier les cas de test de celui-ci simplement en connaissant
+     * un ID de test case — seul le NOM du champ était vérifié, jamais le projet.
      */
+    private function ensureCanEditData(): void
+    {
+        $user = auth()->user();
+
+        if ($user->hasRole('chef_project') || ProjectAccess::isDeveloperOnProject($user, $this->project)) {
+            return;
+        }
+
+        if (ProjectAccess::isAssignedToTemplate($user, $this->template)) {
+            return;
+        }
+
+        abort(403, "Vous n'êtes pas assigné à ce cas de test.");
+    }
+
     #[On('ai-test-cases-added')]
     public function refreshAfterAiGeneration(): void
     {
@@ -80,6 +113,7 @@ class ExcelTestEditor extends Component
 
     public function commitSession(): void
     {
+        $this->ensureCanEditData();
         $this->validate();
 
         $message = $this->commitMessage ?: 'Aucun commentaire';
@@ -87,7 +121,7 @@ class ExcelTestEditor extends Component
         activity()
             ->performedOn($this->project)
             ->causedBy(auth()->user())
-            ->log("Session de test soumise ({$this->template->name}) : " . $message);
+            ->log("Session de test soumise ({$this->template->name}) : ".$message);
 
         $this->showCommitModal = false;
         $this->commitMessage = '';
@@ -98,157 +132,220 @@ class ExcelTestEditor extends Component
     // Validation Client UAT
     // =========================================================================
 
-    /**
-     * Le client valide un cas de test.
-     */
     public function validateCase(int $id): void
     {
         $user = auth()->user();
-        if (!$user || !$user->hasRole('client')) {
+        if (! $user || ! $user->hasRole('client')) {
             return;
         }
 
         $testCase = TestCase::findOrFail($id);
+        $this->authorize('validate', $testCase);
+
         $testCase->update([
-            'client_status'  => 'validated',
+            'client_status' => 'validated',
             'client_comment' => null,
+            'client_status_by' => auth()->id(),
         ]);
 
-        // Notifier le chef de projet
         $this->notifyChefOnClientAction($testCase, 'validated');
+
+        unset($this->rows);
 
         session()->flash('success', 'Cas de test validé ✅');
     }
 
-    /**
-     * Ouvre le modal de rejet pour un cas de test.
-     */
-    public function openRejectModal(int $id): void
+    public function resetCase(int $id): void
     {
         $user = auth()->user();
-        if (!$user || !$user->hasRole('client')) {
+        if (! $user || ! $user->hasRole('client')) {
             return;
         }
 
         $testCase = TestCase::findOrFail($id);
+        $this->authorize('validate', $testCase);
 
-        // Construire un résumé lisible du cas pour l'afficher dans le modal
-        $data = $testCase->data ?? [];
-        $summary = $data['cas_test'] ?? $data['fonctionnalites'] ?? $data['scenarios_test'] ?? ('Cas #' . $id);
+        $testCase->update([
+            'client_status' => 'pending',
+            'client_comment' => null,
+            'client_status_by' => auth()->id(),
+        ]);
 
-        $this->rejectingCaseId  = $id;
-        $this->rejectComment    = $testCase->client_comment ?? '';
-        $this->rejectCaseSummary = (string) $summary;
-        $this->showRejectModal  = true;
+        unset($this->rows);
+
+        session()->flash('success', 'Avis réinitialisé ↺');
     }
 
-    /**
-     * Soumet le rejet du client avec commentaire (et éventuellement une image intégrée).
-     */
+    public function openRejectModal(int $id): void
+    {
+        $user = auth()->user();
+        if (! $user || ! $user->hasRole('client')) {
+            return;
+        }
+
+        $testCase = TestCase::findOrFail($id);
+        $this->authorize('validate', $testCase);
+
+        $data = $testCase->data ?? [];
+        $summary = $data['cas_test'] ?? $data['fonctionnalites'] ?? $data['scenarios_test'] ?? ('Cas #'.$id);
+
+        $this->rejectingCaseId = $id;
+        $this->rejectComment = $testCase->client_comment ?? '';
+        $this->rejectCaseSummary = (string) $summary;
+        $this->showRejectModal = true;
+    }
+
     public function submitRejection(): void
     {
         $user = auth()->user();
-        if (!$user || !$user->hasRole('client') || !$this->rejectingCaseId) {
+        if (! $user || ! $user->hasRole('client') || ! $this->rejectingCaseId) {
             return;
         }
+
+        $testCase = TestCase::findOrFail($this->rejectingCaseId);
+        $this->authorize('validate', $testCase);
 
         $this->validate([
             'rejectComment' => 'required|string|min:5',
         ], [
             'rejectComment.required' => 'Veuillez expliquer la raison du rejet.',
-            'rejectComment.min'      => 'Le commentaire doit contenir au moins 5 caractères.',
+            'rejectComment.min' => 'Le commentaire doit contenir au moins 5 caractères.',
         ]);
 
-        $testCase = TestCase::findOrFail($this->rejectingCaseId);
         $testCase->update([
-            'client_status'  => 'rejected',
+            'client_status' => 'rejected',
             'client_comment' => $this->rejectComment,
+            'client_status_by' => auth()->id(),
         ]);
 
-        // Notifier le chef de projet
         $this->notifyChefOnClientAction($testCase, 'rejected');
 
-        $this->cancelRejection();
-        session()->flash('success', 'Rejet soumis avec votre commentaire ❌');
+        $this->showRejectModal = false;
+        $this->rejectingCaseId = null;
+        $this->rejectComment = '';
+
+        unset($this->rows);
+
+        session()->flash('success', 'Cas de test rejeté avec vos commentaires.');
     }
 
-    /**
-     * Annule le modal de rejet.
-     */
     public function cancelRejection(): void
     {
-        $this->showRejectModal   = false;
-        $this->rejectingCaseId   = null;
-        $this->rejectComment     = '';
+        $this->showRejectModal = false;
+        $this->rejectingCaseId = null;
+        $this->rejectComment = '';
         $this->rejectCaseSummary = null;
     }
 
-    /**
-     * Envoie une notification interne au(x) chef(s) de projet.
-     */
-    private function notifyChefOnClientAction(\App\Models\TestCase $testCase, string $action): void
+    private function notifyChefOnClientAction(TestCase $testCase, string $action): void
     {
         $client = auth()->user();
-        $data   = $testCase->data ?? [];
-        $casLabel = $data['cas_test'] ?? $data['fonctionnalites'] ?? ('Cas #' . $testCase->id);
+        $data = $testCase->data ?? [];
+        $casLabel = $data['cas_test'] ?? $data['fonctionnalites'] ?? ('Cas #'.$testCase->id);
 
-        // Trouver le chef de projet (créateur du projet ou tout utilisateur chef_project du tenant)
-        $chefs = \App\Models\User::role('chef_project')->get();
+        $chefs = User::role('chef_project')->get();
 
         foreach ($chefs as $chef) {
             if ($action === 'validated') {
                 $content = "✅ {$client->name} a validé le cas de test « {$casLabel} » du projet {$this->project->name}.";
             } else {
                 $content = "❌ {$client->name} a rejeté le cas de test « {$casLabel} » du projet {$this->project->name}.\n\n"
-                    . "Commentaire client :\n{$this->rejectComment}";
+                    ."Commentaire client :\n{$this->rejectComment}";
             }
 
-            \App\Models\Message::create([
-                'sender_id'   => $client->id,
+            Message::create([
+                'sender_id' => $client->id,
                 'receiver_id' => $chef->id,
-                'project_id'  => $this->project->id,
-                'type'        => 'client_validation',
-                'content'     => $content,
+                'project_id' => $this->project->id,
+                'type' => 'client_validation',
+                'content' => $content,
             ]);
         }
     }
-
-
 
     #[Computed]
     public function rows()
     {
         return TestCase::where('template_id', $this->template->id)
+            ->with('verdictBy', 'progressBy')
             ->orderBy('id')
             ->get();
     }
 
     public function addRow(): void
     {
+        $this->ensureCanEditData();
+
         $data = [];
         foreach ($this->template->fields as $field) {
             $data[$field['name']] = '';
         }
 
-        if (auth()->check() && auth()->user()->hasRole('client')) {
+        if (auth()->user()->hasRole('client')) {
             $data['_added_by_client'] = true;
         }
 
         TestCase::create([
-            'project_id'  => $this->project->id,
+            'project_id' => $this->project->id,
             'template_id' => $this->template->id,
-            'type'        => $this->project->type === 'UAT' ? 'uat' : 'iat',
-            'data'        => $data,
+            // Toujours en minuscules désormais (avant : comparé à 'UAT' en
+            // majuscules, ce qui marquait tout nouveau cas comme IAT par erreur
+            // dès qu'un projet passait en UAT).
+            'type' => $this->project->type === 'uat' ? 'uat' : 'iat',
+            'data' => $data,
         ]);
+
+        unset($this->rows);
+    }
+
+    /**
+     * Met à jour l'axe "progress" (À faire / En cours / Bloqué / Terminé) d'un
+     * cas de test. Remplace l'ancien mécanisme où ce statut était un champ
+     * libre parmi d'autres (data['etat_test']), avec une simple chaîne de
+     * caractères non validée — ici la valeur est vérifiée contre la liste
+     * autorisée avant écriture.
+     */
+    public function updateProgress(int $id, string $value): void
+    {
+        $this->ensureCanEditData();
+
+        if (! array_key_exists($value, TestCaseTemplate::progressOptions())) {
+            return;
+        }
+
+        TestCase::where('id', $id)->where('template_id', $this->template->id)->update(['progress' => $value, 'progress_by' => auth()->id()]);
+        unset($this->rows);
+    }
+
+    /**
+     * Met à jour l'axe "verdict" (Validé / Non validé / Sous réserve /
+     * Optimisation), désormais une colonne dédiée plutôt qu'un champ libre.
+     */
+    public function updateVerdict(int $id, ?string $value): void
+    {
+        $this->ensureCanEditData();
+
+        if ($value !== null && ! array_key_exists($value, TestCaseTemplate::verdictOptions())) {
+            return;
+        }
+
+        $data = [
+            'verdict' => $value,
+            'verdict_by' => auth()->id(),
+            'verdict_set_at' => now(),
+        ];
+
+        if ($value) {
+            $data['progress'] = 'termine';
+        }
+
+        TestCase::where('id', $id)->where('template_id', $this->template->id)->update($data);
+        unset($this->rows);
     }
 
     public function clearColumnData(string $field): void
     {
-        $user = auth()->user();
-        if (!$user || !$user->hasRole('chef_project')) {
-            session()->flash('error', "Vous n'avez pas l'autorisation de vider cette colonne.");
-            return;
-        }
+        $this->authorize('update', $this->project);
 
         $testCases = TestCase::where('template_id', $this->template->id)
             ->where('project_id', $this->project->id)
@@ -264,24 +361,26 @@ class ExcelTestEditor extends Component
         }
 
         unset($this->rows);
-        session()->flash('success', "Toutes les données de la colonne ont été vidées avec succès.");
+        session()->flash('success', 'Toutes les données de la colonne ont été vidées avec succès.');
     }
 
     public function updateCell(int $id, string $field, string $value): void
     {
+        $this->ensureCanEditData();
+
         $user = auth()->user();
 
-        if ($user && $user->hasRole('client')) {
+        if ($user->hasRole('client')) {
             $testCase = TestCase::find($id);
-            if (!$testCase) return;
+            if (! $testCase) {
+                return;
+            }
 
             $isAddedByClient = isset($testCase->data['_added_by_client']) && $testCase->data['_added_by_client'];
-            $clientEditableKeywords = ['client', 'uat', 'retour_client', 'validation', 'commentaires', 'status', 'etat', 'result', 'nature'];
-            
-            $isEditable = false;
-            if ($isAddedByClient) {
-                $isEditable = true;
-            } else {
+            $clientEditableKeywords = ['client', 'uat', 'retour_client', 'commentaires', 'nature'];
+
+            $isEditable = $isAddedByClient;
+            if (! $isEditable) {
                 foreach ($clientEditableKeywords as $keyword) {
                     if (str_contains(strtolower($field), $keyword)) {
                         $isEditable = true;
@@ -290,14 +389,13 @@ class ExcelTestEditor extends Component
                 }
             }
 
-            if (!$isEditable) {
-                // Silently ignore unauthorized edits
+            if (! $isEditable) {
                 return;
             }
         }
 
-        if ($user && $user->hasRole('tester')) {
-            $testerEditableKeywords = ['etat', 'status', 'statut', 'result', 'nature', 'comment'];
+        if ($user->hasRole('tester')) {
+            $testerEditableKeywords = ['result', 'nature', 'comment'];
             $isEditable = false;
             foreach ($testerEditableKeywords as $keyword) {
                 if (str_contains(strtolower($field), $keyword)) {
@@ -305,21 +403,21 @@ class ExcelTestEditor extends Component
                     break;
                 }
             }
-            if (!$isEditable) {
+            if (! $isEditable) {
                 return;
             }
         }
 
-        if ($user && $user->hasRole('developer')) {
-            if (!str_contains(strtolower($field), 'retour_dev')) {
+        if ($user->hasRole('developer')) {
+            if (! str_contains(strtolower($field), 'retour_dev')) {
                 return;
             }
         }
 
         $testCase = TestCase::find($id);
         if ($testCase) {
-            $data          = $testCase->data ?? [];
-            $data[$field]  = $value;
+            $data = $testCase->data ?? [];
+            $data[$field] = $value;
             $testCase->data = $data;
             $testCase->save();
         }
@@ -327,11 +425,17 @@ class ExcelTestEditor extends Component
 
     public function deleteRow(int $id): void
     {
-        TestCase::destroy($id);
+        $testCase = TestCase::findOrFail($id);
+        $this->authorize('delete', $testCase);
+
+        $testCase->delete();
+        unset($this->rows);
     }
 
     public function addColumn(): void
     {
+        $this->authorize('update', $this->project);
+
         $this->validate([
             'newColumnName' => 'required|string|min:2|max:50',
             'newColumnType' => 'required|in:text,textarea,select,url',
@@ -339,11 +443,10 @@ class ExcelTestEditor extends Component
 
         $fields = $this->template->fields;
         $machineName = strtolower(str_replace(' ', '_', $this->newColumnName));
-        
-        // Add default options for 'select' type if needed
+
         $options = [];
         if ($this->newColumnType === 'select') {
-            $options = ['Option 1', 'Option 2']; // Default options, could be customized later
+            $options = ['Option 1', 'Option 2'];
         }
 
         $newField = [
@@ -352,8 +455,8 @@ class ExcelTestEditor extends Component
             'type' => $this->newColumnType,
             'required' => false,
         ];
-        
-        if (!empty($options)) {
+
+        if (! empty($options)) {
             $newField['options'] = $options;
         }
 
@@ -363,49 +466,63 @@ class ExcelTestEditor extends Component
         $this->newColumnName = '';
         $this->newColumnType = 'text';
         $this->showColumnModal = false;
-        
-        // Refresh template
+
         $this->template->refresh();
     }
 
     public function removeColumn(string $columnName): void
     {
+        $this->authorize('update', $this->project);
+
         $fields = $this->template->fields;
-        $fields = array_filter($fields, fn($field) => $field['name'] !== $columnName);
-        
+        $fields = array_filter($fields, fn ($field) => $field['name'] !== $columnName);
+
         $this->template->update(['fields' => array_values($fields)]);
         $this->template->refresh();
     }
 
     public function updateColumnType(string $columnName, string $newType): void
     {
+        $this->authorize('update', $this->project);
+
         $fields = $this->template->fields;
-        
+
         foreach ($fields as &$field) {
             if ($field['name'] === $columnName) {
                 $field['type'] = $newType;
-                if ($newType === 'select' && empty($field['options'])) {
-                    $field['options'] = ['Option 1', 'Option 2'];
+                if ($newType === 'select') {
+                    $uniqueValues = TestCase::where('template_id', $this->template->id)
+                        ->get()
+                        ->pluck("data.{$columnName}")
+                        ->filter()
+                        ->map(fn ($v) => trim((string) $v))
+                        ->unique()
+                        ->values()
+                        ->toArray();
+
+                    $field['options'] = empty($uniqueValues) ? ['Option 1', 'Option 2'] : $uniqueValues;
                 }
                 break;
             }
         }
-        
+
         $this->template->update(['fields' => $fields]);
         $this->template->refresh();
     }
 
     public function openOptionsEditor(string $columnName): void
     {
-        $this->showColumnModal = false; // Fermer le modal colonnes en premier
+        $this->authorize('update', $this->project);
+
+        $this->showColumnModal = false;
         $this->editingOptionsColumn = $columnName;
         $this->editingOptions = [];
-        
+
         $fields = $this->template->fields;
         foreach ($fields as $field) {
             if ($field['name'] === $columnName) {
                 $options = $field['options'] ?? [];
-                $colors  = $field['option_colors'] ?? [];
+                $colors = $field['option_colors'] ?? [];
                 foreach ($options as $opt) {
                     $this->editingOptions[] = [
                         'value' => $opt,
@@ -415,13 +532,13 @@ class ExcelTestEditor extends Component
                 break;
             }
         }
-        
+
         if (empty($this->editingOptions)) {
             $this->editingOptions = [
                 ['value' => '', 'color' => '#6b7280'],
             ];
         }
-        
+
         $this->showOptionsEditor = true;
     }
 
@@ -438,12 +555,14 @@ class ExcelTestEditor extends Component
 
     public function saveOptions(): void
     {
+        $this->authorize('update', $this->project);
+
         $fields = $this->template->fields;
-        
+
         foreach ($fields as &$field) {
             if ($field['name'] === $this->editingOptionsColumn) {
                 $options = [];
-                $colors  = [];
+                $colors = [];
                 foreach ($this->editingOptions as $opt) {
                     $val = trim($opt['value']);
                     if ($val !== '') {
@@ -456,7 +575,7 @@ class ExcelTestEditor extends Component
                 break;
             }
         }
-        
+
         $this->template->update(['fields' => $fields]);
         $this->template->refresh();
         $this->showOptionsEditor = false;
@@ -476,18 +595,20 @@ class ExcelTestEditor extends Component
     {
         $projectLinks = $this->project->links ?? [];
         $templateLinks = $this->template->links ?? [];
-        
+
         return array_merge($projectLinks, $templateLinks);
     }
 
     public function importExcel(): void
     {
+        $this->authorize('update', $this->project);
+
         $this->validate([
             'excelFile' => 'required|file|mimes:xlsx,xls,csv|max:10240',
         ], [
             'excelFile.required' => 'Veuillez sélectionner un fichier.',
-            'excelFile.mimes'    => 'Le fichier doit être un fichier Excel (.xlsx, .xls) ou CSV.',
-            'excelFile.max'      => 'Le fichier ne doit pas dépasser 10 Mo.',
+            'excelFile.mimes' => 'Le fichier doit être un fichier Excel (.xlsx, .xls) ou CSV.',
+            'excelFile.max' => 'Le fichier ne doit pas dépasser 10 Mo.',
         ]);
 
         try {
@@ -499,8 +620,9 @@ class ExcelTestEditor extends Component
             $this->importError = null;
             $this->excelFile = null;
             $this->template->refresh();
+            unset($this->rows);
         } catch (\Exception $e) {
-            $this->importError = 'Erreur : ' . $e->getMessage();
+            $this->importError = 'Erreur : '.$e->getMessage();
             $this->importResult = null;
         }
     }

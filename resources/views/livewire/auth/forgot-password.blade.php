@@ -28,35 +28,35 @@
 
           <div class="ticket" style="transform:rotateY(0deg) translateZ(240px)">
             <div class="id">TC-014</div><div class="label">Connexion utilisateur</div>
-            <div class="chip"><span>En attente</span></div>
+            <div class="chip"><span>Bienvenue</span></div>
           </div>
           <div class="ticket" style="transform:rotateY(45deg) translateZ(240px)">
             <div class="id">TC-022</div><div class="label">Validation formulaire client</div>
-            <div class="chip"><span>En attente</span></div>
+            <div class="chip"><span>Bienvenue</span></div>
           </div>
           <div class="ticket" style="transform:rotateY(90deg) translateZ(240px)">
             <div class="id">TC-031</div><div class="label">Export du rapport PDF</div>
-            <div class="chip"><span>En attente</span></div>
+            <div class="chip"><span>Bienvenue</span></div>
           </div>
           <div class="ticket" style="transform:rotateY(135deg) translateZ(240px)">
             <div class="id">TC-045</div><div class="label">Synchronisation PWA</div>
-            <div class="chip"><span>En attente</span></div>
+            <div class="chip"><span>Bienvenue</span></div>
           </div>
           <div class="ticket" style="transform:rotateY(180deg) translateZ(240px)">
             <div class="id">TC-052</div><div class="label">Accès portail client</div>
-            <div class="chip"><span>En attente</span></div>
+            <div class="chip"><span>Bienvenue</span></div>
           </div>
           <div class="ticket" style="transform:rotateY(225deg) translateZ(240px)">
             <div class="id">TC-067</div><div class="label">Planification du sprint</div>
-            <div class="chip"><span>En attente</span></div>
+            <div class="chip"><span>Bienvenue</span></div>
           </div>
           <div class="ticket" style="transform:rotateY(270deg) translateZ(240px)">
-            <div class="id">TC-078</div><div class="label">Exécution du cas de test</div>
-            <div class="chip"><span>En attente</span></div>
+            <div class="id">TC-078</div><div class="label">Aujourd'hui pluqu'hier et bien mmoins que demain</div>
+            <div class="chip"><span>Bienvenue</span></div>
           </div>
           <div class="ticket" style="transform:rotateY(315deg) translateZ(240px)">
-            <div class="id">TC-089</div><div class="label">Notifications temps réel</div>
-            <div class="chip"><span>En attente</span></div>
+            <div class="id">TC-089</div><div class="label">Chaque ticket balaye la plateforme jusqu'à son verdict .</div>
+            <div class="chip"><span>Bienvenue</span></div>
           </div>
         </div>
       </div>

@@ -5,11 +5,17 @@ namespace App\Imports;
 use App\Models\TestCase;
 use App\Models\TestCaseTemplate;
 use OpenSpout\Reader\XLSX\Reader;
-use OpenSpout\Common\Entity\Row;
 
+/**
+ * Même correctif que ProjectExcelImport : les colonnes ETAT DE TEST/STATUS
+ * sont détectées à part et routées vers progress/verdict, plutôt que
+ * silencieusement ignorées (elles ne correspondent à aucun champ du template
+ * depuis que ces deux axes ne sont plus des champs libres — Phase 1).
+ */
 class TestCaseExcelImport
 {
     protected TestCaseTemplate $template;
+
     protected int $projectId;
 
     public function __construct(TestCaseTemplate $template, int $projectId)
@@ -18,68 +24,77 @@ class TestCaseExcelImport
         $this->projectId = $projectId;
     }
 
-    /**
-     * Import rows from an uploaded Excel/Xlsx file using OpenSpout.
-     * Automatically detects the header row by matching template field labels.
-     * Returns number of rows imported.
-     */
+    protected static function specialColumnLabels(): array
+    {
+        return [
+            'etatdetest' => 'progress',
+            'etat' => 'progress',
+            'status' => 'verdict',
+            'statut' => 'verdict',
+        ];
+    }
+
     public function import(string $filePath): int
     {
-        $reader = new Reader();
+        $reader = new Reader;
         $reader->open($filePath);
 
         $fieldMap = [];
         foreach ($this->template->fields as $field) {
-            $normalized = $this->normalize($field['label']);
+            $normalized = TestCaseTemplate::normalizeLabel($field['label']);
             $fieldMap[$normalized] = $field['name'];
         }
 
+        $specialAliases = self::specialColumnLabels();
+
         $headerRowIndex = null;
-        $columnMap = []; // column index => field name
+        $columnMap = [];
+        $specialColumnMap = [];
 
         $importedCount = 0;
-        
+
         foreach ($reader->getSheetIterator() as $sheet) {
             $rowIndex = 1;
             foreach ($sheet->getRowIterator() as $row) {
-                // toArray() returns an array of values (strings, DateTimes, ints, etc.)
                 $cells = $row->toArray();
-                
-                // 1. Detect Header Row
+
                 if ($headerRowIndex === null) {
                     $matches = [];
+                    $specialMatches = [];
+
                     foreach ($cells as $colIndex => $cellValue) {
-                        if (empty($cellValue)) continue;
-                        
+                        if (empty($cellValue)) {
+                            continue;
+                        }
+
                         if ($cellValue instanceof \DateTimeInterface) {
                             $cellValue = $cellValue->format('Y-m-d H:i:s');
                         }
-                        
-                        $normalized = $this->normalize((string) $cellValue);
-                        if (isset($fieldMap[$normalized])) {
+
+                        $normalized = TestCaseTemplate::normalizeLabel((string) $cellValue);
+
+                        if (isset($specialAliases[$normalized])) {
+                            $specialMatches[$colIndex] = $specialAliases[$normalized];
+                        } elseif (isset($fieldMap[$normalized])) {
                             $matches[$colIndex] = $fieldMap[$normalized];
                         }
                     }
-                    
-                    // If we matched at least 2 field labels, this is the header row
-                    if (count($matches) >= 2) {
+
+                    if (count($matches) + count($specialMatches) >= 2) {
                         $headerRowIndex = $rowIndex;
                         $columnMap = $matches;
+                        $specialColumnMap = $specialMatches;
                     }
-                } 
-                // 2. Read Data Rows
-                else {
+                } else {
                     $hasData = false;
-                    foreach ($columnMap as $colIndex => $fieldName) {
-                        $cellValue = $cells[$colIndex] ?? '';
-                        if (!empty($cellValue)) {
+                    foreach ($columnMap + $specialColumnMap as $colIndex => $target) {
+                        if (! empty($cells[$colIndex] ?? '')) {
                             $hasData = true;
                             break;
                         }
                     }
 
                     if ($hasData) {
-                        // Build data array
                         $data = [];
                         foreach ($this->template->fields as $field) {
                             $data[$field['name']] = '';
@@ -87,47 +102,52 @@ class TestCaseExcelImport
 
                         foreach ($columnMap as $colIndex => $fieldName) {
                             $val = $cells[$colIndex] ?? '';
-                            // Handle date objects from Excel if needed
                             if ($val instanceof \DateTimeInterface) {
                                 $val = $val->format('Y-m-d H:i:s');
                             }
                             $data[$fieldName] = trim((string) $val);
                         }
 
+                        $progress = 'a_faire';
+                        $verdict = null;
+
+                        foreach ($specialColumnMap as $colIndex => $target) {
+                            $val = trim((string) ($cells[$colIndex] ?? ''));
+                            if ($val === '') {
+                                continue;
+                            }
+
+                            if ($target === 'progress') {
+                                $progress = TestCaseTemplate::resolveProgressValue($val) ?? 'a_faire';
+                            } elseif ($target === 'verdict') {
+                                $verdict = TestCaseTemplate::resolveVerdictValue($val);
+                            }
+                        }
+
                         TestCase::create([
-                            'project_id'  => $this->projectId,
+                            'project_id' => $this->projectId,
                             'template_id' => $this->template->id,
-                            'data'        => $data,
+                            'progress' => $progress,
+                            'verdict' => $verdict,
+                            'source' => 'excel',
+                            'data' => $data,
                         ]);
 
                         $importedCount++;
                     }
                 }
-                
+
                 $rowIndex++;
             }
-            break; // Only read the first sheet
+            break;
         }
 
         $reader->close();
 
         if ($headerRowIndex === null) {
-            throw new \Exception('Impossible de détecter la ligne d\'en-tête. Vérifiez que les colonnes correspondent aux champs attendus (ex: ' . implode(', ', array_keys($fieldMap)) . ').');
+            throw new \Exception('Impossible de détecter la ligne d\'en-tête. Vérifiez que les colonnes correspondent aux champs attendus (ex: '.implode(', ', array_keys($fieldMap)).').');
         }
 
         return $importedCount;
-    }
-
-    private function normalize(string $str): string
-    {
-        $str = mb_strtolower(trim($str));
-        // Simple mapping to handle common french accents without iconv errors
-        $str = strtr(
-            utf8_decode($str),
-            utf8_decode('àáâãäçèéêëìíîïñòóôõöùúûüýÿÀÁÂÃÄÇÈÉÊËÌÍÎÏÑÒÓÔÕÖÙÚÛÜÝ'),
-            'aaaaaceeeeiiiinooooouuuuyyAAAAACEEEEIIIINOOOOOUUUUY'
-        );
-        $str = preg_replace('/[^a-z0-9]/', '', $str); // Remove spaces, punctuation
-        return $str;
     }
 }

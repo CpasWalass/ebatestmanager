@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Project;
 use App\Models\Report;
 use App\Models\TestCase;
+use App\Models\TestCaseAssignment;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
@@ -18,19 +19,20 @@ class ClientDashboardController extends Controller
         $user = $request->user();
 
         // Récupérer les projets auxquels le client est assigné
-        $assignedProjectIds = \App\Models\TestCaseAssignment::where('user_id', $user->id)
+        $assignedProjectIds = TestCaseAssignment::where('user_id', $user->id)
             ->whereNotNull('project_id')
             ->pluck('project_id')
             ->toArray();
 
+        // Projets assignés
         $projets = Project::whereIn('id', $assignedProjectIds)
             ->where(function ($query) {
-                $query->where('type', 'UAT')
-                      ->orWhereHas('testCases', function ($q) {
-                          $q->where('type', 'uat');
-                      });
+                $query->where('type', 'uat')
+                    ->orWhereHas('testCases', function ($q) {
+                        $q->where('type', 'uat');
+                    });
             })
-            ->with(['testCases' => function($q) {
+            ->with(['testCases' => function ($q) {
                 $q->where('type', 'uat');
             }])
             ->get();
@@ -43,16 +45,17 @@ class ClientDashboardController extends Controller
             ->take(5)
             ->get();
 
-        // Nombre de cas de test UAT validés (succès)
-        $uatValides = TestCase::where('tenant_id', $tenantId)
+        // Statistiques Client strictes (restreintes aux projets assignés)
+        $clientTestCases = TestCase::where('tenant_id', $tenantId)
+            ->whereIn('project_id', $assignedProjectIds)
             ->where('type', 'uat')
-            ->whereHas('executions', function($q) {
-                $q->where('status', 'valide');
-            })->count();
+            ->get();
 
-        // Total UAT
-        $totalUat = TestCase::where('tenant_id', $tenantId)->where('type', 'uat')->count();
-        
+        $clientStats = TestCase::clientStatsFor($clientTestCases);
+
+        $uatValides = $clientStats['validated'];
+        $totalUat = $clientStats['total'];
+
         $conformite = $totalUat > 0 ? round(($uatValides / $totalUat) * 100) : 0;
 
         return view('client.dashboard', compact(

@@ -2,8 +2,8 @@
 
 namespace App\Policies;
 
-use App\Models\User;
 use App\Models\TestCaseAssignment;
+use App\Models\User;
 
 class TestCaseAssignmentPolicy
 {
@@ -14,6 +14,6 @@ class TestCaseAssignmentPolicy
 
     public function delete(User $user, TestCaseAssignment $assignment): bool
     {
-        return $user->hasPermissionTo('manage testcases') || $user->id === $assignment->user_id;
+        return $user->hasPermissionTo('assign tests') || $user->id === $assignment->user_id;
     }
 }

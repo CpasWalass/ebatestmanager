@@ -22,14 +22,14 @@ class Report extends Model
         'perimeter',
         'stats',
         'notes',
-        'sections',
+        'findings',
         'status',
         'tenant_id',
     ];
 
     protected $casts = [
-        'stats'    => 'array',
-        'sections' => 'array',
+        'stats' => 'array',
+        'findings' => 'array',
         'test_date' => 'date',
     ];
 
@@ -48,41 +48,16 @@ class Report extends Model
         return $this->hasMany(ReportResponse::class);
     }
 
-    /**
-     * Génère les statistiques depuis les TestExecutions du projet
-     */
-    public function generateStats(): array
-    {
-        $executions = $this->project->testCases()
-            ->with('executions')
-            ->get()
-            ->flatMap(fn($tc) => $tc->executions);
-
-        $total   = $executions->count();
-        $success = $executions->where('status', 'valide')->count();
-        $failure = $executions->where('status', 'non_valide')->count();
-        $reserve = $executions->where('status', 'sous_reserve')->count();
-        $optim   = $executions->where('status', 'optimisation')->count();
-
-        return [
-            'total'       => $total,
-            'success'     => $success,
-            'failure'     => $failure,
-            'reserve'     => $reserve,
-            'optimisation'=> $optim,
-        ];
-    }
-
     public function getStatusLabelAttribute(): string
     {
-        return match($this->status) {
-            'draft'        => 'Brouillon',
-            'sent'         => 'Envoyé',
+        return match ($this->status) {
+            'draft' => 'Brouillon',
+            'sent' => 'Envoyé',
             'acknowledged' => 'Pris en compte',
-            'resolved'     => 'Corrigé',
-            'retest'       => 'En re-test',
-            'closed'       => 'Clôturé',
-            default        => $this->status,
+            'resolved' => 'Corrigé',
+            'retest' => 'En re-test',
+            'closed' => 'Clôturé',
+            default => $this->status,
         };
     }
 }

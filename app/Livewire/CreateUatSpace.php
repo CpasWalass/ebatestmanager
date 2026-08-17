@@ -2,25 +2,29 @@
 
 namespace App\Livewire;
 
-use App\Models\Project;
-use App\Models\User;
-use App\Models\TestCaseAssignment;
 use App\Mail\UatSpaceCreatedMail;
+use App\Models\Message;
+use App\Models\Project;
+use App\Models\TestCaseAssignment;
+use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
-use Livewire\Component;
 use Livewire\Attributes\On;
+use Livewire\Component;
 
 class CreateUatSpace extends Component
 {
     public bool $showModal = false;
+
     public ?Project $project = null;
-    
+
     public string $clientName = '';
+
     public string $clientEmail = '';
-    
+
     public string $generatedLink = '';
+
     public string $generatedPassword = '';
 
     #[On('openUatModal')]
@@ -34,6 +38,8 @@ class CreateUatSpace extends Component
 
     public function createSpace(): void
     {
+        $this->clientEmail = strtolower(trim($this->clientEmail));
+
         $this->validate([
             'clientName' => 'required|string|min:3',
             'clientEmail' => 'required|email',
@@ -43,12 +49,13 @@ class CreateUatSpace extends Component
 
         // Check if user exists
         $user = User::where('email', $this->clientEmail)->first();
-        
-        if (!$user) {
+
+        if (! $user) {
             $user = User::create([
                 'name' => $this->clientName,
                 'email' => $this->clientEmail,
                 'password' => Hash::make($this->generatedPassword),
+                'temporary_password_hash' => Hash::make($this->generatedPassword),
                 'must_change_password' => true,
                 'tenant_id' => $this->project->tenant_id,
             ]);
@@ -57,6 +64,7 @@ class CreateUatSpace extends Component
             // Update password and enforce change on next login
             $user->update([
                 'password' => Hash::make($this->generatedPassword),
+                'temporary_password_hash' => Hash::make($this->generatedPassword),
                 'must_change_password' => true,
             ]);
         }
@@ -72,17 +80,17 @@ class CreateUatSpace extends Component
         ]);
 
         $this->generatedLink = route('client.dashboard');
-        
+
         // Envoi d'un message interne au client
         if ($assignment->wasRecentlyCreated) {
-            \App\Models\Message::create([
+            Message::create([
                 'sender_id' => auth()->id(),
                 'receiver_id' => $user->id,
                 'project_id' => $this->project->id,
                 'type' => 'system',
                 'content' => "Bienvenue ! L'espace de recette (UAT) pour le projet {$this->project->name} est prêt. [Cliquez ici pour y accéder]({$this->generatedLink})",
             ]);
-            
+
             // Envoi de l'email contenant les accès
             try {
                 Mail::to($user->email)->send(new UatSpaceCreatedMail(
@@ -94,10 +102,10 @@ class CreateUatSpace extends Component
             } catch (\Throwable $e) {
                 // Si l'envoi d'email échoue, on continue quand même pour ne pas bloquer l'interface
                 // L'admin verra le mot de passe sur le modal au pire des cas.
-                \Log::error("Erreur lors de l'envoi de l'email UAT : " . $e->getMessage());
+                \Log::error("Erreur lors de l'envoi de l'email UAT : ".$e->getMessage());
             }
         }
-        
+
         session()->flash('success', 'Espace UAT créé avec succès et notification/email envoyés.');
     }
 

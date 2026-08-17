@@ -180,7 +180,9 @@
 
                     {{-- Formulaire de réponse (masqué par défaut) --}}
                     <div id="reply-{{ $rapport->id }}" class="hidden mt-4">
-                        <form action="{{ route('developpeur.rapports.reply') }}" method="POST" class="space-y-3">
+                        <form action="{{ route('developpeur.rapports.reply') }}" method="POST" class="space-y-3"
+                            x-data="devImageUpload('{{ $rapport->id }}')"
+                            @submit="composeAndSubmit()">
                             @csrf
                             <input type="hidden" name="report_id" value="{{ $rapport->id }}">
                             <div>
@@ -189,17 +191,13 @@
                                 </label>
                                 <textarea name="content" rows="3"
                                     x-ref="devtextarea_{{ $rapport->id }}"
-                                    @paste="await handleDevPaste($event, '{{ $rapport->id }}')"
-                                    x-data
+                                    @paste="await handlePaste($event)"
                                     class="w-full text-sm px-3 py-2 pb-8 border border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:border-transparent resize-none"
                                     style="--tw-ring-color:#CC0000"
                                     placeholder="Décrivez les corrections apportées... (collez une image avec Ctrl+V)"></textarea>
 
                                 {{-- Barre d'outils image --}}
-                                <div
-                                    x-data="devImageUpload('{{ $rapport->id }}')"
-                                    class="flex items-center gap-2 mt-1"
-                                >
+                                <div class="flex items-center gap-2 mt-1">
                                     <label
                                         class="flex items-center gap-1.5 px-2 py-1 rounded-lg cursor-pointer text-xs font-medium transition"
                                         :class="uploading
@@ -297,13 +295,27 @@
 @push('scripts')
 <script>
 /**
- * Alpine.js — upload d'image dans le textarea de réponse dev
- * Utilisé dans les formulaires HTML classiques (non-Livewire).
+ * Alpine.js — upload d'image dans le textarea de réponse dev (formulaires HTML classiques).
+ * Les images sont affichées en miniatures, jamais en markdown brut dans le champ.
+ * Le markdown ![capture](url) est reconstitué à la soumission du formulaire.
  */
 function devImageUpload(rapportId) {
     return {
         uploading: false,
         images: [],
+
+        async handlePaste(event) {
+            const items = event.clipboardData?.items;
+            if (!items) return;
+            for (const item of items) {
+                if (item.type.startsWith('image/')) {
+                    event.preventDefault();
+                    const file = item.getAsFile();
+                    await this.doUpload(file);
+                    return;
+                }
+            }
+        },
 
         async uploadFile(event) {
             const file = event.target.files[0];
@@ -323,51 +335,28 @@ function devImageUpload(rapportId) {
                 const data = await res.json();
 
                 if (data.url) {
-                    // Injecter l'URL dans le textarea associé à ce rapport
-                    const ta = document.querySelector(`[x-ref="devtextarea_${rapportId}"]`)
-                            || document.getElementById(`devta-${rapportId}`);
-                    if (ta) {
-                        ta.value = (ta.value || '') + `\n![capture](${data.url})`;
-                    }
                     this.images.push({ url: data.url, name: data.name });
                 }
             } catch (e) {
                 console.error('Upload error:', e);
             }
             this.uploading = false;
+        },
+
+        removeImage(idx) {
+            this.images.splice(idx, 1);
+        },
+
+        composeAndSubmit() {
+            const ta = document.querySelector(`[x-ref="devtextarea_${rapportId}"]`)
+                    || document.getElementById(`devta-${rapportId}`);
+            if (ta && this.images.length > 0) {
+                const mdImages = this.images.map(img => `![capture](${img.url})`).join('\n');
+                ta.value = (ta.value.trim() ? ta.value + '\n\n' : '') + mdImages;
+            }
+            return true;
         }
     };
-}
-
-/**
- * Gestionnaire de coller (Ctrl+V) sur le textarea dev.
- * Appelé via @paste sur le textarea directement.
- */
-async function handleDevPaste(event, rapportId) {
-    const items = event.clipboardData?.items;
-    if (!items) return;
-    for (const item of items) {
-        if (item.type.startsWith('image/')) {
-            event.preventDefault();
-            const file = item.getAsFile();
-
-            const fd = new FormData();
-            fd.append('image', file);
-            fd.append('_token', document.querySelector('meta[name="csrf-token"]').content);
-
-            try {
-                const res = await fetch('/upload-image', { method: 'POST', body: fd });
-                if (!res.ok) return;
-                const data = await res.json();
-                if (data.url) {
-                    event.target.value = (event.target.value || '') + `\n![capture](${data.url})`;
-                }
-            } catch (e) {
-                console.error('Paste upload error:', e);
-            }
-            return;
-        }
-    }
 }
 </script>
 @endpush

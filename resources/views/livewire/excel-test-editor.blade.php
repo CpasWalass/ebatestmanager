@@ -145,6 +145,8 @@
                                  @mousedown.prevent="startResize"></div>
                         </th>
                     @endforeach
+                    <th scope="col" class="px-3 py-3 border-r border-[#133c2e] text-center" style="width: 130px;">PROGRESSION</th>
+                    <th scope="col" class="px-3 py-3 border-r border-[#133c2e] text-center" style="width: 130px;">VERDICT</th>
                     @if(auth()->check() && auth()->user()->hasRole('chef_project'))
                     <th scope="col" class="px-2 py-3 text-center" style="width: 100px;">Actions</th>
                     @endif
@@ -459,7 +461,55 @@
                                 @endif
                             </td>
                         @endforeach
-                        
+
+                        {{-- Colonnes fixes PROGRESSION / VERDICT — remplacent les anciens champs
+                             libres "etat_test"/"status" (Phase 1). Un verdict n'a de sens que
+                             si le test a été exécuté (Terminé ou Bloqué). --}}
+                        @php
+                            $canEditStatus = auth()->check() && (auth()->user()->hasRole('chef_project') || auth()->user()->hasRole('tester') || auth()->user()->hasRole('developer'));
+                            $progressOptions = \App\Models\TestCaseTemplate::progressOptions();
+                            $verdictOptions = \App\Models\TestCaseTemplate::verdictOptions();
+                        @endphp
+                        <td class="px-2 py-2 border-r border-gray-200 dark:border-gray-700 text-center">
+                            <div title="{{ $row->progressBy?->name ? 'Progression modifiée par '.$row->progressBy->name.' le '.$row->updated_at->format('d/m/Y H:i') : '' }}" class="inline-block w-full">
+                            @if($canEditStatus)
+                                <select wire:change="updateProgress({{ $row->id }}, $event.target.value)"
+                                        class="text-xs rounded px-1.5 py-1 border-0 font-medium focus:outline-none focus:ring-1 focus:ring-[#8b0000] w-full"
+                                        style="background-color: {{ $progressOptions[$row->progress]['color'] ?? '#6b7280' }}22; color: {{ $progressOptions[$row->progress]['color'] ?? '#6b7280' }};">
+                                    @foreach($progressOptions as $value => $option)
+                                        <option value="{{ $value }}" @selected($row->progress === $value)>{{ $option['label'] }}</option>
+                                    @endforeach
+                                </select>
+                            @else
+                                <span class="inline-block px-2 py-0.5 rounded text-xs font-medium"
+                                      style="background-color: {{ $progressOptions[$row->progress]['color'] ?? '#6b7280' }}22; color: {{ $progressOptions[$row->progress]['color'] ?? '#6b7280' }};">
+                                    {{ $progressOptions[$row->progress]['label'] ?? $row->progress }}
+                                </span>
+                            @endif
+                            </div>
+                        </td>
+                        <td class="px-2 py-2 border-r border-gray-200 dark:border-gray-700 text-center">
+                            <div title="{{ $row->verdictBy?->name ? 'Verdict posé par '.$row->verdictBy->name.' le '.($row->verdict_set_at?->format('d/m/Y H:i') ?? '') : '' }}" class="inline-block w-full">
+                            @if($canEditStatus)
+                                <select wire:change="updateVerdict({{ $row->id }}, $event.target.value || null)"
+                                        class="text-xs rounded px-1.5 py-1 border-0 font-medium focus:outline-none focus:ring-1 focus:ring-[#8b0000] w-full"
+                                        style="background-color: {{ $row->verdict ? ($verdictOptions[$row->verdict]['color'] ?? '#6b7280').'22' : 'transparent' }}; color: {{ $row->verdict ? ($verdictOptions[$row->verdict]['color'] ?? '#6b7280') : '#9ca3af' }};">
+                                    <option value="">—</option>
+                                    @foreach($verdictOptions as $value => $option)
+                                        <option value="{{ $value }}" @selected($row->verdict === $value)>{{ $option['label'] }}</option>
+                                    @endforeach
+                                </select>
+                            @elseif($row->verdict)
+                                <span class="inline-block px-2 py-0.5 rounded text-xs font-medium"
+                                      style="background-color: {{ $verdictOptions[$row->verdict]['color'] ?? '#6b7280' }}22; color: {{ $verdictOptions[$row->verdict]['color'] ?? '#6b7280' }};">
+                                    {{ $verdictOptions[$row->verdict]['label'] }}
+                                </span>
+                            @else
+                                <span class="text-gray-400 text-xs">—</span>
+                            @endif
+                            </div>
+                        </td>
+
                         @if(auth()->check() && (auth()->user()->hasRole('chef_project') || (auth()->user()->hasRole('client') && isset($row->data['_added_by_client']))))
                         <td class="px-2 py-2 text-center">
                             <button wire:click="deleteRow({{ $row->id }})" wire:confirm="Supprimer cette ligne ?" class="text-red-500 hover:text-red-700 opacity-0 group-hover:opacity-100 transition">
@@ -483,7 +533,8 @@
                             @endphp
                             <div class="flex flex-col gap-2 min-w-[140px]">
                                 {{-- Badge statut --}}
-                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold {{ $statusConfig['class'] }}">
+                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold {{ $statusConfig['class'] }}"
+                                      title="{{ $row->clientStatusBy?->name ? 'Avis mis à jour par '.$row->clientStatusBy->name : '' }}">
                                     {{ $statusConfig['icon'] }} {{ $statusConfig['label'] }}
                                 </span>
 
@@ -505,36 +556,38 @@
 
                                 {{-- Boutons d'action (client uniquement) --}}
                                 @if(auth()->user()->hasRole('client'))
-                                <div class="flex gap-1">
+                                <div class="flex gap-1 mt-2">
                                     @if($clientStatus !== 'validated')
                                     <button
                                         type="button"
-                                        wire:click="validateCase({{ $row->id }})"
-                                        wire:loading.attr="disabled"
-                                        class="flex items-center gap-1 px-2 py-1 rounded-md bg-green-600 hover:bg-green-700 text-white text-[11px] font-semibold transition shadow-sm"
+                                        wire:click.prevent="validateCase({{ $row->id }})"
+                                        style="cursor: pointer !important; pointer-events: auto !important;"
+                                        class="flex items-center justify-center gap-1 px-3 py-1.5 rounded-md bg-green-600 hover:bg-green-700 text-white text-xs font-bold shadow-md transition-all transform hover:scale-105"
                                         title="Valider ce cas de test"
                                     >
-                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
                                         OK
                                     </button>
                                     @endif
                                     @if($clientStatus !== 'rejected')
                                     <button
                                         type="button"
-                                        wire:click="openRejectModal({{ $row->id }})"
-                                        class="flex items-center gap-1 px-2 py-1 rounded-md bg-red-600 hover:bg-red-700 text-white text-[11px] font-semibold transition shadow-sm"
+                                        wire:click.prevent="openRejectModal({{ $row->id }})"
+                                        style="cursor: pointer !important; pointer-events: auto !important;"
+                                        class="flex items-center justify-center gap-1 px-3 py-1.5 rounded-md bg-red-600 hover:bg-red-700 text-white text-xs font-bold shadow-md transition-all transform hover:scale-105"
                                         title="Rejeter ce cas de test"
                                     >
-                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
                                         KO
                                     </button>
                                     @endif
                                     @if($clientStatus !== 'pending')
                                     <button
                                         type="button"
-                                        wire:click="validateCase({{ $row->id }})" {{-- reset via revalider --}}
-                                        class="px-2 py-1 rounded-md bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-600 dark:text-gray-300 text-[10px] transition"
-                                        title="Réinitialiser l'avis"
+                                        wire:click.prevent="resetCase({{ $row->id }})"
+                                        style="cursor: pointer !important; pointer-events: auto !important;"
+                                        class="px-2 py-1.5 rounded-md bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 text-[10px] font-bold shadow transition-all"
+                                        title="Réinitialiser"
                                     >↺</button>
                                     @endif
                                 </div>

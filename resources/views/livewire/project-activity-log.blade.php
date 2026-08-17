@@ -29,20 +29,26 @@
                                 <div class="relative flex space-x-3">
                                     <div>
                                         @php
-                                            $iconBg = 'bg-gray-500';
-                                            if ($activity->description === 'created') $iconBg = 'bg-green-500';
-                                            elseif ($activity->description === 'updated') $iconBg = 'bg-blue-500';
-                                            elseif (!in_array($activity->description, ['created', 'updated', 'deleted'])) $iconBg = 'bg-purple-500';
+                                            $iconVerb = \App\Support\ActivityLogHelper::verb($activity->description);
+                                            $iconBg = match ($iconVerb) {
+                                                'créé' => 'bg-green-500',
+                                                'mis à jour' => 'bg-blue-500',
+                                                'supprimé' => 'bg-red-500',
+                                                'restauré' => 'bg-amber-500',
+                                                default => 'bg-purple-500',
+                                            };
                                         @endphp
                                         <span class="h-8 w-8 rounded-full flex items-center justify-center ring-8 ring-white dark:ring-gray-800 {{ $iconBg }}">
-                                            @if($activity->description === 'created')
+                                            @if($iconVerb === 'créé')
                                                 <svg class="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>
-                                            @elseif($activity->description === 'updated')
+                                            @elseif($iconVerb === 'mis à jour')
                                                 <svg class="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
-                                            @elseif(!in_array($activity->description, ['created', 'updated', 'deleted']))
+                                            @elseif($iconVerb === 'supprimé')
+                                                <svg class="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                                            @elseif($iconVerb === 'restauré')
                                                 <svg class="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                                             @else
-                                                <svg class="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                                <svg class="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                                             @endif
                                         </span>
                                     </div>
@@ -50,7 +56,7 @@
                                         <div>
                                             @php
                                                 $causer = $activity->causer ? $activity->causer->name : 'Système';
-                                                $action = $activity->description === 'updated' ? 'modifié' : ($activity->description === 'created' ? 'créé' : 'supprimé');
+                                                $verb = \App\Support\ActivityLogHelper::verb($activity->description);
                                                 $changes = [];
                                                 $subjectName = "un élément";
                                                 
@@ -68,8 +74,13 @@
                                                             ];
                                                         }
                                                     }
-                                                    $identifier = $newData['test_case'] ?? $newData['cas_test'] ?? "#{$activity->subject_id}";
-                                                    $subjectName = "le cas de test $identifier";
+                                                    $case = \App\Models\TestCase::find($activity->subject_id);
+                                                    $identifier = $case?->data['cas_test']
+                                                        ?? $case?->data['test_case']
+                                                        ?? $newData['cas_test']
+                                                        ?? $newData['test_case']
+                                                        ?? "#{$activity->subject_id}";
+                                                    $subjectName = "le cas de test « {$identifier} »";
                                                 } else {
                                                     $newAttrs = $activity->attribute_changes['attributes'] ?? [];
                                                     $oldAttrs = $activity->attribute_changes['old'] ?? [];
@@ -84,11 +95,12 @@
                                                             ];
                                                         }
                                                     }
-                                                    $subjectName = "le projet";
+                                                    $projectName = \App\Support\ActivityLogHelper::subjectName($activity->subject_type, $activity->subject_id)
+                                                        ?? $project->name;
+                                                    $subjectName = "le projet « {$projectName} »";
                                                 }
-                                                if (in_array($activity->description, ['created', 'updated', 'deleted'])) {
-                                                    $action = $activity->description === 'updated' ? 'a modifié' : ($activity->description === 'created' ? 'a créé' : 'a supprimé');
-                                                    $action .= " " . $subjectName;
+                                                if ($verb !== null) {
+                                                    $action = "a {$verb} {$subjectName}";
                                                 } else {
                                                     // It's a custom message (like our commit message)
                                                     $action = " : " . $activity->description;

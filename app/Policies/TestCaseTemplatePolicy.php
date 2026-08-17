@@ -2,48 +2,39 @@
 
 namespace App\Policies;
 
-use App\Models\User;
 use App\Models\TestCaseTemplate;
+use App\Models\User;
+use App\Support\ProjectAccess;
 
 class TestCaseTemplatePolicy
 {
-    /**
-     * Determine whether the user can view any models.
-     */
     public function viewAny(User $user): bool
     {
-        return $user->hasPermissionTo('manage testcases') || $user->hasPermissionTo('view reports');
+        return $user->hasAnyPermission(['manage testcases', 'view reports']);
     }
 
-    /**
-     * Determine whether the user can view the model.
-     */
     public function view(User $user, TestCaseTemplate $template): bool
     {
-        return $user->hasPermissionTo('manage testcases') || $user->hasPermissionTo('view reports');
+        if ($user->isChefProjet() || $user->hasPermissionTo('manage projects')) {
+            return true;
+        }
+
+        return $user->hasAnyPermission(['manage testcases', 'view reports'])
+            && ProjectAccess::isAssignedToTemplate($user, $template);
     }
 
-    /**
-     * Determine whether the user can create models.
-     */
     public function create(User $user): bool
     {
-        return $user->hasPermissionTo('manage testcases');
+        return $user->hasPermissionTo('manage testcases') && $user->isChefProjet();
     }
 
-    /**
-     * Determine whether the user can update the model.
-     */
     public function update(User $user, TestCaseTemplate $template): bool
     {
-        return $user->hasPermissionTo('manage testcases');
+        return $user->hasPermissionTo('manage testcases') && $user->isChefProjet();
     }
 
-    /**
-     * Determine whether the user can delete the model.
-     */
     public function delete(User $user, TestCaseTemplate $template): bool
     {
-        return $user->hasPermissionTo('manage testcases');
+        return $user->hasPermissionTo('manage testcases') && $user->isChefProjet();
     }
 }

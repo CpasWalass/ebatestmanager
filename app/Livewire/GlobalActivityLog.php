@@ -11,7 +11,13 @@ class GlobalActivityLog extends Component
     use WithPagination;
 
     public $search = '';
+
     public $typeFilter = '';
+
+    public function mount(): void
+    {
+        abort_unless(auth()->user()->hasRole('chef_project'), 403);
+    }
 
     public function updatingSearch()
     {
@@ -28,18 +34,18 @@ class GlobalActivityLog extends Component
         $query = Activity::with('causer')->latest();
 
         if ($this->search) {
-            $query->where('description', 'like', '%' . $this->search . '%')
-                  ->orWhereHas('causer', function($q) {
-                      $q->where('name', 'like', '%' . $this->search . '%');
-                  });
+            $query->where('description', 'like', '%'.$this->search.'%')
+                ->orWhereHas('causer', function ($q) {
+                    $q->where('name', 'like', '%'.$this->search.'%');
+                });
         }
 
         if ($this->typeFilter) {
-            $query->where('subject_type', 'like', '%' . $this->typeFilter . '%');
+            $query->where('subject_type', 'like', '%'.$this->typeFilter.'%');
         }
 
         return view('livewire.global-activity-log', [
-            'activities' => $query->paginate(20)
+            'activities' => $query->paginate(20),
         ])->layout('layouts.app');
     }
 }

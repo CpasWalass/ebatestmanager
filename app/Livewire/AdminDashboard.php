@@ -2,19 +2,18 @@
 
 namespace App\Livewire;
 
-use Livewire\Component;
 use App\Models\Project;
 use App\Models\TestCase;
-use App\Models\User;
-use App\Models\Message;
-use App\Models\TestCaseTemplate;
 use App\Models\TestCaseAssignment;
-use App\Models\TestExecution;
+use App\Models\User;
+use Livewire\Component;
 
 class AdminDashboard extends Component
 {
     public $filterPeriod = 'all'; // all, this_month, last_month, this_year
+
     public $filterTester = 'all';
+
     public $filterProject = 'all';
 
     public function render()
@@ -39,10 +38,11 @@ class AdminDashboard extends Component
 
         // On clone la requête pour les KPIs
         $activeProjectsCount = (clone $projectsQuery)->whereNotIn('status', ['completed', 'archived'])->count();
-        $uatProjectsCount = (clone $projectsQuery)->where('status', 'in_progress')->count();
+        $closedProjectsCount = (clone $projectsQuery)->where('status', 'completed')->count();
+        $uatProjectsCount = (clone $projectsQuery)->where('type', 'uat')->whereNotIn('status', ['completed', 'archived'])->count();
 
         // Si on filtre par testeur, on cherche les tests (TestCase) assignés
-        $testCasesQuery = TestCase::whereHas('project', function($q) {
+        $testCasesQuery = TestCase::whereHas('project', function ($q) {
             $q->whereNotIn('status', ['completed', 'archived']);
         });
         if ($this->filterProject !== 'all') {
@@ -51,62 +51,84 @@ class AdminDashboard extends Component
         if ($this->filterTester !== 'all') {
             $assignedProjectIds = TestCaseAssignment::where('user_id', $this->filterTester)->whereNotNull('project_id')->pluck('project_id')->toArray();
             $assignedTemplateIds = TestCaseAssignment::where('user_id', $this->filterTester)->whereNotNull('template_id')->pluck('template_id')->toArray();
-            
-            $testCasesQuery->where(function($q) use ($assignedProjectIds, $assignedTemplateIds) {
+
+            $testCasesQuery->where(function ($q) use ($assignedProjectIds, $assignedTemplateIds) {
                 $q->whereIn('project_id', $assignedProjectIds)
-                  ->orWhereIn('template_id', $assignedTemplateIds);
+                    ->orWhereIn('template_id', $assignedTemplateIds);
             });
         }
         $totalTemplates = $testCasesQuery->count();
 
-        // Calcul du taux de validation en lisant l'état des TestCase directement
-        $allTestCasesQuery = (clone $testCasesQuery)->get();
-        $adminStats = \App\Models\TestCase::calculateStats($allTestCasesQuery);
+        // Calcul du taux de validation Interne (IAT)
+        $allTestCasesQuery = (clone $testCasesQuery)->with(['project', 'verdictBy'])->get();
+        $adminStats = TestCase::statsFor($allTestCasesQuery);
+        $authorBreakdown = TestCase::statsByAuthorBreakdown($allTestCasesQuery);
         $totalExecutions = $adminStats['executed'];
         $validExecutions = $adminStats['valide'];
         $validationRate = $totalExecutions > 0 ? round(($validExecutions / $totalExecutions) * 100) : 0;
 
+        // Répartition par projet (respecte les filtres actifs)
+        $perProjectStats = $allTestCasesQuery->groupBy('project_id')->map(function ($cases) {
+            $stats = TestCase::statsFor($cases);
+            $project = $cases->first()->project;
+
+            return [
+                'name' => $project?->name ?? ('Projet #'.$cases->first()->project_id),
+                'total' => $stats['total'],
+                'executed' => $stats['executed'],
+                'valide' => $stats['valide'],
+                'non_valide' => $stats['non_valide'],
+                'sous_reserve' => $stats['sous_reserve'],
+                'optimisation' => $stats['optimisation'],
+                'bloque' => $stats['bloque'],
+                'non_executed' => $stats['total'] - $stats['executed'],
+                'taux_execution' => $stats['taux_execution'],
+            ];
+        })->sortByDesc('total')->values();
+
+        // Calcul du taux d'approbation Client (UAT)
+        $uatTestCases = (clone $testCasesQuery)->where('type', 'uat')->get();
+        $clientStats = TestCase::clientStatsFor($uatTestCases);
+        $totalUat = $clientStats['total'];
+        $validUat = $clientStats['validated'];
+        $clientValidationRate = $totalUat > 0 ? round(($validUat / $totalUat) * 100) : 0;
+
         // Projets pour la liste principale
         $mainProjects = (clone $projectsQuery)
-            ->with(['client', 'developers', 'creator'])
+            ->with(['client', 'developers', 'createdBy'])
             ->latest()
             ->take(5)
             ->get();
 
         // Capacité de l'équipe (Testeurs)
-        $testersCapacity = User::role('tester')->get()->map(function($tester) {
+        $testersCapacity = User::role('tester')->get()->map(function ($tester) {
             $assignedProjectIds = TestCaseAssignment::where('user_id', $tester->id)->whereNotNull('project_id')->pluck('project_id')->toArray();
             $assignedTemplateIds = TestCaseAssignment::where('user_id', $tester->id)->whereNotNull('template_id')->pluck('template_id')->toArray();
-            
-            $assignedCases = \App\Models\TestCase::whereHas('project', function($q) {
-                    $q->whereNotIn('status', ['completed', 'archived']);
-                })
-                ->where(function($q) use ($assignedProjectIds, $assignedTemplateIds) {
+
+            $assignedCases = TestCase::whereHas('project', function ($q) {
+                $q->whereNotIn('status', ['completed', 'archived']);
+            })
+                ->where(function ($q) use ($assignedProjectIds, $assignedTemplateIds) {
                     $q->whereIn('project_id', $assignedProjectIds)
-                      ->orWhereIn('template_id', $assignedTemplateIds);
+                        ->orWhereIn('template_id', $assignedTemplateIds);
                 })
                 ->get();
-            $testerStats = \App\Models\TestCase::calculateStats($assignedCases);
+            $testerStats = TestCase::statsFor($assignedCases);
 
             $total = $testerStats['total'];
             $done = $testerStats['executed'];
 
             $percent = $total > 0 ? round(($done / $total) * 100) : 100;
+
             return [
                 'name' => $tester->name,
                 'total' => $total,
                 'done' => $done,
                 'percent' => $percent,
                 'status' => $percent >= 100 ? 'Disponible' : ($percent > 50 ? 'En cours' : 'Chargé'),
-                'color' => $percent >= 100 ? 'green' : ($percent > 50 ? 'yellow' : 'red')
+                'color' => $percent >= 100 ? 'green' : ($percent > 50 ? 'yellow' : 'red'),
             ];
         });
-
-        $unreadMessages = Message::where('receiver_id', auth()->id())
-            ->whereNull('read_at')
-            ->with('sender')
-            ->latest()
-            ->get();
 
         // Pour les filtres
         $allTesters = User::role('tester')->orderBy('name')->get();
@@ -114,12 +136,17 @@ class AdminDashboard extends Component
 
         return view('livewire.admin-dashboard', [
             'activeProjectsCount' => $activeProjectsCount,
+            'closedProjectsCount' => $closedProjectsCount,
             'uatProjectsCount' => $uatProjectsCount,
             'totalTemplates' => $totalTemplates,
             'validationRate' => $validationRate,
+            'clientValidationRate' => $clientValidationRate,
             'mainProjects' => $mainProjects,
             'testersCapacity' => $testersCapacity,
-            'unreadMessages' => $unreadMessages,
+            'adminStats' => $adminStats,
+            'authorBreakdown' => $authorBreakdown,
+            'clientStats' => $clientStats,
+            'perProjectStats' => $perProjectStats,
             'allTesters' => $allTesters,
             'allProjects' => $allProjects,
         ]);

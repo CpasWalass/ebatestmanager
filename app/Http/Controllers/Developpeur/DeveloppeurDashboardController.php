@@ -3,9 +3,11 @@
 namespace App\Http\Controllers\Developpeur;
 
 use App\Http\Controllers\Controller;
+use App\Models\Message;
 use App\Models\Project;
 use App\Models\Report;
 use App\Models\ReportResponse;
+use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 class DeveloppeurDashboardController extends Controller
@@ -16,7 +18,7 @@ class DeveloppeurDashboardController extends Controller
 
         // Rapports envoyés au développeur (status sent) des projets qui lui sont assignés
         $rapportsRecus = Report::where('status', 'sent')
-            ->whereHas('project.developers', function($query) use ($user) {
+            ->whereHas('project.developers', function ($query) use ($user) {
                 $query->where('users.id', $user->id);
             })
             ->with(['project.client', 'creator'])
@@ -31,15 +33,15 @@ class DeveloppeurDashboardController extends Controller
             ->get();
 
         $projetsEnRevue = Project::where('status', 'in_review')
-            ->whereHas('developers', function($query) use ($user) {
+            ->whereHas('developers', function ($query) use ($user) {
                 $query->where('users.id', $user->id);
             })
             ->with('client')
             ->latest()
             ->get();
 
-        $enAttente  = $rapportsRecus->count();
-        $traites    = ReportResponse::where('user_id', $user->id)
+        $enAttente = $rapportsRecus->count();
+        $traites = ReportResponse::where('user_id', $user->id)
             ->where('status', 'done')->count();
 
         return view('developpeur.dashboard', compact(
@@ -51,7 +53,7 @@ class DeveloppeurDashboardController extends Controller
         ));
     }
 
-    public function reply(\Illuminate\Http\Request $request)
+    public function reply(Request $request)
     {
         $request->validate([
             'report_id' => 'required|exists:reports,id',
@@ -78,20 +80,20 @@ class DeveloppeurDashboardController extends Controller
             $remainingReports = Report::where('project_id', $report->project_id)
                 ->where('status', 'sent')
                 ->count();
-                
+
             if ($remainingReports === 0) {
-                $report->project->update(['status' => 'active']);
+                $report->project->update(['status' => 'in_progress']);
             }
         }
 
         // Notifier le chef de projet
         if ($report->project && $report->project->createdBy) {
-            \App\Models\Message::create([
+            Message::create([
                 'sender_id' => auth()->id(),
                 'receiver_id' => $report->project->created_by,
                 'project_id' => $report->project_id,
                 'type' => 'system',
-                'content' => "Le développeur " . auth()->user()->name . " a répondu au rapport {$report->perimeter} :\n\n\"{$content}\"",
+                'content' => 'Le développeur '.auth()->user()->name." a répondu au rapport {$report->perimeter} :\n\n\"{$content}\"",
             ]);
         }
 

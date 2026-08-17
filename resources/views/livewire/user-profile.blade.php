@@ -103,19 +103,31 @@
                 
                 <form wire:submit="updatePassword" class="mt-6 space-y-6">
                     <div class="max-w-md space-y-4">
+                        @if (auth()->user()->must_change_password)
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                                {{ auth()->user()->must_change_password ? 'Mot de passe temporaire actuel' : 'Mot de passe actuel' }}
-                            </label>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Mot de passe temporaire</label>
+                            <div class="relative mt-1">
+                                <input id="temporary_password" type="password" wire:model="temporary_password" class="block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm pr-10">
+                                <button type="button" class="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-500 hover:text-gray-700 dark:hover:text-gray-200" data-password-toggle data-target="temporary_password" aria-label="Afficher ou masquer">
+                                    <svg data-eye-open class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                                    <svg data-eye-closed class="hidden h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.542-7a9.97 9.97 0 012.152-3.292m3.36-2.36A9.956 9.956 0 0112 5c4.478 0 8.268 2.943 9.542 7a9.97 9.97 0 01-4.043 5.197M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3l18 18"/></svg>
+                                </button>
+                            </div>
+                            @error('temporary_password') <span class="text-sm text-red-600">{{ $message }}</span> @enderror
+                        </div>
+                        @else
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Mot de passe actuel</label>
                             <div class="relative mt-1">
                                 <input id="current_password" type="password" wire:model="current_password" class="block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm pr-10">
-                                <button type="button" class="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-500 hover:text-gray-700 dark:hover:text-gray-200" data-password-toggle data-target="current_password" aria-label="Afficher ou masquer le mot de passe">
+                                <button type="button" class="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-500 hover:text-gray-700 dark:hover:text-gray-200" data-password-toggle data-target="current_password" aria-label="Afficher ou masquer">
                                     <svg data-eye-open class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
                                     <svg data-eye-closed class="hidden h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.542-7a9.97 9.97 0 012.152-3.292m3.36-2.36A9.956 9.956 0 0112 5c4.478 0 8.268 2.943 9.542 7a9.97 9.97 0 01-4.043 5.197M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3l18 18"/></svg>
                                 </button>
                             </div>
                             @error('current_password') <span class="text-sm text-red-600">{{ $message }}</span> @enderror
                         </div>
+                        @endif
 
                         <div>
                             <div class="flex justify-between items-end">

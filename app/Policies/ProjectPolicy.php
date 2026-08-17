@@ -2,64 +2,64 @@
 
 namespace App\Policies;
 
-use App\Models\User;
 use App\Models\Project;
+use App\Models\User;
+use App\Support\ProjectAccess;
 
 class ProjectPolicy
 {
-    /**
-     * Determine whether the user can view any models.
-     */
     public function viewAny(User $user): bool
     {
-        return $user->hasPermissionTo('manage projects') || $user->hasPermissionTo('view reports');
+        return $user->hasAnyPermission(['manage projects', 'manage testcases', 'view reports']);
     }
 
     /**
-     * Determine whether the user can view the model.
+     * Un chef de projet ou un utilisateur avec "view reports" en général peut voir
+     * n'importe quel projet. Un testeur/développeur/client ne peut voir QUE les
+     * projets sur lesquels il est explicitement assigné (auparavant vérifié
+     * uniquement côté routes web, jamais ici — un appel API aurait pu contourner
+     * cette restriction).
      */
     public function view(User $user, Project $project): bool
     {
-        return $user->hasPermissionTo('manage projects') || 
-               $user->hasPermissionTo('view reports') ||
-               $user->hasPermissionTo('manage testcases');
+        if ($user->hasPermissionTo('manage projects')) {
+            return true;
+        }
+
+        if ($user->hasPermissionTo('manage testcases') || $user->hasPermissionTo('view reports')) {
+            // Un chef de projet garde un accès large ; les autres rôles doivent
+            // être explicitement rattachés au projet.
+            if ($user->isChefProjet()) {
+                return true;
+            }
+
+            return ProjectAccess::isAssignedToProject($user, $project->id)
+                || ProjectAccess::isDeveloperOnProject($user, $project);
+        }
+
+        return false;
     }
 
-    /**
-     * Determine whether the user can create models.
-     */
     public function create(User $user): bool
     {
         return $user->hasPermissionTo('manage projects');
     }
 
-    /**
-     * Determine whether the user can update the model.
-     */
     public function update(User $user, Project $project): bool
     {
         return $user->hasPermissionTo('manage projects') && $user->id === $project->created_by;
     }
 
-    /**
-     * Determine whether the user can delete the model.
-     */
     public function delete(User $user, Project $project): bool
     {
         return $user->hasPermissionTo('manage projects') && $user->id === $project->created_by;
     }
 
-    /**
-     * Determine whether the user can restore the model.
-     */
     public function restore(User $user, Project $project): bool
     {
         return $user->hasPermissionTo('manage projects');
     }
 
-    /**
-     * Determine whether the user can permanently delete the model.
-     */
     public function forceDelete(User $user, Project $project): bool
     {
         return $user->hasPermissionTo('manage projects');

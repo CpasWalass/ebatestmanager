@@ -1,5 +1,9 @@
 <?php
 
+use App\Http\Middleware\EagerLoadTenant;
+use App\Http\Middleware\IdentifyTenant;
+use App\Models\Tenant;
+
 return [
     /*
     |--------------------------------------------------------------------------
@@ -10,7 +14,7 @@ return [
     |
     */
 
-    'tenant_model' => \App\Models\Tenant::class,
+    'tenant_model' => Tenant::class,
 
     /*
     |--------------------------------------------------------------------------
@@ -59,8 +63,8 @@ return [
     |
     */
     'middleware' => [
-        'identify_tenant' => \App\Http\Middleware\IdentifyTenant::class,
-        'eager_load_tenant' => \App\Http\Middleware\EagerLoadTenant::class,
+        'identify_tenant' => IdentifyTenant::class,
+        'eager_load_tenant' => EagerLoadTenant::class,
     ],
 
     /*
@@ -73,7 +77,7 @@ return [
     */
     'cache' => [
         'enabled' => true,
-        'store' => 'redis',
-        'ttl' => 3600, // 1 hour
+        'store' => env('TENANCY_CACHE_STORE', env('CACHE_STORE', 'database')),
+        'ttl' => 3600,
     ],
 ];

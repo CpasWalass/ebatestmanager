@@ -87,7 +87,7 @@
                     <div>
                         <div class="flex items-center gap-2 mb-1">
                             <h3 class="font-semibold text-gray-900 dark:text-white">{{ $projet->name }}</h3>
-                            @if($projet->type === 'UAT')
+                            @if($projet->type === 'uat')
                             <span class="inline-flex items-center px-2 py-0.5 text-xs font-medium rounded-full bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400">
                                 Phase UAT
                             </span>

@@ -8,6 +8,7 @@ use App\Models\Project;
 use App\Models\TestCase;
 use App\Models\TestCaseTemplate;
 use App\Services\GeminiTestCaseGenerator;
+use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\On;
 use Livewire\Component;
 use Livewire\WithFileUploads;
@@ -17,25 +18,33 @@ class AiTestCaseGenerator extends Component
     use WithFileUploads;
 
     public Project $project;
+
     public TestCaseTemplate $template;
 
-    public bool $showModal    = false;
-    public string $inputMode  = 'text';   // 'file' | 'text'
-    public $sourceFile        = null;
+    public bool $showModal = false;
+
+    public string $inputMode = 'text';   // 'file' | 'text'
+
+    public $sourceFile = null;
+
     public string $workflowText = '';
 
-    public ?int   $generationRequestId = null;
-    public array  $reviewRows          = [];
-    public string $errorMessage        = '';
+    public ?int $generationRequestId = null;
+
+    public array $reviewRows = [];
+
+    public string $errorMessage = '';
 
     public function mount(Project $project, TestCaseTemplate $template): void
     {
-        $this->project  = $project;
+        $this->authorize('view', $project);
+
+        $this->project = $project;
         $this->template = $template;
     }
 
     /* ------------------------------------------------------------------ */
-    /*  Ouverture / fermeture                                               */
+    /*  Ouverture / fermeture */
     /* ------------------------------------------------------------------ */
 
     #[On('open-ai-generator')]
@@ -58,16 +67,17 @@ class AiTestCaseGenerator extends Component
     }
 
     /* ------------------------------------------------------------------ */
-    /*  Étape 1 — génération (synchrone)                                   */
+    /*  Étape 1 — génération (synchrone) */
     /* ------------------------------------------------------------------ */
 
     public function startGeneration(GeminiTestCaseGenerator $generator): void
     {
         $this->errorMessage = '';
-        $this->reviewRows   = [];
+        $this->reviewRows = [];
 
         if (! auth()->user()->hasRole('chef_project')) {
             $this->errorMessage = 'Seul le Chef Projet peut générer des cas de test par IA.';
+
             return;
         }
 
@@ -75,31 +85,33 @@ class AiTestCaseGenerator extends Component
             if ($this->inputMode === 'file') {
                 $this->validate(['sourceFile' => 'required|file|mimes:pdf,doc,docx,txt|max:10240']);
                 $extractedText = $generator->extractTextFromFile($this->sourceFile);
-                $inputType     = 'file';
-                $filename      = $this->sourceFile->getClientOriginalName();
+                $inputType = 'file';
+                $filename = $this->sourceFile->getClientOriginalName();
             } else {
                 $this->validate(['workflowText' => 'required|string|min:10|max:20000']);
                 $extractedText = $this->workflowText;
-                $inputType     = 'text';
-                $filename      = null;
+                $inputType = 'text';
+                $filename = null;
             }
-        } catch (\Illuminate\Validation\ValidationException $e) {
+        } catch (ValidationException $e) {
             $this->errorMessage = collect($e->errors())->flatten()->first();
+
             return;
         } catch (\Throwable $e) {
             $this->errorMessage = $e->getMessage();
+
             return;
         }
 
         // Créer l'enregistrement de la demande
         $genRequest = AiGenerationRequest::create([
-            'project_id'     => $this->project->id,
-            'template_id'    => $this->template->id,
-            'user_id'        => auth()->id(),
-            'input_type'     => $inputType,
+            'project_id' => $this->project->id,
+            'template_id' => $this->template->id,
+            'user_id' => auth()->id(),
+            'input_type' => $inputType,
             'input_filename' => $filename,
             'extracted_text' => $extractedText,
-            'status'         => 'pending',
+            'status' => 'pending',
         ]);
 
         $this->generationRequestId = $genRequest->id;
@@ -112,15 +124,16 @@ class AiTestCaseGenerator extends Component
         $genRequest->refresh();
 
         if ($genRequest->status === 'failed') {
-            $this->errorMessage        = $genRequest->error_message ?? 'La génération a échoué.';
+            $this->errorMessage = $genRequest->error_message ?? 'La génération a échoué.';
             $this->generationRequestId = null;
+
             return;
         }
 
         if ($genRequest->status === 'completed' && ! empty($genRequest->proposed_cases)) {
             // Création d'un squelette vide avec tous les champs du template pour éviter les "Undefined array key"
             $defaultFields = [];
-            foreach ($this->template->fields ?? \App\Models\TestCaseTemplate::defaultFields() as $f) {
+            foreach ($this->template->fields ?? TestCaseTemplate::defaultFields() as $f) {
                 $defaultFields[$f['name']] = '';
             }
 
@@ -129,13 +142,13 @@ class AiTestCaseGenerator extends Component
                 ->values()
                 ->all();
         } else {
-            $this->errorMessage        = 'Aucun cas de test n\'a pu être généré.';
+            $this->errorMessage = 'Aucun cas de test n\'a pu être généré.';
             $this->generationRequestId = null;
         }
     }
 
     /* ------------------------------------------------------------------ */
-    /*  Sélection / désélection globale                                    */
+    /*  Sélection / désélection globale */
     /* ------------------------------------------------------------------ */
 
     public function toggleSelectAll(bool $value): void
@@ -151,7 +164,7 @@ class AiTestCaseGenerator extends Component
     }
 
     /* ------------------------------------------------------------------ */
-    /*  Étape 3 — confirmation et persistance                              */
+    /*  Étape 3 — confirmation et persistance */
     /* ------------------------------------------------------------------ */
 
     public function saveAiCases(): void
@@ -162,6 +175,7 @@ class AiTestCaseGenerator extends Component
 
             if ($selected->isEmpty()) {
                 $this->errorMessage = 'Veuillez sélectionner au moins un cas de test.';
+
                 return;
             }
 
@@ -169,12 +183,13 @@ class AiTestCaseGenerator extends Component
             $templateFields = collect($this->template->fields)->pluck('name')->toArray();
 
             // Valeurs par défaut pour les champs de suivi non générés par l'IA
+            // (etat_test/status ne sont plus des champs libres depuis la Phase 1 —
+            // ils vivent dans les colonnes progress/verdict, réglées explicitement
+            // ci-dessous plutôt que comme entrées de $data).
             $defaults = [
-                'etat_test'         => 'A faire',
                 'resultats_obtenus' => '',
-                'nature'            => 'Concluant',
-                'status'            => 'Non validé',
-                'commentaires'      => '',
+                'nature' => 'Concluant',
+                'commentaires' => '',
             ];
 
             foreach ($selected as $row) {
@@ -188,9 +203,12 @@ class AiTestCaseGenerator extends Component
 
                 TestCase::create([
                     'template_id' => $this->template->id,
-                    'project_id'  => $this->project->id,
-                    'data'        => $data,
-                    'source'      => 'ai',
+                    'project_id' => $this->project->id,
+                    'type' => $this->project->type === 'uat' ? 'uat' : 'iat',
+                    'progress' => 'a_faire',
+                    'verdict' => null,
+                    'data' => $data,
+                    'source' => 'ai',
                 ]);
             }
 
@@ -203,9 +221,9 @@ class AiTestCaseGenerator extends Component
             $this->dispatch('ai-test-cases-added', count: $count);
 
             session()->flash('success', "{$count} cas de test générés par IA et ajoutés avec succès.");
-            
+
         } catch (\Throwable $e) {
-            $this->errorMessage = "Erreur lors de l'enregistrement : " . $e->getMessage();
+            $this->errorMessage = "Erreur lors de l'enregistrement : ".$e->getMessage();
         }
     }
 

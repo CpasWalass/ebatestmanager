@@ -4,8 +4,10 @@ namespace App\Http\Controllers\Testeur;
 
 use App\Http\Controllers\Controller;
 use App\Models\Project;
+use App\Models\Report;
+use App\Models\TestCase;
 use App\Models\TestCaseAssignment;
-use App\Models\TestExecution;
+use App\Models\TestCaseTemplate;
 use Illuminate\View\View;
 
 class TesteurDashboardController extends Controller
@@ -19,14 +21,14 @@ class TesteurDashboardController extends Controller
             ->whereNotNull('project_id')
             ->pluck('project_id')
             ->toArray();
-            
-        $assignedTemplateProjectIds = \App\Models\TestCaseTemplate::whereIn('id', function($q) use ($user) {
+
+        $assignedTemplateProjectIds = TestCaseTemplate::whereIn('id', function ($q) use ($user) {
             $q->select('template_id')
-              ->from('test_case_assignments')
-              ->where('user_id', $user->id)
-              ->whereNotNull('template_id');
+                ->from('test_case_assignments')
+                ->where('user_id', $user->id)
+                ->whereNotNull('template_id');
         })->pluck('project_id')->toArray();
-        
+
         $assignedTemplateIds = TestCaseAssignment::where('user_id', $user->id)
             ->whereNotNull('template_id')
             ->pluck('template_id')
@@ -36,41 +38,41 @@ class TesteurDashboardController extends Controller
 
         $assignedProjects = Project::whereIn('id', $allAssignedProjectIds)
             ->whereNotIn('status', ['completed', 'archived'])
-            ->with(['client', 'testCases' => function($q) use ($assignedProjectIds, $assignedTemplateIds) {
-                $q->where(function($query) use ($assignedProjectIds, $assignedTemplateIds) {
+            ->with(['client', 'testCases' => function ($q) use ($assignedProjectIds, $assignedTemplateIds) {
+                $q->where(function ($query) use ($assignedProjectIds, $assignedTemplateIds) {
                     $query->whereIn('project_id', $assignedProjectIds)
-                          ->orWhereIn('template_id', $assignedTemplateIds);
+                        ->orWhereIn('template_id', $assignedTemplateIds);
                 });
             }])
             ->get();
 
         // Stats globales du testeur (comptabiliser les tests individuels, pas les assignations de groupe)
         // EXCLURE les projets terminés ou archivés des statistiques
-        $assignedCases = \App\Models\TestCase::whereHas('project', function($q) {
-                $q->whereNotIn('status', ['completed', 'archived']);
-            })
-            ->where(function($q) use ($assignedProjectIds, $assignedTemplateIds) {
+        $assignedCases = TestCase::whereHas('project', function ($q) {
+            $q->whereNotIn('status', ['completed', 'archived']);
+        })
+            ->where(function ($q) use ($assignedProjectIds, $assignedTemplateIds) {
                 $q->whereIn('project_id', $assignedProjectIds)
-                  ->orWhereIn('template_id', $assignedTemplateIds);
+                    ->orWhereIn('template_id', $assignedTemplateIds);
             })
             ->get();
-            
-        $stats = \App\Models\TestCase::calculateStats($assignedCases);
+
+        $stats = TestCase::statsFor($assignedCases);
 
         $totalAssigned = $stats['total'];
         $totalExecuted = $stats['executed'];
-        
+
         $successCount = $stats['valide'];
         $failureCount = $stats['non_valide'];
         $reserveCount = $stats['sous_reserve'];
-        $optimCount   = $stats['optimisation'];
+        $optimCount = $stats['optimisation'];
 
         $successRate = $totalExecuted > 0
             ? round(($successCount / $totalExecuted) * 100, 1)
             : 0;
 
         // Rapports en re-test (à vérifier par le testeur suite à une correction)
-        $rapportsEnRetest = \App\Models\Report::where('status', 'retest')
+        $rapportsEnRetest = Report::where('status', 'retest')
             ->whereIn('project_id', $allAssignedProjectIds)
             ->with(['project', 'creator'])
             ->latest()

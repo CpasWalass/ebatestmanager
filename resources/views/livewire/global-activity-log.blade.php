@@ -60,18 +60,30 @@
                                 </div>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
-                                @if($activity->description === 'created')
+                                @php
+                                    $actionVerb = \App\Support\ActivityLogHelper::verb($activity->description);
+                                @endphp
+                                @if($actionVerb === 'créé')
                                     <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">Création</span>
-                                @elseif($activity->description === 'updated')
+                                @elseif($actionVerb === 'mis à jour')
                                     <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400">Modification</span>
-                                @elseif($activity->description === 'deleted')
+                                @elseif($actionVerb === 'supprimé')
                                     <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400">Suppression</span>
+                                @elseif($actionVerb === 'restauré')
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400">Restauration</span>
                                 @else
                                     {{ $activity->description }}
                                 @endif
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                                {{ class_basename($activity->subject_type) }} #{{ $activity->subject_id }}
+                                @php
+                                    $targetName = \App\Support\ActivityLogHelper::subjectName($activity->subject_type, $activity->subject_id);
+                                @endphp
+                                @if($targetName)
+                                    {{ $targetName }}
+                                @else
+                                    {{ class_basename($activity->subject_type) }} #{{ $activity->subject_id }}
+                                @endif
                             </td>
                             <td class="px-6 py-4 text-sm text-gray-500 dark:text-gray-400 max-w-xs truncate" title="{{ json_encode($activity->attribute_changes, JSON_UNESCAPED_UNICODE) }}">
                                 @if($activity->attribute_changes && isset($activity->attribute_changes['attributes']))

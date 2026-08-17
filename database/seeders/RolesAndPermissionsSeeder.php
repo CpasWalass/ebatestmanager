@@ -2,12 +2,13 @@
 
 namespace Database\Seeders;
 
+use App\Models\Tenant;
+use App\Models\User;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
-use Spatie\Permission\Models\Role;
 use Spatie\Permission\Models\Permission;
-use App\Models\User;
-use App\Models\Tenant;
+use Spatie\Permission\Models\Role;
+use Spatie\Permission\PermissionRegistrar;
 
 class RolesAndPermissionsSeeder extends Seeder
 {
@@ -15,18 +16,21 @@ class RolesAndPermissionsSeeder extends Seeder
 
     public function run(): void
     {
-        // Reset du cache Spatie
-        app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
+        app()[PermissionRegistrar::class]->forgetCachedPermissions();
 
-        // Toutes les permissions
         $permissions = [
             'manage projects',
             'manage testcases',
             'assign tests',
             'view reports',
             'manage users',
-            'respond_to_reports',  
             'manage clients',
+            'respond to reports',
+            // Nouvelle permission dédiée : un client peut valider/rejeter un cas de
+            // test UAT (client_status/client_comment) mais ne doit jamais pouvoir
+            // éditer son contenu — avant, le rôle "client" avait "manage testcases",
+            // ce qui l'autorisait en théorie à tout modifier.
+            'validate testcases',
         ];
 
         foreach ($permissions as $perm) {
@@ -34,16 +38,10 @@ class RolesAndPermissionsSeeder extends Seeder
         }
 
         $tenant = Tenant::firstOrCreate(
-            ['id' => 'eba_togo'],
-            [
-                'name' => 'EBA_TOGO',
-                'data' => [
-                    'domain' => 'ebatogo.ebatest.local'
-                ]
-            ]
+            ['id' => config('app.default_tenant_id', 'eba')],
+            ['name' => 'e-Business Afrique']
         );
 
-        // Rôles et leurs permissions
         $roles = [
             'chef_project' => [
                 'manage projects',
@@ -51,8 +49,8 @@ class RolesAndPermissionsSeeder extends Seeder
                 'assign tests',
                 'view reports',
                 'manage users',
-                'respond_to_reports',
                 'manage clients',
+                'respond to reports',
             ],
             'tester' => [
                 'manage testcases',
@@ -60,11 +58,11 @@ class RolesAndPermissionsSeeder extends Seeder
             ],
             'developer' => [
                 'view reports',
-                'respond_to_reports',  
+                'respond to reports',
             ],
             'client' => [
                 'view reports',
-                'manage testcases',    
+                'validate testcases',
             ],
         ];
 
@@ -73,40 +71,32 @@ class RolesAndPermissionsSeeder extends Seeder
             $role->syncPermissions($perms);
         }
 
-        // Créer le chef de projet par défaut s'il n'existe pas
-        if (!User::where('email', 'chef@ebatest.local')->exists()) {
-            $user = User::create([
-                'name'              => 'Chef de Projet',
-                'email'             => 'chef@ebatest.local',
-                'email_verified_at' => now(),
-                'password'          => bcrypt('password'),
-                'tenant_id'        => $tenant->id,
-            ]);
-            $user->assignRole('chef_project');
+        // Garde-fou : ces comptes ont un mot de passe connu et prévisible.
+        // Ils ne doivent JAMAIS être créés en production.
+        if (app()->isProduction()) {
+            return;
         }
 
-        // Créer un testeur de démo
-        if (!User::where('email', 'testeur@ebatest.local')->exists()) {
-            $user = User::create([
-                'name'              => 'Jean Testeur',
-                'email'             => 'testeur@ebatest.local',
-                'email_verified_at' => now(),
-                'password'          => bcrypt('password'),
-                'tenant_id'        => $tenant->id,
-            ]);
-            $user->assignRole('tester');
-        }
+        $demoUsers = [
+            ['email' => 'chef@ebatest.local', 'name' => 'Chef de Projet', 'role' => 'chef_project'],
+            ['email' => 'testeur@ebatest.local', 'name' => 'Jean Testeur', 'role' => 'tester'],
+            ['email' => 'dev@ebatest.local', 'name' => 'Marie Développeur', 'role' => 'developer'],
+        ];
 
-        // Créer un développeur de démo
-        if (!User::where('email', 'dev@ebatest.local')->exists()) {
-            $user = User::create([
-                'name'              => 'Marie Développeur',
-                'email'             => 'dev@ebatest.local',
-                'email_verified_at' => now(),
-                'password'          => bcrypt('password'),
-                'tenant_id'        => $tenant->id,
-            ]);
-            $user->assignRole('developer');
+        foreach ($demoUsers as $demo) {
+            $user = User::firstOrCreate(
+                ['email' => $demo['email']],
+                [
+                    'name' => $demo['name'],
+                    'email_verified_at' => now(),
+                    'password' => bcrypt(config('app.demo_password', 'password')),
+                    'tenant_id' => $tenant->id,
+                ]
+            );
+
+            if (! $user->hasRole($demo['role'])) {
+                $user->assignRole($demo['role']);
+            }
         }
     }
 }

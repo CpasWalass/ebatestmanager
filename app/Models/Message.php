@@ -3,9 +3,9 @@
 namespace App\Models;
 
 use App\Models\Traits\BelongsToTenant;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Builder;
 
 class Message extends Model
 {
@@ -40,17 +40,11 @@ class Message extends Model
         return $this->belongsTo(Project::class);
     }
 
-    /**
-     * Scope: messages non lus pour un utilisateur
-     */
     public function scopeUnreadFor(Builder $query, int $userId): Builder
     {
         return $query->where('receiver_id', $userId)->whereNull('read_at');
     }
 
-    /**
-     * Scope: conversation entre deux utilisateurs
-     */
     public function scopeConversation(Builder $query, int $userA, int $userB): Builder
     {
         return $query->where(function ($q) use ($userA, $userB) {
@@ -60,18 +54,15 @@ class Message extends Model
         });
     }
 
-    /**
-     * Marquer comme lu
-     */
     public function markAsRead(): void
     {
-        if (!$this->read_at) {
+        if (! $this->read_at) {
             $this->update(['read_at' => now()]);
         }
     }
 
     public function isRead(): bool
     {
-        return !is_null($this->read_at);
+        return ! is_null($this->read_at);
     }
 }

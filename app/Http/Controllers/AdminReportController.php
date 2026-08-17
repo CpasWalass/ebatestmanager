@@ -2,14 +2,14 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use Barryvdh\DomPDF\Facade\Pdf;
 use App\Models\Project;
 use App\Models\TestCase;
 use App\Models\TestCaseAssignment;
 use App\Models\User;
-use PhpOffice\PhpWord\PhpWord;
+use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Http\Request;
 use PhpOffice\PhpWord\IOFactory;
+use PhpOffice\PhpWord\PhpWord;
 
 class AdminReportController extends Controller
 {
@@ -37,7 +37,7 @@ class AdminReportController extends Controller
         $activeProjectsCount = (clone $projectsQuery)->whereNotIn('status', ['completed', 'archived'])->count();
         $uatProjectsCount = (clone $projectsQuery)->where('status', 'in_progress')->count();
 
-        $testCasesQuery = TestCase::whereHas('project', function($q) {
+        $testCasesQuery = TestCase::whereHas('project', function ($q) {
             $q->whereNotIn('status', ['completed', 'archived']);
         });
         if ($filterProject !== 'all') {
@@ -46,43 +46,44 @@ class AdminReportController extends Controller
         if ($filterTester !== 'all') {
             $assignedProjectIds = TestCaseAssignment::where('user_id', $filterTester)->whereNotNull('project_id')->pluck('project_id')->toArray();
             $assignedTemplateIds = TestCaseAssignment::where('user_id', $filterTester)->whereNotNull('template_id')->pluck('template_id')->toArray();
-            $testCasesQuery->where(function($q) use ($assignedProjectIds, $assignedTemplateIds) {
+            $testCasesQuery->where(function ($q) use ($assignedProjectIds, $assignedTemplateIds) {
                 $q->whereIn('project_id', $assignedProjectIds)->orWhereIn('template_id', $assignedTemplateIds);
             });
         }
 
         $allTestCasesQuery = (clone $testCasesQuery)->get();
-        $adminStats = \App\Models\TestCase::calculateStats($allTestCasesQuery);
+        $adminStats = TestCase::statsFor($allTestCasesQuery);
         $totalExecutions = $adminStats['executed'];
         $validExecutions = $adminStats['valide'];
         $validationRate = $totalExecutions > 0 ? round(($validExecutions / $totalExecutions) * 100) : 0;
         $totalTemplates = $adminStats['total'];
 
-        $testersCapacity = User::role('tester')->get()->map(function($tester) {
+        $testersCapacity = User::role('tester')->get()->map(function ($tester) {
             $assignedProjectIds = TestCaseAssignment::where('user_id', $tester->id)->whereNotNull('project_id')->pluck('project_id')->toArray();
             $assignedTemplateIds = TestCaseAssignment::where('user_id', $tester->id)->whereNotNull('template_id')->pluck('template_id')->toArray();
-            $assignedCases = \App\Models\TestCase::whereHas('project', function($q) {
-                    $q->whereNotIn('status', ['completed', 'archived']);
-                })
-                ->where(function($q) use ($assignedProjectIds, $assignedTemplateIds) {
+            $assignedCases = TestCase::whereHas('project', function ($q) {
+                $q->whereNotIn('status', ['completed', 'archived']);
+            })
+                ->where(function ($q) use ($assignedProjectIds, $assignedTemplateIds) {
                     $q->whereIn('project_id', $assignedProjectIds)->orWhereIn('template_id', $assignedTemplateIds);
                 })
                 ->get();
-            $testerStats = \App\Models\TestCase::calculateStats($assignedCases);
+            $testerStats = TestCase::statsFor($assignedCases);
             $total = $testerStats['total'];
             $done = $testerStats['executed'];
             $percent = $total > 0 ? round(($done / $total) * 100) : 100;
+
             return [
-                'name'    => $tester->name,
-                'total'   => $total,
-                'done'    => $done,
+                'name' => $tester->name,
+                'total' => $total,
+                'done' => $done,
                 'percent' => $percent,
-                'status'  => $percent >= 100 ? 'Disponible' : ($percent > 50 ? 'En cours' : 'Charg&eacute;'),
-                'color'   => $percent >= 100 ? 'green' : ($percent > 50 ? 'yellow' : 'red')
+                'status' => $percent >= 100 ? 'Disponible' : ($percent > 50 ? 'En cours' : 'Charg&eacute;'),
+                'color' => $percent >= 100 ? 'green' : ($percent > 50 ? 'yellow' : 'red'),
             ];
         });
 
-        $filename = 'rapport-admin-filtre-' . date('Ymd');
+        $filename = 'rapport-admin-filtre-'.date('Ymd');
 
         if ($format === 'word') {
             return $this->generateWord($activeProjectsCount, $uatProjectsCount, $totalTemplates, $validationRate, $testersCapacity, $filterPeriod, $filterProject, $filterTester, $filename);
@@ -93,12 +94,89 @@ class AdminReportController extends Controller
             'testersCapacity', 'filterPeriod', 'filterProject', 'filterTester'
         ))->setPaper('a4', 'portrait')->setOption('defaultFont', 'sans-serif');
 
-        return $pdf->download($filename . '.pdf');
+        return $pdf->download($filename.'.pdf');
+    }
+
+    /**
+     * Statistiques détaillées par projet (cas de test + répartition des statuts),
+     * exportées en PDF. Reprend exactement les filtres du tableau de bord.
+     */
+    public function generateStatsPdf(Request $request)
+    {
+        $type = $request->input('type', 'cases');
+        $filterPeriod = $request->input('period', 'all');
+        $filterProject = $request->input('project', 'all');
+        $filterTester = $request->input('tester', 'all');
+
+        $projectsQuery = Project::query();
+        if ($filterProject !== 'all') {
+            $projectsQuery->where('id', $filterProject);
+        }
+        if ($filterPeriod !== 'all') {
+            $now = now();
+            if ($filterPeriod === 'this_month') {
+                $projectsQuery->whereMonth('created_at', $now->month)->whereYear('created_at', $now->year);
+            } elseif ($filterPeriod === 'last_month') {
+                $projectsQuery->whereMonth('created_at', $now->subMonth()->month)->whereYear('created_at', $now->year);
+            } elseif ($filterPeriod === 'this_year') {
+                $projectsQuery->whereYear('created_at', $now->year);
+            }
+        }
+
+        $testCasesQuery = TestCase::whereHas('project', function ($q) {
+            $q->whereNotIn('status', ['completed', 'archived']);
+        });
+        if ($filterProject !== 'all') {
+            $testCasesQuery->where('project_id', $filterProject);
+        }
+        if ($filterTester !== 'all') {
+            $assignedProjectIds = TestCaseAssignment::where('user_id', $filterTester)->whereNotNull('project_id')->pluck('project_id')->toArray();
+            $assignedTemplateIds = TestCaseAssignment::where('user_id', $filterTester)->whereNotNull('template_id')->pluck('template_id')->toArray();
+            $testCasesQuery->where(function ($q) use ($assignedProjectIds, $assignedTemplateIds) {
+                $q->whereIn('project_id', $assignedProjectIds)->orWhereIn('template_id', $assignedTemplateIds);
+            });
+        }
+
+        $allTestCases = $testCasesQuery->with('project')->get();
+
+        $perProjectStats = $allTestCases->groupBy('project_id')->map(function ($cases) {
+            $stats = TestCase::statsFor($cases);
+            $project = $cases->first()->project;
+
+            return [
+                'name' => $project?->name ?? ('Projet #'.$cases->first()->project_id),
+                'total' => $stats['total'],
+                'executed' => $stats['executed'],
+                'valide' => $stats['valide'],
+                'non_valide' => $stats['non_valide'],
+                'sous_reserve' => $stats['sous_reserve'],
+                'optimisation' => $stats['optimisation'],
+                'bloque' => $stats['bloque'],
+                'non_executed' => $stats['total'] - $stats['executed'],
+                'taux_execution' => $stats['taux_execution'],
+            ];
+        })->sortByDesc('total')->values();
+
+        $totals = [
+            'total' => $perProjectStats->sum('total'),
+            'executed' => $perProjectStats->sum('executed'),
+            'valide' => $perProjectStats->sum('valide'),
+            'non_valide' => $perProjectStats->sum('non_valide'),
+            'sous_reserve' => $perProjectStats->sum('sous_reserve'),
+            'optimisation' => $perProjectStats->sum('optimisation'),
+            'non_executed' => $perProjectStats->sum('non_executed'),
+        ];
+
+        $pdf = Pdf::loadView('reports.admin-stats-pdf', compact(
+            'perProjectStats', 'totals', 'type', 'filterPeriod', 'filterProject', 'filterTester'
+        ))->setPaper('a4', 'landscape')->setOption('defaultFont', 'sans-serif');
+
+        return $pdf->download('statistiques-par-projet-'.date('Ymd').'.pdf');
     }
 
     private function generateWord($activeProjectsCount, $uatProjectsCount, $totalTemplates, $validationRate, $testersCapacity, $filterPeriod, $filterProject, $filterTester, $filename)
     {
-        $phpWord = new PhpWord();
+        $phpWord = new PhpWord;
         $phpWord->setDefaultFontName('Arial');
         $phpWord->setDefaultFontSize(11);
 
@@ -112,15 +190,15 @@ class AdminReportController extends Controller
         $section->addTitle('STATISTIQUES & CAPACITE EQUIPE', 1);
 
         $periodLabels = ['all' => 'Toutes periodes', 'this_month' => 'Ce mois-ci', 'last_month' => 'Le mois dernier', 'this_year' => 'Cette annee'];
-        $section->addText('Filtres : ' . ($periodLabels[$filterPeriod] ?? $filterPeriod) . ' | Projet : ' . ($filterProject === 'all' ? 'Tous' : $filterProject) . ' | Testeur : ' . ($filterTester === 'all' ? 'Tous' : $filterTester), ['size' => 10, 'italic' => true, 'color' => '888888']);
+        $section->addText('Filtres : '.($periodLabels[$filterPeriod] ?? $filterPeriod).' | Projet : '.($filterProject === 'all' ? 'Tous' : $filterProject).' | Testeur : '.($filterTester === 'all' ? 'Tous' : $filterTester), ['size' => 10, 'italic' => true, 'color' => '888888']);
         $section->addTextBreak(1);
 
         $section->addTitle('Indicateurs Cles', 2);
         $kpiTable = $section->addTable(['borderColor' => 'DDDDDD', 'borderSize' => 6, 'cellMargin' => 80]);
-        foreach ([['Projets Actifs', $activeProjectsCount], ['En Phase Test (UAT)', $uatProjectsCount], ['Tests Assignes', $totalTemplates], ['Taux de Validation', $validationRate . '%']] as [$label, $value]) {
+        foreach ([['Projets Actifs', $activeProjectsCount], ['En Phase Test (UAT)', $uatProjectsCount], ['Tests Assignes', $totalTemplates], ['Taux de Validation', $validationRate.'%']] as [$label, $value]) {
             $row = $kpiTable->addRow();
             $row->addCell(4000)->addText($label, ['bold' => true, 'color' => '555555']);
-            $row->addCell(3000)->addText((string)$value, ['bold' => true, 'size' => 13]);
+            $row->addCell(3000)->addText((string) $value, ['bold' => true, 'size' => 13]);
         }
         $section->addTextBreak(1);
 
@@ -135,20 +213,20 @@ class AdminReportController extends Controller
             $c = $colorMap[$t['color']] ?? '333333';
             $row = $capTable->addRow();
             $row->addCell(null)->addText($t['name'], ['bold' => true, 'size' => 10]);
-            $row->addCell(null)->addText((string)$t['total'], ['size' => 10]);
-            $row->addCell(null)->addText((string)$t['done'], ['size' => 10]);
-            $row->addCell(null)->addText($t['percent'] . '%', ['bold' => true, 'size' => 10, 'color' => $c]);
+            $row->addCell(null)->addText((string) $t['total'], ['size' => 10]);
+            $row->addCell(null)->addText((string) $t['done'], ['size' => 10]);
+            $row->addCell(null)->addText($t['percent'].'%', ['bold' => true, 'size' => 10, 'color' => $c]);
             $statusLabel = $t['percent'] >= 100 ? 'DISPONIBLE' : ($t['percent'] > 50 ? 'EN COURS' : 'CHARGE');
             $row->addCell(null)->addText($statusLabel, ['bold' => true, 'size' => 10, 'color' => $c]);
         }
 
         $footer = $section->addFooter();
-        $footer->addText('Genere le ' . now()->format('d/m/Y') . ' - EbaTestManager by e-Business Afrique', ['size' => 9, 'color' => '888888']);
+        $footer->addText('Genere le '.now()->format('d/m/Y').' - EbaTestManager by e-Business Afrique', ['size' => 9, 'color' => '888888']);
 
-        $tempPath = storage_path('app/temp_' . $filename . '.docx');
+        $tempPath = storage_path('app/temp_'.$filename.'.docx');
         $writer = IOFactory::createWriter($phpWord, 'Word2007');
         $writer->save($tempPath);
 
-        return response()->download($tempPath, $filename . '.docx')->deleteFileAfterSend(true);
+        return response()->download($tempPath, $filename.'.docx')->deleteFileAfterSend(true);
     }
 }
