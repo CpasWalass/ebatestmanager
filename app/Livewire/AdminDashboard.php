@@ -101,22 +101,33 @@ class AdminDashboard extends Component
             ->get();
 
         // Capacité de l'équipe (Testeurs)
-        $testersCapacity = User::role('tester')->get()->map(function ($tester) {
-            $assignedProjectIds = TestCaseAssignment::where('user_id', $tester->id)->whereNotNull('project_id')->pluck('project_id')->toArray();
-            $assignedTemplateIds = TestCaseAssignment::where('user_id', $tester->id)->whereNotNull('template_id')->pluck('template_id')->toArray();
+        $activeProjectIds = Project::whereNotIn('status', ['completed', 'archived'])
+            ->pluck('id')
+            ->toArray();
 
-            $assignedCases = TestCase::whereHas('project', function ($q) {
-                $q->whereNotIn('status', ['completed', 'archived']);
-            })
+        $testersCapacity = User::role('tester')->get()->map(function ($tester) use ($activeProjectIds) {
+            $assignedProjectIds = TestCaseAssignment::where('user_id', $tester->id)
+                ->whereNotNull('project_id')
+                ->pluck('project_id')
+                ->toArray();
+
+            $assignedTemplateIds = TestCaseAssignment::where('user_id', $tester->id)
+                ->whereNotNull('template_id')
+                ->pluck('template_id')
+                ->toArray();
+
+            $assignedCaseIds = TestCase::whereIn('project_id', $activeProjectIds)
                 ->where(function ($q) use ($assignedProjectIds, $assignedTemplateIds) {
                     $q->whereIn('project_id', $assignedProjectIds)
                         ->orWhereIn('template_id', $assignedTemplateIds);
                 })
-                ->get();
-            $testerStats = TestCase::statsFor($assignedCases);
+                ->pluck('id');
 
-            $total = $testerStats['total'];
-            $done = $testerStats['executed'];
+            $total = $assignedCaseIds->count();
+
+            $done = TestCase::whereIn('id', $assignedCaseIds)
+                ->whereIn('progress', ['termine', 'bloque'])
+                ->count();
 
             $percent = $total > 0 ? round(($done / $total) * 100) : 100;
 

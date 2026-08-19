@@ -47,8 +47,10 @@
                 'client'       => '#ea580c',
                 default        => '#6b7280',
             };
-            $workload = $member->active_assignments ?? 0;
-            $workloadClass = $workload > 8 ? 'bg-red-500' : ($workload > 3 ? 'bg-yellow-500' : 'bg-green-500');
+            $workload = $member->test_cases_count ?? 0;
+            $executed = $member->executed_count ?? 0;
+            $pct = $workload > 0 ? round(($executed / $workload) * 100) : 0;
+            $workloadClass = $pct >= 100 ? 'bg-green-500' : ($pct > 50 ? 'bg-yellow-500' : 'bg-red-500');
         @endphp
         <div class="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm hover:shadow-md transition p-5 flex flex-col gap-4 {{ !$member->is_active ? 'opacity-60 grayscale' : '' }}">
             <div class="flex items-center justify-between">
@@ -92,17 +94,18 @@
 
             <div class="flex items-center justify-between">
                 <span class="px-2.5 py-1 rounded-full text-xs font-semibold {{ $roleData['color'] }}">{{ $roleData['label'] }}</span>
+                @if($role === 'tester')
                 <span class="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1.5">
                     <span class="w-2 h-2 rounded-full {{ $workloadClass }}"></span>
-                    {{ $workload }} assignation(s)
+                    {{ $workload }} test(s)
                 </span>
+                @endif
             </div>
 
             @if($role === 'tester')
             <div class="pt-1 border-t border-gray-100 dark:border-gray-700">
-                @php $pct = $workload > 0 ? min(100, $workload * 10) : 0; @endphp
                 <div class="flex items-center justify-between text-xs text-gray-400 mb-1">
-                    <span>Charge de travail</span>
+                    <span>Exécution</span>
                     <span>{{ $pct }}%</span>
                 </div>
                 <div class="w-full bg-gray-100 dark:bg-gray-700 rounded-full h-1.5">

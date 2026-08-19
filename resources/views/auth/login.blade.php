@@ -12,10 +12,6 @@
 
   <div class="brand-bar"></div>
   <div class="split">
-  <button class="theme-toggle" onclick="toggleTheme()" aria-label="Basculer le thème">
-    <svg class="sun" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.536l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.121-10.607a1 1 0 010 1.414l-.707.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.464 5.464a1 1 0 01.707-.293h.026a1 1 0 010 2 1 1 0 01-.733-1.707zM5 11a1 1 0 100-2H4a1 1 0 100 2h1z" clip-rule="evenodd"/></svg>
-    <svg class="moon" fill="currentColor" viewBox="0 0 20 20"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"/></svg>
-  </button>
 
   <section class="scene-side">
     <div class="brand-mark">
@@ -167,28 +163,6 @@
           <button class="btn-submit" type="submit">Se connecter</button>
       </form>
 
-      <div class="demo-section">
-          <h3>Comptes de démonstration (mdp : password)</h3>
-          <div class="demo-accounts">
-              <div class="demo-account" onclick="fillLogin('chef@ebatest.local')">
-                  <span class="role-badge">Chef de Projet</span>
-                  <span class="demo-email">chef@ebatest.local</span>
-              </div>
-              <div class="demo-account" onclick="fillLogin('testeur@ebatest.local')">
-                  <span class="role-badge">Testeur</span>
-                  <span class="demo-email">testeur@ebatest.local</span>
-              </div>
-              <div class="demo-account" onclick="fillLogin('dev@ebatest.local')">
-                  <span class="role-badge">Développeur</span>
-                  <span class="demo-email">dev@ebatest.local</span>
-              </div>
-              <div class="demo-account" onclick="fillLogin('client@ebatest.local')">
-                  <span class="role-badge">Client</span>
-                  <span class="demo-email">client@ebatest.local</span>
-              </div>
-          </div>
-      </div>
-
       <p class="foot-note">EbaTestManager © 2026 ° e-Business Afrique</p>
     </div>
   </section>
@@ -199,10 +173,6 @@
     var dark = localStorage.getItem('darkMode') === 'true';
     if(dark) document.documentElement.classList.add('dark');
   })();
-  function toggleTheme(){
-    var isDark = document.documentElement.classList.toggle('dark');
-    localStorage.setItem('darkMode', isDark);
-  }
 
   function togglePassword() {
       const input = document.getElementById('password');
@@ -220,12 +190,6 @@
           eyeOff.style.display = 'none';
           btn.style.color = 'var(--muted)';
       }
-  }
-
-  function fillLogin(email) {
-      document.getElementById('email').value = email;
-      document.getElementById('password').value = 'password';
-      document.getElementById('email').focus();
   }
 
   const tickets = document.querySelectorAll('.ticket');

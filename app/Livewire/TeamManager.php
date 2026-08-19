@@ -3,6 +3,9 @@
 namespace App\Livewire;
 
 use App\Mail\WelcomeNewUser;
+use App\Models\Project;
+use App\Models\TestCase;
+use App\Models\TestCaseAssignment;
 use App\Models\User;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\Hash;
@@ -10,6 +13,7 @@ use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Livewire\Attributes\Computed;
+use Livewire\Attributes\On;
 use Livewire\Component;
 
 class TeamManager extends Component
@@ -28,6 +32,8 @@ class TeamManager extends Component
 
     public string $generatedPassword = '';
 
+    public int $assignationVersion = 0;
+
     public function mount(): void
     {
         $this->authorize('viewAny', User::class);
@@ -36,6 +42,8 @@ class TeamManager extends Component
     #[Computed]
     public function users()
     {
+        $user = auth()->user();
+
         return User::query()
             ->when($this->search, fn ($q) => $q
                 ->where('name', 'like', '%'.$this->search.'%')
@@ -43,11 +51,43 @@ class TeamManager extends Component
             )
             ->when($this->roleFilter, fn ($q) => $q->role($this->roleFilter))
             ->with('roles')
-            ->withCount([
-                'assignments as active_assignments' => fn ($q) => $q->whereIn('status', ['pending', 'in_progress']),
-            ])
             ->orderBy('name')
-            ->get();
+            ->get()
+            ->each(function ($member) {
+                if (! $member->hasRole('tester')) {
+                    $member->test_cases_count = 0;
+                    $member->executed_count = 0;
+
+                    return;
+                }
+
+                $assignedProjectIds = TestCaseAssignment::where('user_id', $member->id)
+                    ->whereNotNull('project_id')
+                    ->pluck('project_id')
+                    ->toArray();
+
+                $assignedTemplateIds = TestCaseAssignment::where('user_id', $member->id)
+                    ->whereNotNull('template_id')
+                    ->pluck('template_id')
+                    ->toArray();
+
+                $activeProjectIds = Project::whereNotIn('status', ['completed', 'archived'])
+                    ->pluck('id')
+                    ->toArray();
+
+                $assignedCaseIds = TestCase::whereIn('project_id', $activeProjectIds)
+                    ->where(function ($q) use ($assignedProjectIds, $assignedTemplateIds) {
+                        $q->whereIn('project_id', $assignedProjectIds)
+                            ->orWhereIn('template_id', $assignedTemplateIds);
+                    })
+                    ->pluck('id');
+
+                $member->test_cases_count = $assignedCaseIds->count();
+
+                $member->executed_count = TestCase::whereIn('id', $assignedCaseIds)
+                    ->whereIn('progress', ['termine', 'bloque'])
+                    ->count();
+            });
     }
 
     public function openNewModal(): void
@@ -146,6 +186,12 @@ class TeamManager extends Component
 
         $user->delete();
         session()->flash('success', 'Utilisateur supprimé.');
+    }
+
+    #[On('assignments-updated')]
+    public function refreshUsers(): void
+    {
+        $this->assignationVersion++;
     }
 
     public function render()

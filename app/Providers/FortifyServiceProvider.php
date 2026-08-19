@@ -114,15 +114,44 @@ class FortifyServiceProvider extends ServiceProvider
             {
                 public function toResponse($request)
                 {
-                    if (session()->has('url.intended')) {
-                        return redirect()->intended();
-                    }
-
                     $user = auth()->user();
 
                     if ($user?->must_change_password) {
+                        session()->forget('url.intended');
+
                         return redirect()->route('profile.show')
                             ->with('status', 'Veuillez changer votre mot de passe temporaire avant de continuer.');
+                    }
+
+                    if (session()->has('url.intended')) {
+                        $intended = session('url.intended');
+                        $path = parse_url($intended, PHP_URL_PATH) ?? '/';
+
+                        $roleAccess = [
+                            'chef_project' => ['/', '/dashboard', '/equipe', '/clients', '/admin'],
+                            'tester' => ['/', '/dashboard', '/testeur'],
+                            'developer' => ['/', '/dashboard', '/developpeur'],
+                            'client' => ['/', '/dashboard', '/client'],
+                        ];
+
+                        $userRoles = $user->getRoleNames()->toArray();
+                        $allowed = false;
+
+                        foreach ($userRoles as $role) {
+                            $prefixes = $roleAccess[$role] ?? [];
+                            foreach ($prefixes as $prefix) {
+                                if ($prefix === '/' || $path === $prefix || str_starts_with($path, $prefix.'/')) {
+                                    $allowed = true;
+                                    break 2;
+                                }
+                            }
+                        }
+
+                        if ($allowed) {
+                            return redirect()->intended();
+                        }
+
+                        session()->forget('url.intended');
                     }
 
                     return match (true) {

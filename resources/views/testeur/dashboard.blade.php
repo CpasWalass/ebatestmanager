@@ -240,13 +240,12 @@
             <div class="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 p-5">
                 <h3 class="font-semibold text-gray-900 dark:text-white mb-3">Activité Récente</h3>
                 @php
-                    $recentExec = \App\Models\TestCase::whereIn('project_id', $assignedProjects->pluck('id'))
-                        ->where('updated_at', '>=', now()->subDays(7))
-                        ->with('project')
-                        ->latest('updated_at')
+                    $recentExec = \App\Models\TestExecution::where('tester_id', auth()->id())
+                        ->where('created_at', '>=', now()->subDays(7))
+                        ->with('testCase.project')
+                        ->latest('created_at')
                         ->take(4)
-                        ->get()
-                        ->filter(fn($c) => $c->execution_status !== null);
+                        ->get();
                 @endphp
                 @if($recentExec->isEmpty())
                     <p class="text-sm text-gray-400 text-center py-4">Aucune activité récente</p>
@@ -256,7 +255,7 @@
                             <div class="flex items-start gap-3">
                                 <span class="mt-1 flex-shrink-0">
                                     @php
-                                        $color = match($exec->execution_status) {
+                                        $color = match($exec->status) {
                                             'valide' => '#16a34a',
                                             'non_valide' => '#CC0000',
                                             'sous_reserve' => '#f59e0b',
@@ -268,9 +267,9 @@
                                 </span>
                                 <div class="flex-1 min-w-0">
                                     <p class="text-xs font-medium text-gray-900 dark:text-white truncate">
-                                        {{ $exec->project?->name ?? 'Projet' }}
+                                        {{ $exec->testCase?->project?->name ?? 'Projet' }}
                                     </p>
-                                    <p class="text-xs text-gray-400">{{ $exec->updated_at->diffForHumans() }}</p>
+                                    <p class="text-xs text-gray-400">{{ $exec->created_at->diffForHumans() }}</p>
                                 </div>
                             </div>
                         @endforeach

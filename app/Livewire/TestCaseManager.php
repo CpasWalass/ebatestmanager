@@ -36,6 +36,8 @@ class TestCaseManager extends Component
 
     public bool $showDevModal = false;
 
+    public int $version = 0;
+
     public array $selectedDevIds = [];
 
     public bool $showArchives = false;
@@ -119,8 +121,16 @@ class TestCaseManager extends Component
         $template = TestCaseTemplate::findOrFail($id);
         $this->authorize('delete', $template);
 
+        $count = $template->testCases()->count();
+        $template->testCases()->delete();
         $template->delete();
-        session()->flash('success', 'Cas de test supprimé avec succès.');
+
+        $message = $count > 0
+            ? "Fichier et {$count} cas de test supprimé(s) avec succès."
+            : 'Cas de test supprimé avec succès.';
+
+        $this->version++;
+        session()->flash('success', $message);
     }
 
     public function save(): void
@@ -440,6 +450,8 @@ class TestCaseManager extends Component
 
     public function render()
     {
-        return view('livewire.test-case-manager');
+        return view('livewire.test-case-manager', [
+            'totalTestCases' => TestCase::where('project_id', $this->project->id)->count(),
+        ]);
     }
 }

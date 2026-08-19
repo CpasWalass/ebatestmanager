@@ -26,7 +26,10 @@
     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
         <div>
             <h1 class="text-3xl font-bold">Cas de Tests</h1>
-            <p class="text-gray-600 dark:text-gray-400 text-sm mt-1">Dossiers de tests pour le projet <span class="font-semibold text-[#8b0000]">{{ $project->name }}</span></p>
+            <p class="text-gray-600 dark:text-gray-400 text-sm mt-1">
+                Dossiers de tests pour le projet <span class="font-semibold text-[#8b0000]">{{ $project->name }}</span>
+                <span class="ml-2 px-2 py-0.5 bg-gray-100 dark:bg-gray-700 rounded-full text-xs font-semibold">{{ $totalTestCases }} test(s) au total</span>
+            </p>
         </div>
         
         @if(auth()->check() && auth()->user()->hasRole('chef_project'))
