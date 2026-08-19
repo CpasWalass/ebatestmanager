@@ -143,6 +143,15 @@ class ProjectManager extends Component
         session()->flash('success', 'Projet supprimé avec succès.');
     }
 
+    public function reopenProject(int $projectId): void
+    {
+        $project = Project::findOrFail($projectId);
+        $this->authorize('update', $project);
+
+        $project->update(['status' => 'in_progress']);
+        session()->flash('success', 'Le projet a été réactivé avec succès.');
+    }
+
     /**
      * IMPORTANT — correctif de sécurité : aucune de ces méthodes ne vérifiait
      * l'autorisation côté serveur dans la version originale. Le bouton

@@ -150,6 +150,7 @@
                     $projLink = route('projets.show', $project);
                 }
             @endphp
+            <div class="relative">
             <a href="{{ $projLink }}" class="block bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 transition group cursor-pointer hover:-translate-y-1 hover:shadow-md">
                 <div class="flex justify-between items-start mb-4">
                     <div>
@@ -170,6 +171,13 @@
                     <span class="text-xs font-medium text-gray-400">{{ $project->created_at->format('d/m/Y') }}</span>
                 </div>
             </a>
+            @if(auth()->check() && auth()->user()->hasRole('chef_project') && auth()->id() === $project->created_by)
+            <button wire:click="reopenProject({{ $project->id }})" wire:confirm="Êtes-vous sûr de vouloir réactiver ce projet ?" onclick="event.preventDefault(); event.stopPropagation();" class="absolute bottom-4 right-4 px-3 py-1.5 bg-amber-50 hover:bg-amber-100 dark:bg-amber-900/20 dark:hover:bg-amber-900/40 text-amber-700 dark:text-amber-400 text-xs font-medium rounded-lg transition flex items-center gap-1.5">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                Réactiver
+            </button>
+            @endif
+            </div>
         @empty
             <div class="col-span-full py-12 text-center text-gray-500 dark:text-gray-400">
                 Aucun projet clôturé.

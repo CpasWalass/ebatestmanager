@@ -159,6 +159,32 @@ class TestCaseManagerTest extends TestCase
         $this->assertDatabaseHas('projects', ['id' => $project->id, 'status' => 'completed']);
     }
 
+    public function test_reopen_project(): void
+    {
+        $project = $this->createProject(['status' => 'completed']);
+        $this->actingAs($this->chef);
+
+        Livewire::test(TestCaseManager::class, ['project' => $project])
+            ->call('reopenProject');
+
+        $this->assertDatabaseHas('projects', ['id' => $project->id, 'status' => 'in_progress']);
+    }
+
+    public function test_non_creator_cannot_reopen_project(): void
+    {
+        $project = $this->createProject(['status' => 'completed']);
+
+        $otherChef = User::factory()->create();
+        $otherChef->assignRole('chef_project');
+        $otherChef->givePermissionTo(['manage testcases', 'manage projects']);
+
+        $this->actingAs($otherChef);
+
+        Livewire::test(TestCaseManager::class, ['project' => $project])
+            ->call('reopenProject')
+            ->assertStatus(403);
+    }
+
     public function test_tester_sees_assigned_templates(): void
     {
         $project = $this->createProject();

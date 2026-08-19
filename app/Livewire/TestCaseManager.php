@@ -248,6 +248,14 @@ class TestCaseManager extends Component
         session()->flash('success', 'Le projet a été clôturé avec succès et marqué comme terminé.');
     }
 
+    public function reopenProject(): void
+    {
+        $this->authorize('update', $this->project);
+
+        $this->project->update(['status' => 'in_progress']);
+        session()->flash('success', 'Le projet a été réactivé avec succès.');
+    }
+
     public function removeDeveloper(int $userId): void
     {
         $this->authorize('update', $this->project);

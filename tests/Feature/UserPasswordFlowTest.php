@@ -10,6 +10,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Livewire\Livewire;
+use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 use Tests\TestCase;
 
@@ -17,15 +18,22 @@ class UserPasswordFlowTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        Role::firstOrCreate(['name' => 'chef_project', 'guard_name' => 'web']);
+        Role::firstOrCreate(['name' => 'tester', 'guard_name' => 'web']);
+        Permission::firstOrCreate(['name' => 'manage users', 'guard_name' => 'web']);
+    }
+
     public function test_creating_a_user_sends_a_temporary_password_and_requires_first_change(): void
     {
         Mail::fake();
 
-        Role::firstOrCreate(['name' => 'chef_project', 'guard_name' => 'web']);
-        Role::firstOrCreate(['name' => 'tester', 'guard_name' => 'web']);
-
         $admin = User::factory()->create();
         $admin->assignRole('chef_project');
+        $admin->givePermissionTo('manage users');
 
         $this->actingAs($admin);
 
@@ -49,7 +57,7 @@ class UserPasswordFlowTest extends TestCase
         });
     }
 
-    public function test_password_change_requires_current_and_temporary_password(): void
+    public function test_password_change_requires_temporary_password_when_must_change(): void
     {
         $user = User::factory()->create([
             'password' => Hash::make('temp-password'),
@@ -60,8 +68,24 @@ class UserPasswordFlowTest extends TestCase
         $this->actingAs($user);
 
         Livewire::test(UserProfile::class)
+            ->set('temporary_password', 'wrong-temp')
+            ->set('password', 'NewPassword123!')
+            ->set('password_confirmation', 'NewPassword123!')
+            ->call('updatePassword')
+            ->assertHasErrors(['temporary_password']);
+    }
+
+    public function test_password_change_requires_current_password_when_not_must_change(): void
+    {
+        $user = User::factory()->create([
+            'password' => Hash::make('current-password'),
+            'must_change_password' => false,
+        ]);
+
+        $this->actingAs($user);
+
+        Livewire::test(UserProfile::class)
             ->set('current_password', 'wrong-password')
-            ->set('temporary_password', 'temp-password')
             ->set('password', 'NewPassword123!')
             ->set('password_confirmation', 'NewPassword123!')
             ->call('updatePassword')
